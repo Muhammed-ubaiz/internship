@@ -3,29 +3,32 @@ import {useNavigate} from"react-router-dom"
 import axios from "axios"
 function AdminLogin() {
 
-const [emai,setemail]=useState("")
+const [email,setemail]=useState("")
 const [password,setpassword]=useState("")
 const navigate=useNavigate()
 
 
-const handleSubmit = async (e) =>{
+const handleSubmit = async (e) => {
   e.preventDefault();
-  try {
-    const response = await axios.post("http://localhost:5001/admin/login",{
-      emai,password
-    });
-    if (response.data.succes){
 
-    navigate()
-    }
-    else {
+  try {
+    const response = await axios.post(
+      "http://localhost:3001/admin/login",
+      { email, password, }
+    );
+
+    if (response.data.success) {
+      navigate('/admindashboard');
+      
+      
+    } else {
       alert("Invalid credentials");
     }
   } catch (error) {
-    console.error("Login error:", err);
-      alert("Something went wrong");
+    alert(error.response?.data?.message || "Something went wrong");
   }
-}
+};
+
 
   return (
     <>
