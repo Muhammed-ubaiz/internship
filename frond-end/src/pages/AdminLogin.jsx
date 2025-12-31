@@ -1,5 +1,31 @@
-import react from "react"
+import react, { useState } from "react"
+import {useNavigate} from"react-router-dom"
+import axios from "axios"
 function AdminLogin() {
+
+const [emai,setemail]=useState("")
+const [password,setpassword]=useState("")
+const navigate=useNavigate()
+
+
+const handleSubmit = async (e) =>{
+  e.preventDefault();
+  try {
+    const response = await axios.post("http://localhost:5001/admin/login",{
+      emai,password
+    });
+    if (response.data.succes){
+
+    navigate()
+    }
+    else {
+      alert("Invalid credentials");
+    }
+  } catch (error) {
+    console.error("Login error:", err);
+      alert("Something went wrong");
+  }
+}
 
   return (
     <>
@@ -16,11 +42,13 @@ function AdminLogin() {
 
         {/* Form */}
         <form
+        onSubmit={(e)=>{handleSubmit(e)}}
         className="space-y-5">
           {/* Email */}
           <div>
             <label className="block text-[#1679AB] mb-2">Email</label>
             <input
+            onChange={(e)=>setemail(e.target.value)}
               type="email"
               placeholder="Enter your email"
               className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
@@ -31,6 +59,7 @@ function AdminLogin() {
           <div>
             <label className="block text-[#1679AB] mb-2">Password</label>
             <input
+             onChange={(e) => setpassword(e.target.value)}
               type="password"
               placeholder="Enter your password"
               className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
