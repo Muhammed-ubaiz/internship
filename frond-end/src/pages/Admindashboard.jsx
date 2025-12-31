@@ -1,4 +1,6 @@
 import React from 'react';
+import DashboardCalendar from './Dashboardcalender';
+import LiveClockUpdate from './LiveClockUpdate';
 
 function Admindashboard() {
   return (
@@ -8,10 +10,7 @@ function Admindashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-[#141E46]">Dashboard</h1>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[#1679AB]">February 2023</span>
-            {/* <img src="https://i.pravatar.cc/40" alt="profile" className="w-10 h-10 rounded-full" /> */}
-          </div>
+         
         </div>
 
         {/* Stats Cards */}
@@ -49,48 +48,27 @@ function Admindashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Calendar */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-200">
-            <h3 className="text-center font-semibold text-[#141E46] mb-4">February 2023</h3>
-            <div className="grid grid-cols-7 text-center text-sm text-[#1679AB] mb-2">
-              <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
-            </div>
-            <div className="grid grid-cols-7 gap-2 text-center text-sm">
-              <span className="text-[#141E46]">30</span>
-              <span className="bg-[#1679AB] text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto">1</span>
-              <span className="text-[#141E46]">2</span>
-              <span className="text-[#141E46]">3</span>
-              <span className="text-[#141E46]">4</span>
-              <span className="text-[#141E46]">5</span>
-              <span className="text-[#141E46]">6</span>
-            </div>
-          </div>
+          <DashboardCalendar/>
 
           {/* Clock */}
-          <div className="bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center justify-center border border-gray-200">
-            <div className="w-40 h-40 rounded-full border-8 border-[#EEF6FB] flex items-center justify-center mb-4">
-              <span className="text-3xl">🕒</span>
-            </div>
-            <p className="text-2xl font-bold text-[#141E46]">12:16 PM</p>
+          <div className="w-full h-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex justify-center items-center">
+            <LiveClockUpdate />
           </div>
 
           {/* Working / Break */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
+          <div className="space-y-4 flex flex-col justify-between">
+            <div className= "h-35 bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
               <p className="text-sm text-[#1679AB]">Total Students Working Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">00 Hr 00 Mins 00 Secs</p>
             </div>
-            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
+            <div className="h-35 bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
               <p className="text-sm text-[#1679AB]">Total Students Break Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">00 Hr 00 Mins 55 Secs</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-2xl p-4 text-center text-[#1679AB] italic border border-gray-200">
-              “Punctuality is the virtue of the bored.”
-            </div>
+           
 
-            <button className="w-full bg-[#141E46] hover:bg-[#2e3656] text-white py-3 rounded-lg font-semibold">
-              Punch In
-            </button>
+            
           </div>
         </div>
       </div>
