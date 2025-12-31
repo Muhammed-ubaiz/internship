@@ -1,6 +1,6 @@
 import React from 'react';
-import DashboardCalendar from './Dashboardcalender';
-import LiveClockUpdate from './LiveClockUpdate';
+import DashboardCalendar from '../Dashboardcalender';
+import LiveClockUpdate from '../LiveClockUpdate';
 
 function Admindashboard() {
   return (
