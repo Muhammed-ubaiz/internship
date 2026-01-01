@@ -1,69 +1,96 @@
 import React, { useState } from "react";
 import Sidebar from "./sidebar";
+import axios from "axios";
 
 function Course() {
   const [showCourseModal, setShowCourseModal] = useState(false);
-  const [showBatchListModal, setShowBatchListModal] = useState(false);
-  const [showBatchModal, setShowBatchModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [courses, setCourses] = useState([]);
 
-  const courses = [
-    { name: "React for Beginners", duration: "7 months" },
-    { name: "Advanced JavaScript", duration: "5 months" },
-    { name: "Node.js Mastery", duration: "6 months" },
-  ];
+  const [courseName, setCourseName] = useState("");
+  const [duration, setDuration] = useState("");
 
+
+  const fetchCourse = async()=>{
+    try {
+        const res = await axios.get("http://localhost:3001/admin/getCourse")
+        const withStatus = res.data.map((course)=>({
+          ...course
+        }))
+        setCourses(withStatus)
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+
+  const handleAddCourse = async(e)=>{
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:3001/admin/addCourse",{
+        name: courseName,
+        duration: duration
+      })
+      console.log(response.data.success);
+      setCourses([...courses, { name: courseName, duration: duration }]);
+      setCourseName("");
+      setDuration("");
+      setShowCourseModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+
+  
   return (
-        <div className="min-h-screen bg-[#EEF6FB] flex">
+    <div className="min-h-screen bg-[#EEF6FB] flex">
       {/* Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 md:ml-34">
+      <div className="flex-1 p-6 md:ml-36">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 mt-6">
+        <div className="flex justify-between items-center mt-6 mb-6">
           <h1 className="text-2xl font-semibold text-[#141E46]">Courses</h1>
           <button
+            type="button"
             onClick={() => setShowCourseModal(true)}
-            className="bg-[#141E46] hover:bg-[#2e3656] text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300"
+            className="bg-[#141E46] text-white px-4 py-2 rounded-lg"
           >
             Add Course
           </button>
         </div>
 
-        {/* Courses Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 bg-white rounded-2xl shadow-xl overflow-hidden">
+          <table className="w-full bg-white rounded-xl shadow-lg">
             <thead className="bg-[#D1E8FF]">
               <tr>
-                <th className="p-3 text-left border-b text-[#141E46]">Course Name</th>
-                <th className="p-3 text-left border-b text-[#141E46]">Duration</th>
-                <th className="p-3 text-center border-b text-[#141E46]">Actions</th>
+                <th className="p-3 text-left">Course Name</th>
+                <th className="p-3 text-left">Duration</th>
+                <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
+              {courses.length === 0 && (
+                <tr>
+                  <td colSpan="3" className="p-4 text-center text-gray-500">
+                    No courses added
+                  </td>
+                </tr>
+              )}
+
               {courses.map((course, index) => (
-                <tr key={index} className="border-b hover:bg-[#F0F8FF] transition-colors">
+                <tr key={index} className="border-b hover:bg-[#F0F8FF]">
                   <td className="p-3">{course.name}</td>
                   <td className="p-3">{course.duration}</td>
-                  <td className="p-3 text-center space-x-2">
+                  <td className="p-3 text-center">
                     <button
-                      onClick={() => setShowBatchListModal(true)}
-                      className="bg-[#1679AB] hover:bg-[#0f5780] text-white px-3 py-1 rounded-lg transition-all duration-300"
-                    >
-                      View Batches
-                    </button>
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="bg-[#141E46] hover:bg-[#2c3763] text-white px-3 py-1 rounded-lg transition-all duration-300"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => alert("Delete clicked")}
-                      className="bg-[#DC2626] hover:bg-[#b91c1c] text-white px-3 py-1 rounded-lg transition-all duration-300"
+                      type="button"
+                      onClick={() => handleDelete(index)}
+                      className="bg-red-600 text-white px-3 py-1 rounded-lg"
                     >
                       Delete
                     </button>
@@ -74,113 +101,65 @@ function Course() {
           </table>
         </div>
 
-        {/* Modals */}
-        {showCourseModal && <CourseModal onClose={() => setShowCourseModal(false)} />}
-        {showEditModal && <EditCourseModal onClose={() => setShowEditModal(false)} />}
-        {showBatchListModal && (
-          <BatchListModal
-            onClose={() => setShowBatchListModal(false)}
-            onAddBatch={() => setShowBatchModal(true)}
+        {/* MODAL */}
+        {showCourseModal && (
+          <AddCourseModal
+            onClose={() => setShowCourseModal(false)}
+            onAdd={handleAddCourse}
+            courseName={courseName}
+            setCourseName={setCourseName}
+            duration={duration}
+            setDuration={setDuration}
           />
         )}
-        {showBatchModal && <BatchModal onClose={() => setShowBatchModal(false)} />}
       </div>
     </div>
   );
 }
 
-// Add Course Modal
-function CourseModal({ onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-2xl w-96 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-[#141E46]">Add Course</h2>
-          <button onClick={onClose} className="text-gray-500">✕</button>
-        </div>
-        <input
-          className="w-full border border-gray-300 p-2 rounded-lg mb-2 focus:ring-2 focus:ring-[#1679AB]"
-          placeholder="Course Name"
-        />
-        <input
-          className="w-full border border-gray-300 p-2 rounded-lg mb-2 focus:ring-2 focus:ring-[#1679AB]"
-          placeholder="Duration"
-        />
-        <button className="w-full bg-[#141E46] hover:bg-[#2e3656] text-white py-2 rounded-lg font-semibold transition-all duration-300">
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
+/* ================= MODAL ================= */
 
-// Edit Course Modal
-function EditCourseModal({ onClose }) {
+function AddCourseModal({
+  onClose,
+  onAdd,
+  courseName,
+  setCourseName,
+  duration,
+  setDuration,
+}) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-2xl w-96 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-[#141E46]">Edit Course</h2>
-          <button onClick={onClose} className="text-gray-500">✕</button>
-        </div>
-        <input
-          className="w-full border border-gray-300 p-2 rounded-lg mb-2 focus:ring-2 focus:ring-[#1679AB]"
-          placeholder="Course Name"
-          defaultValue="Sample Course"
-        />
-        <input
-          className="w-full border border-gray-300 p-2 rounded-lg mb-2 focus:ring-2 focus:ring-[#1679AB]"
-          placeholder="Duration"
-          defaultValue="7 months"
-        />
-        <button className="w-full bg-[#141E46] hover:bg-[#2c3763] text-white py-2 rounded-lg font-semibold transition-all duration-300">
-          Save Changes
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Batch List Modal
-function BatchListModal({ onClose, onAddBatch }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-2xl w-96 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-[#141E46]">Batches</h2>
-          <button onClick={onClose} className="text-gray-500">✕</button>
-        </div>
-        <ul className="list-disc pl-5 text-[#141E46]">
-          <li>30-September-2025</li>
-          <li>15-October-2025</li>
-          <li>01-November-2025</li>
-        </ul>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+      <div className="bg-white w-96 p-6 rounded-2xl shadow-2xl relative">
         <button
-          onClick={onAddBatch}
-          className="w-full mt-4 bg-[#1679AB] hover:bg-[#0f5780] text-white py-2 rounded-lg font-semibold transition-all duration-300"
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 text-xl"
         >
-          Add Batch
+          ✕
         </button>
-      </div>
-    </div>
-  );
-}
 
-// Batch Modal
-function BatchModal({ onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-2xl w-80 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-[#141E46]">Add Batch</h2>
-          <button onClick={onClose} className="text-gray-500">✕</button>
-        </div>
+        <h2 className="text-xl font-semibold mb-4">Add Course</h2>
+
         <input
-          className="w-full border border-gray-300 p-2 rounded-lg mb-2 focus:ring-2 focus:ring-[#1679AB]"
-          placeholder="Batch Date"
+          value={courseName}
+          onChange={(e) => setCourseName(e.target.value)}
+          placeholder="Course Name"
+          className="w-full border p-2 rounded-lg mb-3"
         />
-        <button className="w-full bg-[#141E46] hover:bg-[#2e3656] text-white py-2 rounded-lg font-semibold transition-all duration-300">
-          Add
+
+        <input
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          placeholder="Duration"
+          className="w-full border p-2 rounded-lg mb-4"
+        />
+
+        <button
+          type="button"
+          onClick={onAdd}
+          className="w-full bg-[#141E46] text-white py-2 rounded-lg"
+        >
+          Add Course
         </button>
       </div>
     </div>

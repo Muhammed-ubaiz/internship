@@ -4,6 +4,7 @@ import AdminLogin from '../pages/adminpage/AdminLogin'
 import Studentsdashboard from '../pages/studentpage/Studentsdashboard'
 import Admindashboard from '../pages/adminpage/Admindashboard'
 import Course from '../pages/adminpage/Course'
+import StudentCreate from '../pages/adminpage/StudentCreate'
 
 function LayoutRoutes() {
   return (
@@ -14,6 +15,7 @@ function LayoutRoutes() {
         <Route path='/studentsdashboard' element={<Studentsdashboard/>}/>
         <Route path='/admindashboard' element={<Admindashboard/>}/>
          <Route path='/course' element={<Course/>}/>
+         <Route path='/student' element={<StudentCreate/>}/>
       </Routes>
       </BrowserRouter>
     </>
