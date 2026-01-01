@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
+import { useEffect } from "react";
 
 function Course() {
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -22,6 +23,10 @@ function Course() {
       
     }
   }
+
+  useEffect(()=>{
+    fetchCourse();
+  },[]);
 
   const handleAddCourse = async(e)=>{
     e.preventDefault();
