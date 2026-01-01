@@ -1,9 +1,9 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AdminLogin from '../pages/adminpage/AdminLogin'
-import Studentsdashboard from '../pages/Studentsdashboard'
+import Studentsdashboard from '../pages/studentpage/Studentsdashboard'
 import Admindashboard from '../pages/adminpage/Admindashboard'
-import SideBarStudent from '../pages/studentpage/SideBarStudent'
+import Course from '../pages/adminpage/Course'
 
 function LayoutRoutes() {
   return (
@@ -13,7 +13,7 @@ function LayoutRoutes() {
         <Route path='/' element={<AdminLogin/>}/>
         <Route path='/studentsdashboard' element={<Studentsdashboard/>}/>
         <Route path='/admindashboard' element={<Admindashboard/>}/>
-        <Route path='/sidebarstudent' element={<SideBarStudent/>}/>
+         <Route path='/course' element={<Course/>}/>
       </Routes>
       </BrowserRouter>
     </>
