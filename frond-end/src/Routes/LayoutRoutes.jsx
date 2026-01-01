@@ -1,10 +1,4 @@
 
-import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import AdminLogin from "../pages/adminpage/AdminLogin";
-import Studentsdashboard from "../pages/Studentsdashboard";
-import Admindashboard from "../pages/adminpage/Admindashboard";
-import SideBarStudent from "../pages/studentpage/SideBarStudent";
 
 import ProtectedRoute from "../../ProtectedRoute";
 
@@ -15,6 +9,7 @@ import Studentsdashboard from '../pages/studentpage/Studentsdashboard'
 import Admindashboard from '../pages/adminpage/Admindashboard'
 import Course from '../pages/adminpage/Course'
 import StudentCreate from '../pages/adminpage/StudentCreate'
+import SideBarStudent from "../pages/studentpage/SideBarStudent";
 
 
 function LayoutRoutes() {

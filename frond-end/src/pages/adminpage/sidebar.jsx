@@ -6,8 +6,8 @@ import {
   FaUmbrellaBeach,
   FaUserClock,
   FaPowerOff,
-  FaDiscourse,
-  FaFile,
+  
+  
   FaBook,
 } from "react-icons/fa";
 
