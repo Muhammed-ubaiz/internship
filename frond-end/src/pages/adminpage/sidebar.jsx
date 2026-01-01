@@ -1,68 +1,65 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaCalendarCheck,
   FaUmbrellaBeach,
   FaUserClock,
   FaPowerOff,
+  FaDiscourse,
+  FaFile,
+  FaBook,
 } from "react-icons/fa";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const menuItem =
+    "relative group flex items-center justify-center mb-11 mt-7 cursor-pointer transform transition-transform duration-300 hover:scale-125";
+
+  const tooltip =
+    "absolute left-3 top-11 -translate-y-1/2 bg-gray-200/80 text-[#141E46] font-bold text-xs px-1 py-1 rounded-md opacity-0 scale-80 translate-x-1 group-hover:opacity-100 group-hover:scale-70 group-hover:translate-x-0 transition-all duration-300";
+
   return (
-    <>
-      {/* Sidebar Container */}
-      <div className="h-screen w-64 fixed left-0 top-0 bg-[#EEF6FB] text-[#141E46] shadow-2xl">
+    <div className="fixed left-0 top-0 h-screen w-[150px] flex flex-col items-center pt-10 ">
 
-        {/* Header */}
-        <div className="p-1 text-center border-b border-[#1679AB]">
-          <h1 className="text-2xl font-bold text-[#1679AB]">
-            ADMIN PANEL
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Attendance System
-          </p>
-        </div>
-
-        {/* Menu */}
-        <ul className="mt-6 px-4 space-y-3">
-
-          <li className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-                         hover:bg-[#1679AB] hover:text-white transition">
-            <FaHome />
-            <span className="font-medium">Dashboard</span>
-          </li>
-
-          <li className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-                         hover:bg-[#1679AB] hover:text-white transition">
-            <FaCalendarCheck />
-            <span className="font-medium">Attendance</span>
-          </li>
-
-          <li className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-                         hover:bg-[#1679AB] hover:text-white transition">
-            <FaUmbrellaBeach />
-            <span className="font-medium">Holidays</span>
-          </li>
-
-          <li className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-                         hover:bg-[#1679AB] hover:text-white transition">
-            <FaUserClock />
-            <span className="font-medium">Leave</span>
-          </li>
-
-        </ul>
-
-        {/* Logout */}
-        <div className="absolute bottom-6 w-full px-4">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-                          bg-[#141E46] text-white hover:bg-[#2e3656] transition">
-            <FaPowerOff />
-            <span className="font-medium">Logout</span>
-          </div>
-        </div>
-
+      {/* Home */}
+      <div className={menuItem}>
+        <FaHome size={30} />
+        <span className={tooltip}>Dashboard</span>
       </div>
-    </>
+
+      {/* Attendance */}
+      <div  className={menuItem}>
+        <FaCalendarCheck size={30} />
+        <span className={tooltip}>Attendance</span>
+      </div>
+
+      {/* Leave */}
+      <div  className={menuItem}>
+        <FaUmbrellaBeach size={30} />
+        <span className={tooltip}>Leave</span>
+      </div>
+
+      <div  className={menuItem}>
+        <FaBook size={30} />
+        <span className={tooltip}>Courses</span>
+      </div>
+
+      {/* Users */}
+      <div  className={menuItem}>
+        <FaUserClock size={30} />
+        <span className={tooltip}>Students</span>
+      </div>
+
+      {/* Logout (bottom) */}
+      <div className="mt-auto mb-8">
+        <div  className={menuItem}>
+          <FaPowerOff size={30} />
+          <span className={tooltip}>Logout</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
