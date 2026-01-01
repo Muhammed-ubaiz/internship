@@ -28,22 +28,33 @@ function Course() {
     fetchCourse();
   },[]);
 
-  const handleAddCourse = async(e)=>{
-    e.preventDefault();
-    try {
-      const response = await axios.post("http://localhost:3001/admin/addCourse",{
-        name: courseName,
-        duration: duration
-      })
-      console.log(response.data.success);
-      setCourses([...courses, { name: courseName, duration: duration }]);
-      setCourseName("");
-      setDuration("");
-      setShowCourseModal(false);
-    } catch (error) {
-      console.error(error);
-    }
+ const handleAddCourse = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await axios.post("http://localhost:3001/admin/addCourse", {
+      name: courseName,
+      duration,
+    });
+
+    setCourses([...courses, res.data.course]);
+    setCourseName("");
+    setDuration("");
+    setShowCourseModal(false);
+  } catch (error) {
+    console.error(error);
   }
+};
+
+
+  const handleDelete = async (id) => {
+  try {
+    await axios.delete(`http://localhost:3001/admin/deleteCourse/${id}`);
+    setCourses(courses.filter((course) => course._id !== id));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
 
   
@@ -87,21 +98,22 @@ function Course() {
                 </tr>
               )}
 
-              {courses.map((course, index) => (
-                <tr key={index} className="border-b hover:bg-[#F0F8FF]">
-                  <td className="p-3">{course.name}</td>
-                  <td className="p-3">{course.duration}</td>
-                  <td className="p-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(index)}
-                      className="bg-red-600 text-white px-3 py-1 rounded-lg"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {courses.map((course) => (
+  <tr key={course._id} className="border-b hover:bg-[#F0F8FF]">
+    <td className="p-3">{course.name}</td>
+    <td className="p-3">{course.duration}</td>
+    <td className="p-3 text-center">
+      <button
+        type="button"
+        onClick={() => handleDelete(course._id)}
+        className="bg-red-600 text-white px-3 py-1 rounded-lg"
+      >
+        Delete
+      </button>
+    </td>
+  </tr>
+))}
+
             </tbody>
           </table>
         </div>
