@@ -1,6 +1,10 @@
 import react, { useState } from "react"
 import {useNavigate} from"react-router-dom"
 import axios from "axios"
+
+
+import {jwtDecode} from "jwt-decode"
+
 function AdminLogin() {
 
 const [email,setemail]=useState("")
@@ -14,15 +18,33 @@ const handleSubmit = async (e) => {
   try {
     const response = await axios.post(
       "http://localhost:3001/admin/login",
-      { email, password, }
+      { email, password },
+     {headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }}
+      
     );
+    
 
     if (response.data.success) {
-      navigate('/admindashboard');
-      
-      
-    } else {
-      alert("Invalid credentials");
+      const { token, role } = response.data;
+    
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+    
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+    
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = "/adminlogin";
+      }, timeout);
+    
+      navigate("/admindashboard");
+    }
+    
+    else {
+      alert("Check your email and password");
     }
   } catch (error) {
     alert(error.response?.data?.message || "Something went wrong");

@@ -1,4 +1,17 @@
 import express from "express";
+
+import { Login } from "../Controller/AdminController.js";
+import { verifyToken } from "../AuthMiddleware.js";
+
+const adminRoutes = express.Router();
+
+
+adminRoutes.post("/login", Login);
+
+
+
+
+
 import {
   Login,
   addCourse,
@@ -15,5 +28,6 @@ adminRoutes.post("/login", Login);
 adminRoutes.post("/addCourse", addCourse);
 adminRoutes.get("/getCourse", getCourse);
 adminRoutes.delete("/deleteCourse/:id", deleteCourse);
+
 
 export default adminRoutes;
