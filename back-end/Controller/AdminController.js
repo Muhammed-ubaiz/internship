@@ -28,25 +28,12 @@ const Login = (req, res) => {
   });
 };
 
-export { Login };
+
 
 import Course from "../Model/Coursemodel.js";
 
 
-const adminemail = "admin@gmail.com"
-const adminpass = "admin123"
 
-
-
-const Login = (req,res)=>{
-    const {email , password}= req.body
-
-    if(email === adminemail && password === adminpass){
-        return res.json({ success: true });
-    }else{
-        res.send("error")
-    }
-}
 
 export const addCourse = async (req, res) => {
   try {
