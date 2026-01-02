@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
-import { useEffect } from "react";
 
 function Course() {
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -9,6 +8,7 @@ function Course() {
 
   const [courseName, setCourseName] = useState("");
   const [duration, setDuration] = useState("");
+
 
   const fetchCourse = async () => {
     const token = localStorage.getItem("token");
@@ -25,6 +25,25 @@ function Course() {
         ...course,
       }));
       setCourses(withStatus);
+
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showAddBatchModal, setShowAddBatchModal] = useState(false);
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [batches, setBatches] = useState([]);
+  const [batchName, setBatchName] = useState("");
+
+  const [editCourseName, setEditCourseName] = useState("");
+  const [editDuration, setEditDuration] = useState("");
+
+  /* = FETCH COURSES = */
+
+  const fetchCourse = async () => {
+    try {
+      const res = await axios.get("http://localhost:3001/admin/getCourse");
+      setCourses(res.data);
+
     } catch (error) {
       console.log(error);
     }
@@ -33,6 +52,7 @@ function Course() {
   useEffect(() => {
     fetchCourse();
   }, []);
+
 
   const handleAddCourse = async (e) => {
     e.preventDefault();
@@ -67,6 +87,95 @@ function Course() {
     try {
       await axios.delete(`http://localhost:3001/admin/deleteCourse/${id}`);
       setCourses(courses.filter((course) => course._id !== id));
+
+
+  /* = ADD COURSE = */
+
+  const handleAddCourse = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:3001/admin/addCourse", {
+        name: courseName,
+        duration,
+      });
+
+      setCourses([...courses, res.data.course]);
+      setCourseName("");
+      setDuration("");
+      setShowCourseModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* = DELETE COURSE = */
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3001/admin/deleteCourse/${id}`);
+      setCourses(courses.filter((course) => course._id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* = VIEW BATCH = */
+
+  const handleViewBatch = async (course) => {
+    setSelectedCourse(course);
+    setShowBatchModal(true);
+    try {
+      const res = await axios.get(
+        `http://localhost:3001/admin/getBatches/${course._id}`
+      );
+      setBatches(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* = ADD BATCH =*/
+
+  const handleAddBatch = async () => {
+    try {
+      const res = await axios.post(
+        `http://localhost:3001/admin/addBatch/${selectedCourse._id}`,
+        { name: batchName }
+      );
+      setBatches([...batches, res.data.batch]);
+      setBatchName("");
+      setShowAddBatchModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* = EDIT COURSE = */
+
+  const handleEditClick = (course) => {
+    setSelectedCourse(course);
+    setEditCourseName(course.name);
+    setEditDuration(course.duration);
+    setShowEditCourseModal(true);
+  };
+
+  const handleEditCourse = async () => {
+    try {
+      const res = await axios.put(
+        `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+        {
+          name: editCourseName,
+          duration: editDuration,
+        }
+      );
+
+      setCourses(
+        courses.map((c) =>
+          c._id === selectedCourse._id ? res.data.course : c
+        )
+      );
+      setShowEditCourseModal(false);
+
     } catch (error) {
       console.error(error);
     }
@@ -74,18 +183,14 @@ function Course() {
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] flex">
-      {/* Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6 md:ml-36">
-        {/* Header */}
-        <div className="flex justify-between items-center mt-6 mb-6">
+      <div className="flex-1 p-4 md:p-6 md:ml-36">
+        <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
           <h1 className="text-2xl font-semibold text-[#141E46]">Courses</h1>
           <button
-            type="button"
             onClick={() => setShowCourseModal(true)}
             className="bg-[#141E46] text-white px-4 py-2 rounded-lg"
           >
@@ -93,7 +198,6 @@ function Course() {
           </button>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full bg-white rounded-xl shadow-lg">
             <thead className="bg-[#D1E8FF]">
@@ -113,6 +217,7 @@ function Course() {
               )}
 
               {courses.map((course) => (
+
                 <tr key={course._id} className="border-b hover:bg-[#F0F8FF]">
                   <td className="p-3">{course.name}</td>
                   <td className="p-3">{course.duration}</td>
@@ -121,6 +226,27 @@ function Course() {
                       type="button"
                       onClick={() => handleDelete(course._id)}
                       className="bg-red-600 text-white px-3 py-1 rounded-lg"
+
+                <tr key={course._id} className="border-b">
+                  <td className="p-3">{course.name}</td>
+                  <td className="p-3">{course.duration}</td>
+                  <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
+                    <button
+                      onClick={() => handleViewBatch(course)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded"
+                    >
+                      View Batches
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(course)}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(course._id)}
+                      className="bg-red-600 text-white px-3 py-1 rounded"
+
                     >
                       Delete
                     </button>
@@ -131,66 +257,128 @@ function Course() {
           </table>
         </div>
 
-        {/* MODAL */}
+        {/* ================= MODALS ================= */}
+
         {showCourseModal && (
-          <AddCourseModal
-            onClose={() => setShowCourseModal(false)}
-            onAdd={handleAddCourse}
-            courseName={courseName}
-            setCourseName={setCourseName}
-            duration={duration}
-            setDuration={setDuration}
-          />
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96 relative">
+              <button
+                onClick={() => setShowCourseModal(false)}
+                className="absolute top-3 right-3"
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-semibold mb-4">Add Course</h2>
+              <input
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="Course Name"
+                className="w-full border p-2 rounded mb-3"
+              />
+              <input
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="Duration"
+                className="w-full border p-2 rounded mb-4"
+              />
+              <button
+                onClick={handleAddCourse}
+                className="w-full bg-[#141E46] text-white py-2 rounded"
+              >
+                Add Course
+              </button>
+            </div>
+          </div>
         )}
-      </div>
-    </div>
-  );
-}
 
-/* ================= MODAL ================= */
+        {showBatchModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96 relative">
+              <button
+                onClick={() => setShowBatchModal(false)}
+                className="absolute top-3 right-3"
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-semibold mb-4">Batches</h2>
 
-function AddCourseModal({
-  onClose,
-  onAdd,
-  courseName,
-  setCourseName,
-  duration,
-  setDuration,
-}) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className="bg-white w-96 p-6 rounded-2xl shadow-2xl relative">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-3 right-3 text-xl"
-        >
-          ✕
-        </button>
+              {batches.length === 0 ? (
+                <p className="text-gray-500 mb-4">No batches found</p>
+              ) : (
+                <ul className="mb-4 space-y-2">
+                  {batches.map((b) => (
+                    <li key={b._id} className="border p-2 rounded">
+                      {b.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-        <h2 className="text-xl font-semibold mb-4">Add Course</h2>
+              <button
+                onClick={() => setShowAddBatchModal(true)}
+                className="w-full bg-[#141E46] text-white py-2 rounded"
+              >
+                Add Batch
+              </button>
+            </div>
+          </div>
+        )}
 
-        <input
-          value={courseName}
-          onChange={(e) => setCourseName(e.target.value)}
-          placeholder="Course Name"
-          className="w-full border p-2 rounded-lg mb-3"
-        />
+        {showAddBatchModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96 relative">
+              <button
+                onClick={() => setShowAddBatchModal(false)}
+                className="absolute top-3 right-3"
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-semibold mb-4">Add Batch</h2>
+              <input
+                value={batchName}
+                onChange={(e) => setBatchName(e.target.value)}
+                placeholder="12-September-2024"
+                className="w-full border p-2 rounded mb-4"
+              />
+              <button
+                onClick={handleAddBatch}
+                className="w-full bg-[#141E46] text-white py-2 rounded"
+              >
+                Add Batch
+              </button>
+            </div>
+          </div>
+        )}
 
-        <input
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          placeholder="Duration"
-          className="w-full border p-2 rounded-lg mb-4"
-        />
-
-        <button
-          type="button"
-          onClick={onAdd}
-          className="w-full bg-[#141E46] text-white py-2 rounded-lg"
-        >
-          Add Course
-        </button>
+        {showEditCourseModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96 relative">
+              <button
+                onClick={() => setShowEditCourseModal(false)}
+                className="absolute top-3 right-3"
+              >
+                ✕
+              </button>
+              <h2 className="text-lg font-semibold mb-4">Edit Course</h2>
+              <input
+                value={editCourseName}
+                onChange={(e) => setEditCourseName(e.target.value)}
+                className="w-full border p-2 rounded mb-3"
+              />
+              <input
+                value={editDuration}
+                onChange={(e) => setEditDuration(e.target.value)}
+                className="w-full border p-2 rounded mb-4"
+              />
+              <button
+                onClick={handleEditCourse}
+                className="w-full bg-[#141E46] text-white py-2 rounded"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

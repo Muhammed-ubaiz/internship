@@ -17,7 +17,11 @@ function LayoutRoutes() {
         <Routes>
           <Route path="/" element={<AdminLogin />} />
           <Route
+
             path="/admindashboard"
+
+            path="/"
+
             element={
               <ProtectedRoute role="admin">
                 <Admindashboard />
@@ -48,7 +52,6 @@ function LayoutRoutes() {
 
           <Route path="/studentsdashboard" element={<Studentsdashboard />} />
 
-          {/* <Route path='/' element={<AdminLogin/>}/> */}
 
           <Route path="/attendance" element={<Attendance />} />
         </Routes>
