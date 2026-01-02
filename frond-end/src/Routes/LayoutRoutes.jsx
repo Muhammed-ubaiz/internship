@@ -20,7 +20,7 @@ function LayoutRoutes() {
 
             path="/admindashboard"
 
-            path="/"
+           
 
             element={
               <ProtectedRoute role="admin">
