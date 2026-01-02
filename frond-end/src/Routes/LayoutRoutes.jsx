@@ -20,7 +20,7 @@ function LayoutRoutes() {
 
         <Routes>
           <Route
-            path="/adminlogin"
+            path="/"
             element={
              
                 <AdminLogin />
