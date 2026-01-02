@@ -13,7 +13,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "10m" } //  expiry
+      { expiresIn: "5m" } //  expiry
     );
 
     return res.json({

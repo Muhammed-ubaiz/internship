@@ -70,28 +70,45 @@ function Studentsdashboard() {
             <LiveClockUpdate />
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
-              <p className="text-sm text-[#1679AB]">Working Hours</p>
+          <div className="space-y-4 ">
+            <div className=" flex gap-3">
+
+            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200 w-[50%]">
+              <p className="text-sm text-[#1679AB]">Punch in Time </p>
               <p className="text-lg font-semibold text-[#141E46]">
-                00 Hr 00 Mins 00 Secs
+                11:11 AM
               </p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200 w-[50%]">
+              <p className="text-sm text-[#1679AB]">Punch out Time </p>
+              <p className="text-lg font-semibold text-[#141E46]">
+                11:11 AM
+              </p>
+            </div>
             </div>
 
             <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200">
-              <p className="text-sm text-[#1679AB]">Break Hours</p>
+              <p className="text-sm text-[#1679AB]"> Today Break Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">
                 00 Hr 00 Mins 55 Secs
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-2xl p-4 text-center text-[#1679AB] italic border border-gray-200">
-              “Punctuality is the virtue of the bored.”
+            <div className="bg-white rounded-2xl shadow-2xl p-4  text-[#1679AB] border border-gray-200">
+            <p className="text-sm text-[#1679AB]">Today Working  Hours</p>
+              <p className="text-lg font-semibold text-[#141E46]">
+                00 Hr 00 Mins 55 Secs
+              </p>
             </div>
+            <div className=" flex gap-3">
 
-            <button className="w-full bg-[#141E46] hover:bg-[#2e3656] text-white py-3 rounded-lg font-semibold transition">
+            <button className="w-full bg-[#0dd635] hover:bg-[#0dd664] text-white py-3 rounded-lg font-semibold transition">
               Punch In
             </button>
+            <button className="w-full bg-[#ed1717] hover:bg-[#d60d0de2] text-white py-3 rounded-lg font-semibold transition">
+              Punch Out
+            </button>
+            </div>
           </div>
         </div>
       </div>
