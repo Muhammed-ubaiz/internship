@@ -30,14 +30,14 @@ function LayoutRoutes() {
           <Route
             path="/admindashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute role ="admin">
                 <Admindashboard />
               </ProtectedRoute>
             }
           />
           <Route path="/student"
            element={
-          <ProtectedRoute>
+          <ProtectedRoute role ="admin">
             <StudentCreate/>
           </ProtectedRoute>}/>
 
@@ -47,6 +47,7 @@ function LayoutRoutes() {
         <Route path="/sidebarstudent" element={<SideBarStudent />} />
         
         <Route path='/studentsdashboard' element={<Studentsdashboard/>}/>
+        
         
          <Route path='/course' element={<Course/>}/>
        

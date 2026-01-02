@@ -1,4 +1,5 @@
 
+import Course from "../Model/Coursemodel.js";
 import jwt from "jsonwebtoken";
 
 const adminemail = "admin@gmail.com";
@@ -12,7 +13,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "10s" } // ⬅️ better expiry
+      { expiresIn: "10m" } //  expiry
     );
 
     return res.json({
@@ -30,7 +31,6 @@ const Login = (req, res) => {
 
 
 
-import Course from "../Model/Coursemodel.js";
 
 
 

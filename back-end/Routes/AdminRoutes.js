@@ -6,16 +6,6 @@ import { verifyToken } from "../AuthMiddleware.js";
 const adminRoutes = express.Router();
 
 
-
-
-
-
-
-
-
-
-
-/* AUTH */
 adminRoutes.post("/login", Login);
 
 /* COURSES */
