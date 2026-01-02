@@ -9,7 +9,7 @@ function Studentsdashboard() {
       <SideBarStudent />
 
       {/* Main Content */}
-      <div className="ml-[150px] max-w-7xl mx-auto">
+      <div className="ml-[225px] max-w-6xl mx-auto">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
