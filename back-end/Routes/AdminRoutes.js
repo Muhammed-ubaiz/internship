@@ -9,8 +9,8 @@ const adminRoutes = express.Router();
 adminRoutes.post("/login", Login);
 
 /* COURSES */
-adminRoutes.post("/addCourse", addCourse);
-adminRoutes.get("/getCourse", getCourse);
+adminRoutes.post("/addCourse",verifyToken, addCourse);
+adminRoutes.get("/getCourse",verifyToken, getCourse);
 adminRoutes.delete("/deleteCourse/:id", deleteCourse);
 
 

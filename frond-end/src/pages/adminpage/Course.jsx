@@ -9,6 +9,23 @@ function Course() {
   const [courseName, setCourseName] = useState("");
   const [duration, setDuration] = useState("");
 
+
+  const fetchCourse = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    try {
+      const res = await axios.get("http://localhost:3001/admin/getCourse", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      });
+
+      const withStatus = res.data.map((course) => ({
+        ...course,
+      }));
+      setCourses(withStatus);
+
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
@@ -26,6 +43,7 @@ function Course() {
     try {
       const res = await axios.get("http://localhost:3001/admin/getCourse");
       setCourses(res.data);
+
     } catch (error) {
       console.log(error);
     }
@@ -34,6 +52,42 @@ function Course() {
   useEffect(() => {
     fetchCourse();
   }, []);
+
+
+  const handleAddCourse = async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/addCourse",
+        {
+          name: courseName,
+          duration,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      setCourses([...courses, res.data.course]);
+      setCourseName("");
+      setDuration("");
+      setShowCourseModal(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3001/admin/deleteCourse/${id}`);
+      setCourses(courses.filter((course) => course._id !== id));
+
 
   /* = ADD COURSE = */
 
@@ -121,6 +175,7 @@ function Course() {
         )
       );
       setShowEditCourseModal(false);
+
     } catch (error) {
       console.error(error);
     }
@@ -162,6 +217,16 @@ function Course() {
               )}
 
               {courses.map((course) => (
+
+                <tr key={course._id} className="border-b hover:bg-[#F0F8FF]">
+                  <td className="p-3">{course.name}</td>
+                  <td className="p-3">{course.duration}</td>
+                  <td className="p-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(course._id)}
+                      className="bg-red-600 text-white px-3 py-1 rounded-lg"
+
                 <tr key={course._id} className="border-b">
                   <td className="p-3">{course.name}</td>
                   <td className="p-3">{course.duration}</td>
@@ -181,6 +246,7 @@ function Course() {
                     <button
                       onClick={() => handleDelete(course._id)}
                       className="bg-red-600 text-white px-3 py-1 rounded"
+
                     >
                       Delete
                     </button>
