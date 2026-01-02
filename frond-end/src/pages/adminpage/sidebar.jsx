@@ -24,13 +24,13 @@ function Sidebar() {
     <div className="fixed left-0 top-0 h-screen w-[150px] flex flex-col items-center pt-10 ">
 
       {/* Home */}
-      <div className={menuItem}>
+      <div className={menuItem} onClick={()=> navigate ("/admindashboard")}>
         <FaHome size={30} />
         <span className={tooltip}>Dashboard</span>
       </div>
 
       {/* Attendance */}
-      <div  className={menuItem}>
+      <div  className={menuItem} onClick={()=> navigate ("/attendance")}>
         <FaCalendarCheck size={30} />
         <span className={tooltip}>Attendance</span>
       </div>
@@ -41,7 +41,7 @@ function Sidebar() {
         <span className={tooltip}>Leave</span>
       </div>
 
-      <div  className={menuItem}>
+      <div  className={menuItem} onClick={()=> navigate ("/course")}>
         <FaBook size={30} />
         <span className={tooltip}>Courses</span>
       </div>

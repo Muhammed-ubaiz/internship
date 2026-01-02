@@ -10,6 +10,7 @@ import Admindashboard from '../pages/adminpage/Admindashboard'
 import Course from '../pages/adminpage/Course'
 import StudentCreate from '../pages/adminpage/StudentCreate'
 import SideBarStudent from "../pages/studentpage/SideBarStudent";
+import Attendance from "../pages/adminpage/Attendance"
 
 
 function LayoutRoutes() {
@@ -34,17 +35,22 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+          <Route path="/student"
+           element={
+          <ProtectedRoute>
+            <StudentCreate/>
+          </ProtectedRoute>}/>
 
-          <Route path="/sidebarstudent" element={<SideBarStudent />} />
-        </Routes>
 
-      <Routes>
-        <Route path='/' element={<AdminLogin/>}/>
+        <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+
+        <Route path="/sidebarstudent" element={<SideBarStudent />} />
+        
         <Route path='/studentsdashboard' element={<Studentsdashboard/>}/>
-        <Route path='/admindashboard' element={<Admindashboard/>}/>
+        
          <Route path='/course' element={<Course/>}/>
-         <Route path='/student' element={<StudentCreate/>}/>
+       
+         <Route path='/attendance' element={<Attendance/>}/>
       </Routes>
 
       </BrowserRouter>
