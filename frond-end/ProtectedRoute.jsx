@@ -8,7 +8,7 @@ function ProtectedRoute({ children }) {
   if (!token || role !== "admin") {
     return <Navigate to="/adminlogin" />;
   }
-  
+   
   
 
   return children;
