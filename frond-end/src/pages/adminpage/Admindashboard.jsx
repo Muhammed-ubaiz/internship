@@ -12,18 +12,19 @@ function Admindashboard() {
       <Sidebar/>
 
       {/* Main Content */}
+      <div className="flex-1 p-3 md:p-6 md:ml-15">
       <div className="ml-37 p-6 ">
         <div className="max-w-7xl mx-auto">
 
           {/* Header */}
-          <div className="flex justify-between items-center mb-6 mt-6">
+          <div className="flex justify-between items-center  ">
             <h1 className="text-2xl font-semibold text-[#141E46]">
               Dashboard
             </h1>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-10">
             
             <div className="bg-white rounded-2xl shadow-2xl p-5  hover:scale-105 transition">
               <p className="text-sm text-[#1679AB]">Total Students</p>
@@ -86,6 +87,7 @@ function Admindashboard() {
             </div>
 
           </div>
+        </div>
         </div>
       </div>
     </div>
