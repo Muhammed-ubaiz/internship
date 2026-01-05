@@ -47,7 +47,11 @@ function Sidebar() {
       </div>
 
       {/* Users */}
+
+      <div  className={menuItem} onClick={()=>navigate ("/student")}>
+
       <div  className={menuItem} onClick={()=> navigate ("/student")}>
+
         <FaUserClock size={30} />
         <span className={tooltip}>Students</span>
       </div>

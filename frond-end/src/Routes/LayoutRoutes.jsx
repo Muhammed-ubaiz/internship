@@ -9,6 +9,7 @@ import Course from "../pages/adminpage/Course";
 import StudentCreate from "../pages/adminpage/StudentCreate";
 import SideBarStudent from "../pages/studentpage/SideBarStudent";
 import Attendance from "../pages/adminpage/Attendance";
+import StudentLogin from "../pages/studentpage/StudentLogin";
 
 function LayoutRoutes() {
   return (
@@ -52,9 +53,17 @@ function LayoutRoutes() {
 
           <Route path="/studentsdashboard" element={<Studentsdashboard />} />
 
+
+          <Route path="/attendance" element={<Attendance />}
+          
+          />
+          <Route path="/studentlogin" element={<StudentLogin />} />
+
+
+=======
             
 
-          <Route path="/attendance" element={<Attendance />} />
+
         </Routes>
       </BrowserRouter>
     </>
