@@ -4,6 +4,7 @@ import cors from "cors";
 import connectDB from "./Database/Connetion.js";
 import adminRoutes from "./Routes/AdminRoutes.js";
 
+
 dotenv.config();
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.json());
 connectDB();
 
 app.use("/admin", adminRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -1,67 +1,142 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaCalendarCheck,
   FaUmbrellaBeach,
   FaUserClock,
-  FaPowerOff,
-  
-  
   FaBook,
+  FaPowerOff,
+  FaChevronDown,
 } from "react-icons/fa";
 
 function Sidebar() {
   const navigate = useNavigate();
 
-  const menuItem =
-    "relative group flex items-center justify-center mb-11 mt-7 cursor-pointer transform transition-transform duration-300 hover:scale-125";
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
-  const tooltip =
-    "absolute left-3 top-11 -translate-y-1/2 bg-gray-200/80 text-[#141E46] font-bold text-xs px-1 py-1 rounded-md opacity-0 scale-80 translate-x-1 group-hover:opacity-100 group-hover:scale-70 group-hover:translate-x-0 transition-all duration-300";
+  const menuItem =
+    "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-white hover:text-black cursor-pointer transition-all";
+
+  const subItem =
+    "pl-12 py-2 text-xs text-gray-300 hover:text-black hover:bg-white cursor-pointer transition-all";
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-[150px] flex flex-col items-center pt-10 ">
+    <div className="fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col">
 
-      {/* Home */}
-      <div className={menuItem} onClick={()=> navigate ("/admindashboard")}>
-        <FaHome size={30} />
-        <span className={tooltip}>Dashboard</span>
+      {/* Title */}
+      <div className="px-6 py-5 text-white font-bold text-lg border-b border-gray-700">
+        Admin Panel
       </div>
 
-      {/* Attendance */}
-      <div  className={menuItem} onClick={()=> navigate ("/attendance")}>
-        <FaCalendarCheck size={30} />
-        <span className={tooltip}>Attendance</span>
-      </div>
+      {/* Menu */}
+      <div className="flex flex-col flex-1 mt-2">
 
-      {/* Leave */}
-      <div  className={menuItem}>
-        <FaUmbrellaBeach size={30} />
-        <span className={tooltip}>Leave</span>
-      </div>
-
-      <div  className={menuItem} onClick={()=> navigate ("/course")}>
-        <FaBook size={30} />
-        <span className={tooltip}>Courses</span>
-      </div>
-
-      {/* Users */}
-
-      <div  className={menuItem} onClick={()=>navigate ("/student")}>
-
-      <div  className={menuItem} onClick={()=> navigate ("/student")}>
-
-        <FaUserClock size={30} />
-        <span className={tooltip}>Students</span>
-      </div>
-
-      {/* Logout (bottom) */}
-      <div className="mt-auto mb-8">
-        <div  className={menuItem} onClick={()=> navigate ("/")}>
-          <FaPowerOff size={30} />
-          <span className={tooltip}>Logout</span>
+        {/* Dashboard */}
+        <div className={menuItem} onClick={() => navigate("/admindashboard")}>
+          <div className="flex items-center gap-3">
+            <FaHome />
+            <span>Dashboard</span>
+          </div>
         </div>
+
+         {/* Courses */}
+         <div className={menuItem} onClick={() => navigate("/course")}>
+          <div className="flex items-center gap-3">
+            <FaBook />
+            <span>Courses</span>
+          </div>
+        </div>
+        
+          {/* Students */}
+        <div className={menuItem} onClick={() => navigate("/student")}>
+          <div className="flex items-center gap-3">
+            <FaUserClock />
+            <span>Students</span>
+          </div>
+        </div>
+
+        {/* Attendance */}
+        <div
+          className={menuItem}
+          onClick={() => setAttendanceOpen(!attendanceOpen)}
+        >
+          <div className="flex items-center gap-3">
+            <FaCalendarCheck />
+            <span>Attendance</span>
+          </div>
+          <FaChevronDown
+            className={`transition-transform ${
+              attendanceOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {attendanceOpen && (
+          <div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/attendance")}
+            >
+              Daily Attendance
+            </div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/attendance/monthly")}
+            >
+              Monthly Summary
+            </div>
+          </div>
+        )}
+
+        {/* Leave */}
+        <div
+          className={menuItem}
+          onClick={() => setLeaveOpen(!leaveOpen)}
+        >
+          <div className="flex items-center gap-3">
+            <FaUmbrellaBeach />
+            <span>Leave</span>
+          </div>
+          <FaChevronDown
+            className={`transition-transform ${
+              leaveOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {leaveOpen && (
+          <div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/leave/apply")}
+            >
+               Leave Request's
+            </div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/leave/history")}
+            >
+              Leave History
+            </div>
+          </div>
+        )}
+
+      
+        {/* Logout */}
+        <div className="mt-auto border-t border-gray-700">
+          <div
+            className={menuItem}
+            onClick={() => navigate("/")}
+          >
+            <div className="flex items-center gap-3">
+              <FaPowerOff />
+              <span>Logout</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

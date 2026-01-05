@@ -169,6 +169,9 @@ const handleEditCourse = async () => {
         <Sidebar />
       </div>
 
+      <div className="flex-1 p-3 md:p-6 md:ml-15 ">
+
+
       <div className="flex-1 p-4 md:p-6 md:ml-36">
         <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
           <h1 className="text-2xl font-semibold text-[#141E46]">Courses</h1>
@@ -180,7 +183,7 @@ const handleEditCourse = async () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-3xl">
           <table className="w-full bg-white rounded-xl shadow-lg">
             <thead className="bg-[#D1E8FF]">
               <tr>
@@ -355,6 +358,7 @@ const handleEditCourse = async () => {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
