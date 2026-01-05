@@ -1,9 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
+import axios from "axios";
 
 function StudentCreate() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const [students, setStudents] = useState([]);
+const [formData, setFormData] = useState({
+  name: "",
+  email: "",
+  password: "",
+  course: "MERN Stack",
+  batch: "Batch A",
+});
+
+const fetchStudents = async () => {
+  try {
+    const res = await axios.get("http://localhost:3001/admin/getStudents");
+    setStudents(res.data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+useEffect(() => {
+  fetchStudents();
+}, []);
+
+
+ const handleAddStudent = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await axios.post("http://localhost:3001/admin/addStudent", formData);
+
+    if (res.data.success) {
+      setStudents([...students, res.data.student]);
+      setFormData({ name: "", email: "", password: "", course: "MERN Stack", batch: "Batch A" });
+      setShowCreateModal(false);
+    }
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to create student");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
@@ -15,6 +56,11 @@ function StudentCreate() {
           <h1 className="text-2xl font-semibold text-[#141E46]">
             Students Management
           </h1>
+          <input
+            type="search"
+            placeholder="Search Student..."
+            className="w-94 border rounded-lg px-3 py-2 mt-1 "
+          />
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
@@ -38,55 +84,45 @@ function StudentCreate() {
               </tr>
             </thead>
 
-            <tbody>
-              <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                <td className="px-3 py-3">1</td>
-                <td>Rahul</td>
-                <td>rahul@gmail.com</td>
-                <td>MERN Stack</td>
-                <td>Batch A</td>
-                <td>
-                  <span className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                    Active
-                  </span>
-                </td>
-                <td className="flex gap-2 p-5">
-                  <button className="px-3 py-1 text-xs rounded-lg bg-red-600 text-white">
-                    Inactive
-                  </button>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
+           <tbody>
+  {students.map((student, index) => (
+    <tr key={student._id} className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+      <td className="px-3 py-3">{index + 1}</td>
+      <td>{student.name}</td>
+      <td>{student.email}</td>
+      <td>{student.course}</td>
+      <td>{student.batch}</td>
+      <td>
+        <span
+          className={`px-3 py-1 rounded-full text-xs ${
+            student.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
+        >
+          {student.status}
+        </span>
+      </td>
+      <td className="flex gap-2 p-5">
+        <button
+          className={`px-3 py-1 text-xs rounded-lg ${
+            student.status === "Active" ? "bg-red-600" : "bg-green-600"
+          } text-white`}
+        >
+          {student.status === "Active" ? "Inactive" : "Active"}
+        </button>
+        <button
+          onClick={() => {
+            setShowEditModal(true);
+            setFormData({ ...student, password: "" });
+          }}
+          className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
+        >
+          Edit
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
 
-              <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                <td className="px-3 py-3">2</td>
-                <td>Ayesha</td>
-                <td>ayesha@gmail.com</td>
-                <td>React JS</td>
-                <td>Batch B</td>
-                <td>
-                  <span className="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                    Inactive
-                  </span>
-                </td>
-                <td className="flex gap-2 p-5">
-                  <button className="px-3 py-1 text-xs rounded-lg bg-green-600 text-white">
-                    Active
-                  </button>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
-                  >
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            </tbody>
           </table>
         </div>
       </div>
@@ -107,31 +143,56 @@ function StudentCreate() {
             </h2>
 
             <div className="space-y-4">
-              <input
-                placeholder="Enter name"
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
-              />
-              <input
-                placeholder="Enter email"
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
-              />
-              <input
-                type="password"
-                placeholder="Enter password"
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
-              />
-              <select className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]">
-                <option>MERN Stack</option>
-                <option>React JS</option>
-              </select>
-              <select className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]">
-                <option>Batch A</option>
-                <option>Batch B</option>
-              </select>
+              <form onSubmit={handleAddStudent} className="space-y-4">
+  <input
+    name="name"
+    placeholder="Enter name"
+    value={formData.name}
+    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
+  />
+  <input
+    name="email"
+    placeholder="Enter email"
+    value={formData.email}
+    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
+  />
+  <input
+    name="password"
+    type="password"
+    placeholder="Enter password"
+    value={formData.password}
+    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
+  />
+  <select
+    name="course"
+    value={formData.course}
+    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
+  >
+    <option>MERN Stack</option>
+    <option>React JS</option>
+  </select>
+  <select
+    name="batch"
+    value={formData.batch}
+    onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
+    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-[#1679AB]"
+  >
+    <option>Batch A</option>
+    <option>Batch B</option>
+  </select>
 
-              <button className="w-full px-5 py-2 bg-[#141E46] text-white rounded-lg hover:bg-[#125f87]">
-                Create Student
-              </button>
+  <button
+    type="submit"
+    className="w-full px-5 py-2 bg-[#141E46] text-white rounded-lg hover:bg-[#125f87]"
+  >
+    Create Student
+  </button>
+</form>
+
             </div>
           </div>
         </div>
