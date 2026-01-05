@@ -50,7 +50,7 @@ useEffect(() => {
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
       <Sidebar />
 
-      <div className="ml-37 p-6 max-w-7xl mx-auto">
+      <div className="ml-52 p-6 max-w-7xl mx-auto ">
         {/* HEADER */}
         <div className="flex justify-between mb-6">
           <h1 className="text-2xl font-semibold text-[#141E46]">

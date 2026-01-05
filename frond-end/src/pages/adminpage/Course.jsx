@@ -88,35 +88,33 @@ function Course() {
 
 
 
-  const handleViewBatch = async (course) => {
+ const handleViewBatch = async (course) => {
     setSelectedCourse(course);
     setShowBatchModal(true);
     try {
       const res = await axios.get(
-        `http://localhost:3001/admin/getBatches/${course._id}`
+        `http://localhost:3001/admin/getBatches/${course.name}`
       );
-      setBatches(res.data);
-    } catch (error) {
-      console.error(error);
+      setBatches(res.data.batches);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  /* = ADD BATCH =*/
-
+  // ADD BATCH
   const handleAddBatch = async () => {
     try {
       const res = await axios.post(
-        `http://localhost:3001/admin/addBatch/${selectedCourse._id}`,
+        `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
         { name: batchName }
       );
       setBatches([...batches, res.data.batch]);
       setBatchName("");
       setShowAddBatchModal(false);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   };
-
   /* = EDIT COURSE = */
 
   const handleEditClick = (course) => {
@@ -126,23 +124,40 @@ function Course() {
     setShowEditCourseModal(true);
   };
 
-  const handleEditCourse = async () => {
+const handleEditCourse = async () => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  
+  try {
+    const res = await axios.put(
+      `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+      { name: editCourseName, duration: editDuration },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      }
+    );
+
+    // Step 2b: update local state
+    setCourses(
+      courses.map((c) =>
+        c._id === selectedCourse._id ? res.data.course : c
+      )
+    );
+
+    // Step 2c: close modal
+    setShowEditCourseModal(false);
+  } catch (error) {
+    console.error('Update failed:', error);
+  }
+};
+
+  const handleDeleteBatch = async (id) => {
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
-        {
-          name: editCourseName,
-          duration: editDuration,
-        }
-      );
-
-      setCourses(
-        courses.map((c) =>
-          c._id === selectedCourse._id ? res.data.course : c
-        )
-      );
-      setShowEditCourseModal(false);
-
+      await axios.delete(`http://localhost:3001/admin/deleteBatch/${id}`);
+      setBatches(batches.filter((batch) => batch._id !== id));
     } catch (error) {
       console.error(error);
     }
@@ -153,6 +168,9 @@ function Course() {
       <div className="hidden md:block">
         <Sidebar />
       </div>
+
+      <div className="flex-1 p-3 md:p-6 md:ml-15 ">
+
 
       <div className="flex-1 p-4 md:p-6 md:ml-36">
         <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
@@ -165,7 +183,7 @@ function Course() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-3xl">
           <table className="w-full bg-white rounded-xl shadow-lg">
             <thead className="bg-[#D1E8FF]">
               <tr>
@@ -183,34 +201,19 @@ function Course() {
                 </tr>
               )}
 
-{courses.map((course) => (
+{courses.map((course) => ( 
   <tr key={course._id} className="border-b hover:bg-[#F0F8FF]">
-    <td className="p-3">{course.name}</td>
-    <td className="p-3">{course.duration}</td>
-    <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
-      <button
-        onClick={() => handleViewBatch(course)}
-        className="bg-blue-600 text-white px-3 py-1 rounded"
-      >
-        View Batches
-      </button>
-
-      <button
-        onClick={() => handleEditClick(course)}
-        className="bg-yellow-500 text-white px-3 py-1 rounded"
-      >
-        Edit
-      </button>
-
-      <button
-        onClick={() => handleDelete(course._id)}
-        className="bg-red-600 text-white px-3 py-1 rounded"
-      >
-        Delete
-      </button>
-    </td>
-  </tr>
-))}
+     <td className="p-3">{course.name}</td>
+      <td className="p-3">{course.duration}</td>
+       <td className="p-3 text-center flex flex-wrap gap-2 justify-center"> 
+        <button
+         onClick={() => handleViewBatch(course)} 
+         className="bg-blue-600 text-white px-3 py-1 rounded" > View Batches </button> 
+         <button onClick={() => handleEditClick(course)} className="bg-yellow-500 text-white px-3 py-1 rounded" > Edit </button> 
+         <button onClick={() => handleDelete(course._id)} className="bg-red-600 text-white px-3 py-1 rounded" > Delete </button> 
+         </td> 
+         </tr> 
+        ))}
 
             </tbody>
           </table>
@@ -250,38 +253,55 @@ function Course() {
           </div>
         )}
 
-        {showBatchModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-96 relative">
-              <button
-                onClick={() => setShowBatchModal(false)}
-                className="absolute top-3 right-3"
-              >
-                ✕
-              </button>
-              <h2 className="text-lg font-semibold mb-4">Batches</h2>
+       {showBatchModal && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg w-96 relative">
+      {/* Close button */}
+      <button
+        onClick={() => setShowBatchModal(false)}
+        className="absolute top-3 right-3 text-lg"
+      >
+        ✕
+      </button>
 
-              {batches.length === 0 ? (
-                <p className="text-gray-500 mb-4">No batches found</p>
-              ) : (
-                <ul className="mb-4 space-y-2">
-                  {batches.map((b) => (
-                    <li key={b._id} className="border p-2 rounded">
-                      {b.name}
-                    </li>
-                  ))}
-                </ul>
-              )}
+      <h2 className="text-lg font-semibold mb-4">
+        Batches for {selectedCourse?.name}
+      </h2>
 
+      {/* Batch list */}
+      {batches.length === 0 ? (
+        <p className="text-gray-500 mb-4">No batches found</p>
+      ) : (
+        <ul className="mb-4 space-y-2 max-h-64 overflow-y-auto">
+          {batches.map((b) => (
+            <li
+              key={b._id}
+              className="flex justify-between items-center bg-gray-300 border border-gray-200 p-2 rounded shadow-sm hover:bg-gray-100 transition"
+            >
+              <span>{b.name}</span>
               <button
-                onClick={() => setShowAddBatchModal(true)}
-                className="w-full bg-[#141E46] text-white py-2 rounded"
+                onClick={() => handleDeleteBatch(b._id)}
+                className="text-red-600 hover:text-red-800 ml-2"
+                title="Delete Batch"
               >
-                Add Batch
+                🗑️
               </button>
-            </div>
-          </div>
-        )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Open Add Batch modal */}
+      <button
+        onClick={() => setShowAddBatchModal(true)}
+        className="w-full bg-[#141E46] text-white py-2 rounded"
+      >
+        Add Batch
+      </button>
+    </div>
+  </div>
+)}
+
 
         {showAddBatchModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
@@ -296,7 +316,7 @@ function Course() {
               <input
                 value={batchName}
                 onChange={(e) => setBatchName(e.target.value)}
-                placeholder="12-September-2024"
+                placeholder="dd/mm/yy"
                 className="w-full border p-2 rounded mb-4"
               />
               <button
@@ -338,6 +358,7 @@ function Course() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
