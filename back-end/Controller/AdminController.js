@@ -160,21 +160,21 @@ export const addBatch = async (req, res) => {
 
 // UPDATE COURSE
 export const updateCourse = async (req, res) => {
-   try {
-    const course = await Course.findByIdAndUpdate(
-      id,
-      { editCourseName: duration },
-      { new: true } // returns the updated course
-    );
+    const { _id } = req.params;
+    const { editCourseName, editDuration } = req.body;
 
-    if (!course) return res.status(404).json({ message: 'Course not found' });
+    if (!_id || !editCourseName || !editDuration) {
+      return res.status(400).json({ success: false, message: "All fields required" });
+    }
 
-    res.json({ course });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
+    await Course.findByIdAndUpdate(_id, { name: editCourseName, duration: editDuration });
+    res.json({ success: true, message: "Course updated successfully" });
 };
+
+
+
+
+
 
 export const deleteBatch = async (req, res) => {
   const { batchId } = req.params;
