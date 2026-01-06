@@ -11,4 +11,5 @@ const studentSchema = new mongoose.Schema({
   status: { type: String, default: "Active" },  
 });
 
-export default mongoose.model("Student", studentSchema);
+const Student = mongoose.model("Student", studentSchema);
+export default Student;
