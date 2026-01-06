@@ -1,30 +1,38 @@
 import axios from "axios";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function StudentLogin() {
+  const navigate = useNavigate();
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
-  const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-  
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/student/checkstudent",
-        { email,password }
-      );
-  
-      if (response.data.success) {
-        navigate("/studentsdashboard");
+const handleLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/student/checkstudent",
+      {
+        email,
+        password
       }
-  
-    } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+    );
+
+    if (res.data.success) {
+      alert("Login successful");
+      console.log(res.data.student);
+      navigate("/studentsdashboard");
     }
-  };
-  
+  } catch (error) {
+    if (error.response) {
+      // 👇 backend message show cheyyuka
+      alert(error.response.data.message);
+    } else {
+      alert("Server error");
+    }
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
