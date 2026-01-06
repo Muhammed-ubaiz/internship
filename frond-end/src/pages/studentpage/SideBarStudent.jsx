@@ -111,7 +111,7 @@ function SideBarStudent() {
         {/* Push Logout to Bottom */}
         <div className="mt-auto border-t border-gray-700">
           <div className={menuItem}>
-            <div className="flex items-center gap-3">
+            <div onClick={()=> navigate("/studentlogin")} className="flex items-center gap-3">
               <FaPowerOff />
               <span>Logout</span>
             </div>
