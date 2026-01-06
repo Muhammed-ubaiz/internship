@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./Database/Connetion.js";
 import adminRoutes from "./Routes/AdminRoutes.js";
+import studentroutes from "./Routes/StudentRoutes.js";
 
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use(express.json());
 connectDB();
 
 app.use("/admin", adminRoutes);
+app.use("/student",studentroutes)
 
 
 app.listen(PORT, () => {
