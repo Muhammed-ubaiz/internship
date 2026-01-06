@@ -1,4 +1,4 @@
-import Batchmodel from "../Model/Batchmodel.js";
+
 import Batch from "../Model/Batchmodel.js";
 import Course from "../Model/Coursemodel.js";
 import jwt from "jsonwebtoken";
@@ -198,7 +198,66 @@ export const deleteBatch = async (req, res) => {
 };
 
 
+const toggleStudentStatus = async (req, res) => {
+    try {
+      const { id } = req.params; // student id
+      const student = await Student.findById(id);
+  
+      if (!student) {
+        return res.status(404).json({ msg: "Student not found" });
+      }
+  
+      // toggle status
+      student.status = student.status === "Active" ? "Inactive" : "Active";
+      await student.save();
+  
+      res.status(200).json({
+        success: true,
+        msg: "Status updated successfully",
+        data: student,
+      });
+    } catch (error) {
+      console.error("Error toggling status:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  };
+  
+
+export const updateStudent = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    const { name, email, course, batch, password } = req.body;
+
+    if (!name || !email || !course || !batch) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields required" });
+    }
+    const updateData = { name, email, course, batch };
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    const student = await Student.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+
+    res.json({ success: true, student });
+  } catch (error) {
+    console.error("Update student error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 
-export{Login,}
+
+export{Login,toggleStudentStatus}
 

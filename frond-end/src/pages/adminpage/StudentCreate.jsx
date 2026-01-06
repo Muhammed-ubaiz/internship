@@ -9,13 +9,51 @@ function StudentCreate() {
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
-  
+  const [courses, setCourses] = useState([]);
+  const [batches, setBatches] = useState([]);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
 
+  const fetchCourses = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get("http://localhost:3001/admin/getCourse", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      });
+      setCourses(res.data);
+    } catch (error) {
+      console.error("Failed to fetch courses", error);
+    }
+  };
+
+  const fetchBatchesByCourse = async (courseName) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get(
+        `http://localhost:3001/admin/getBatches/${courseName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+      setBatches(res.data.batches);
+    } catch (error) {
+      console.error("Failed to fetch batches", error);
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -28,26 +66,33 @@ function StudentCreate() {
 
   useEffect(() => {
     fetchStudents();
+    fetchCourses();
   }, []);
 
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/addStudent",
-        { name, email, password, course, batch }
-      );
+      const res = await axios.post("http://localhost:3001/admin/addStudent", {
+        name,
+        email,
+        password,
+        course,
+        batch,
+      });
 
       if (res.data.success) {
         setStudents([...students, res.data.student]);
-
-
         setName("");
         setEmail("");
         setPassword("");
         setCourse("");
         setBatch("");
+
+        setBatches([]);
 
         setShowCreateModal(false);
       }
@@ -57,37 +102,42 @@ function StudentCreate() {
     }
   };
 
- 
   const openEditModal = (student) => {
     setSelectedStudentId(student._id);
     setName(student.name);
     setEmail(student.email);
     setCourse(student.course);
     setBatch(student.batch);
+
+    // Load batches for selected course
+    const selectedCourse = courses.find((c) => c._id === student.course);
+    if (selectedCourse) {
+      fetchBatchesByCourse(selectedCourse.name);
+    }
+
     setPassword("");
     setShowEditModal(true);
   };
 
+ const handleUpdateStudent = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await axios.put(
+      `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
+      { name, email, course, batch, password } // optional password
+    );
 
-  const handleUpdateStudent = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
-        { name, email, course, batch }
-      );
-
-      if (res.data.success) {
-        fetchStudents();
-        setShowEditModal(false);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update student");
+    if (res.data.success) {
+      fetchStudents();
+      setShowEditModal(false);
     }
-  };
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to update student");
+  }
+};
 
- 
+
   const handleToggleStatus = async (id) => {
     try {
       const res = await axios.put(
@@ -115,7 +165,16 @@ function StudentCreate() {
           </h1>
 
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+                setShowCreateModal(true);
+
+                setName("");
+                setEmail("");
+                setPassword("");
+                setCourse("");
+                setBatch("");
+                setBatches([]);
+              }}
             className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
           >
             + Create Student
@@ -128,15 +187,14 @@ function StudentCreate() {
             <thead>
               <tr className="text-[#1679AB] text-left">
                 <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Course</th>
-                <th>Batch</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th className="p-3 text-center">Name</th>
+                <th className="p-3 text-center">Email</th>
+                <th className="p-3 text-center">Course</th>
+                <th className="p-3 text-center">Batch</th>
+                <th className="p-3 text-center">Status</th>
+                <th  className="p-3 text-center">Action</th>
               </tr>
             </thead>
-
             <tbody>
               {students.map((student, index) => (
                 <tr
@@ -144,37 +202,38 @@ function StudentCreate() {
                   className="bg-[#EEF6FB] hover:bg-[#D1E8FF]"
                 >
                   <td className="px-3 py-3">{index + 1}</td>
-                  <td>{student.name}</td>
-                  <td>{student.email}</td>
-                  <td>{student.course}</td>
-                  <td>{student.batch}</td>
-                  <td>
+                  <td className="px-4 py-3 w-[200px] break-all text-center" >{student.name}</td>
+                  <td className="px-4 py-3 w-[200px] break-all text-center">{student.email}</td>
+                  {/* Display course name instead of ID */}
+                  <td  className="px-4 py-3 w-[150px] break-all text-center">
+                    {courses.find((c) => c._id === student.course)?.name ||
+                      "N/A"}
+                  </td>
+                  {/* Display batch name */}
+                  <td className="px-4 py-3 w-[150px] break-all text-center">{student.batch || "N/A"}</td>
+                  <td className="px-4 py-3 w-[150px] break-all text-center">
                     <span
                       className={`px-3 py-1 rounded-full text-xs ${
                         student.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700 px-8"
+                          : "bg-red-100 text-red-700 px-7"
                       }`}
                     >
                       {student.status}
                     </span>
                   </td>
-                  <td className="flex gap-2 p-5">
-                    
+                  <td  className="p-3 text-center flex flex-wrap gap-2 justify-center">
                     <button
                       onClick={() => handleToggleStatus(student._id)}
-                      className={`px-3 py-1 text-xs rounded-lg text-white ${
+                      className={`px-5 py-1 text-xs rounded-lg text-white ${
                         student.status === "Active"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
+                          ? "bg-red-600 hover:bg-red-700 "
+                          : "bg-green-600 hover:bg-green-700 px-6"
                       }`}
                     >
-                      {student.status === "Active"
-                        ? "Inactive"
-                        : "Active"}
+                      {student.status === "Active" ? "Inactive" : "Active"}
                     </button>
 
-                    {/* EDIT */}
                     <button
                       onClick={() => openEditModal(student)}
                       className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
@@ -194,7 +253,16 @@ function StudentCreate() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md rounded-2xl p-6 relative">
             <button
-              onClick={() => setShowCreateModal(false)}
+              onClick={() => {
+                setShowCreateModal(false);
+
+                setName("");
+                setEmail("");
+                setPassword("");
+                setCourse("");
+                setBatch("");
+                setBatches([]);
+              }}
               className="absolute top-3 right-3"
             >
               ✕
@@ -206,6 +274,7 @@ function StudentCreate() {
 
             <form onSubmit={handleAddStudent} className="space-y-3">
               <input
+                type="text"
                 placeholder="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -213,6 +282,7 @@ function StudentCreate() {
                 required
               />
               <input
+                type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -227,25 +297,47 @@ function StudentCreate() {
                 className="w-full border p-2 rounded"
                 required
               />
+
               <select
+                type="text"
                 value={course}
-                onChange={(e) => setCourse(e.target.value)}
+                onChange={(e) => {
+                  const selectedCourseId = e.target.value;
+                  setCourse(selectedCourseId);
+
+                  const selectedCourse = courses.find(
+                    (c) => c._id === selectedCourseId
+                  );
+
+                  if (selectedCourse) {
+                    fetchBatchesByCourse(selectedCourse.name);
+                    setBatch("");
+                  }
+                }}
                 className="w-full border p-2 rounded"
                 required
               >
                 <option value="">Select Course</option>
-                <option>MERN Stack</option>
-                <option>React JS</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
+
               <select
+                type="text"
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
                 className="w-full border p-2 rounded"
                 required
               >
                 <option value="">Select Batch</option>
-                <option>Batch A</option>
-                <option>Batch B</option>
+                {batches.map((b) => (
+                  <option key={b._id} value={b.name}>
+                    {b.name}
+                  </option>
+                ))}
               </select>
 
               <button className="w-full bg-[#141E46] text-white py-2 rounded">
@@ -286,12 +378,26 @@ function StudentCreate() {
               />
               <select
                 value={course}
-                onChange={(e) => setCourse(e.target.value)}
+                onChange={(e) => {
+                  const selectedCourseId = e.target.value;
+                  setCourse(selectedCourseId);
+                  const selectedCourse = courses.find(
+                    (c) => c._id === selectedCourseId
+                  );
+                  if (selectedCourse) {
+                    fetchBatchesByCourse(selectedCourse.name);
+                    setBatch("");
+                  }
+                }}
                 className="w-full border p-2 rounded"
                 required
               >
-                <option>MERN Stack</option>
-                <option>React JS</option>
+                <option value="">Select Course</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
               <select
                 value={batch}
@@ -299,8 +405,12 @@ function StudentCreate() {
                 className="w-full border p-2 rounded"
                 required
               >
-                <option>Batch A</option>
-                <option>Batch B</option>
+                <option value="">Select Batch</option>
+                {batches.map((b) => (
+                  <option key={b._id} value={b.name}>
+                    {b.name}
+                  </option>
+                ))}
               </select>
 
               <button className="w-full bg-[#141E46] text-white py-2 rounded">
