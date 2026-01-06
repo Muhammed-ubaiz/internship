@@ -127,32 +127,45 @@ function Course() {
 const handleEditCourse = async () => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  
+
+  // Validation
+  if (!selectedCourse?._id || !editCourseName || !editDuration) {
+    alert("Ella field-um fill cheyyanam!");
+    return;
+  }
+
   try {
-    const res = await axios.put(
-      `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
-      { name: editCourseName, duration: editDuration },
+    const res = await axios.post(
+      `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`, // <-- _id in URL
+      {
+        editCourseName: editCourseName,      // <-- matches backend
+        editDuration: editDuration           // <-- matches backend
+      },
       {
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          Role: role,
-        },
+          Role: role
+        }
       }
     );
 
-    // Step 2b: update local state
     setCourses(
-      courses.map((c) =>
-        c._id === selectedCourse._id ? res.data.course : c
+      courses.map(course =>
+        course._id === selectedCourse._id ? res.data.course : course
       )
     );
-
-    // Step 2c: close modal
     setShowEditCourseModal(false);
+    await fetchCourse();
   } catch (error) {
-    console.error('Update failed:', error);
+    if (error.response) {
+      console.error("Update failed:", error.response.data);
+    } else {
+      console.error("Update failed:", error.message);
+    }
   }
 };
+
 
   const handleDeleteBatch = async (id) => {
     try {
@@ -202,18 +215,19 @@ const handleEditCourse = async () => {
               )}
 
 {courses.map((course) => ( 
-  <tr key={course._id} className="border-b hover:bg-[#F0F8FF]">
-     <td className="p-3">{course.name}</td>
-      <td className="p-3">{course.duration}</td>
-       <td className="p-3 text-center flex flex-wrap gap-2 justify-center"> 
+  <tr key={course?._id } className="border-b hover:bg-[#F0F8FF]">
+     <td className="p-3">{course?.name || "No Name"}</td>
+     <td className="p-3">{course?.duration || "No Duration"}</td>
+     <td className="p-3 text-center flex flex-wrap gap-2 justify-center"> 
         <button
          onClick={() => handleViewBatch(course)} 
          className="bg-blue-600 text-white px-3 py-1 rounded" > View Batches </button> 
-         <button onClick={() => handleEditClick(course)} className="bg-yellow-500 text-white px-3 py-1 rounded" > Edit </button> 
-         <button onClick={() => handleDelete(course._id)} className="bg-red-600 text-white px-3 py-1 rounded" > Delete </button> 
-         </td> 
-         </tr> 
-        ))}
+        <button onClick={() => handleEditClick(course)} className="bg-yellow-500 text-white px-3 py-1 rounded" > Edit </button> 
+        <button onClick={() => handleDelete(course._id)} className="bg-red-600 text-white px-3 py-1 rounded" > Delete </button> 
+     </td> 
+  </tr> 
+))}
+
 
             </tbody>
           </table>

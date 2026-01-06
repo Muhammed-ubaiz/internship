@@ -2,7 +2,11 @@ import express from "express";
 
 
 
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents } from "../Controller/AdminController.js";
+ 
+import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, deleteBatch,addStudent,getStudents, updateCourse } from "../Controller/AdminController.js";
+
+
+
 
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -15,7 +19,8 @@ adminRoutes.post("/login", Login);
 adminRoutes.post("/addCourse",verifyToken, addCourse);
 adminRoutes.get("/getCourse",verifyToken, getCourse);
 adminRoutes.delete("/deleteCourse/:id", deleteCourse);
-adminRoutes.put("/updateCourse/:courseId", updateCourse);
+adminRoutes.post("/updateCourse/:_id", updateCourse);
+
 
 
 adminRoutes.get("/getBatches/:courseName", getBatches);
