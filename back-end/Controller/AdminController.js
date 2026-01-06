@@ -160,16 +160,38 @@ export const addBatch = async (req, res) => {
 
 // UPDATE COURSE
 export const updateCourse = async (req, res) => {
+  try {
     const { _id } = req.params;
     const { editCourseName, editDuration } = req.body;
 
     if (!_id || !editCourseName || !editDuration) {
-      return res.status(400).json({ success: false, message: "All fields required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields required" });
     }
 
-    await Course.findByIdAndUpdate(_id, { name: editCourseName, duration: editDuration });
-    res.json({ success: true, message: "Course updated successfully" });
+    const updatedCourse = await Course.findByIdAndUpdate(
+      _id,
+      { name: editCourseName, duration: editDuration },
+      { new: true } 
+    );
+
+    if (!updatedCourse) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Course not found" });
+    }
+
+    res.json({
+      success: true,
+      course: updatedCourse, 
+    });
+  } catch (error) {
+    console.error("Update course error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
+
 
 
 
