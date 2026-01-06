@@ -330,8 +330,9 @@ const handleEditCourse = async () => {
               <input
                 value={batchName}
                 onChange={(e) => setBatchName(e.target.value)}
-                placeholder="dd/mm/yy"
+                placeholder="yy/mm/dd"
                 className="w-full border p-2 rounded mb-4"
+                type="date"
               />
               <button
                 onClick={handleAddBatch}
