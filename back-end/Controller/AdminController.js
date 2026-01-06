@@ -257,7 +257,30 @@ export const updateStudent = async (req, res) => {
   }
 };
 
+const toggleCourseStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const course = await Course.findById(id);
 
+    if (!course) {
+      return res.status(404).json({ msg: "Course not found" });
+    }
 
-export{Login,toggleStudentStatus}
+    // Toggle status using lowercase values to match schema enum
+    course.status = course.status === "active" ? "inactive" : "active";
+
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      msg: "Course status updated successfully",
+      data: course,
+    });
+  } catch (error) {
+    console.error("Error toggling course status:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export{Login,toggleStudentStatus, toggleCourseStatus}
 

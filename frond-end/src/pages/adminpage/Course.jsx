@@ -8,7 +8,7 @@ function Course() {
 
   const [courseName, setCourseName] = useState("");
   const [duration, setDuration] = useState("");
-  
+
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
@@ -20,45 +20,40 @@ function Course() {
   const [editCourseName, setEditCourseName] = useState("");
   const [editDuration, setEditDuration] = useState("");
 
-
+  // ================= FETCH COURSES =================
   const fetchCourse = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get("http://localhost:3001/admin/getCourse",
-        
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Role: role,
-            },
+      const res = await axios.get(
+        "http://localhost:3001/admin/getCourse",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
           },
-        
+        }
       );
-        setCourses(res.data);
-      }catch(error){
+      setCourses(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-      }
+  useEffect(() => {
+    fetchCourse();
+  }, []);
 
-    
-  }
-
-    useEffect(() => {
-      fetchCourse();
-    }, []);
-  
+  // ================= ADD COURSE =================
   const handleAddCourse = async (e) => {
     e.preventDefault();
-
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
+
     try {
       const res = await axios.post(
         "http://localhost:3001/admin/addCourse",
-        {
-          name: courseName,
-          duration,
-        },
+        { name: courseName, duration },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -76,21 +71,11 @@ function Course() {
     }
   };
 
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:3001/admin/deleteCourse/${id}`);
-      setCourses(courses.filter((course) => course._id !== id));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-
-
- const handleViewBatch = async (course) => {
+  // ================= VIEW BATCH =================
+  const handleViewBatch = async (course) => {
     setSelectedCourse(course);
     setShowBatchModal(true);
+
     try {
       const res = await axios.get(
         `http://localhost:3001/admin/getBatches/${course.name}`
@@ -101,7 +86,7 @@ function Course() {
     }
   };
 
-  // ADD BATCH
+  // ================= ADD BATCH =================
   const handleAddBatch = async () => {
     try {
       const res = await axios.post(
@@ -115,8 +100,20 @@ function Course() {
       console.error(err);
     }
   };
-  /* = EDIT COURSE = */
 
+  // ================= DELETE BATCH =================
+  const handleDeleteBatch = async (id) => {
+    try {
+      await axios.delete(
+        `http://localhost:3001/admin/deleteBatch/${id}`
+      );
+      setBatches(batches.filter((b) => b._id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // ================= EDIT COURSE =================
   const handleEditClick = (course) => {
     setSelectedCourse(course);
     setEditCourseName(course.name);
@@ -124,117 +121,146 @@ function Course() {
     setShowEditCourseModal(true);
   };
 
-const handleEditCourse = async () => {
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const handleEditCourse = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-  // Validation
-  if (!selectedCourse?._id || !editCourseName || !editDuration) {
-    alert("Ella field-um fill cheyyanam!");
-    return;
-  }
-
-  try {
-    const res = await axios.post(
-      `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`, // <-- _id in URL
-      {
-        editCourseName: editCourseName,      // <-- matches backend
-        editDuration: editDuration           // <-- matches backend
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Role: role
-        }
-      }
-    );
-
-    setCourses(
-      courses.map(course =>
-        course._id === selectedCourse._id ? res.data.course : course
-      )
-    );
-    setShowEditCourseModal(false);
-    await fetchCourse();
-  } catch (error) {
-    if (error.response) {
-      console.error("Update failed:", error.response.data);
-    } else {
-      console.error("Update failed:", error.message);
-    }
-  }
-};
-
-
-  const handleDeleteBatch = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/admin/deleteBatch/${id}`);
-      setBatches(batches.filter((batch) => batch._id !== id));
+      const res = await axios.post(
+        `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+        { editCourseName, editDuration },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      setCourses(
+        courses.map((c) =>
+          c._id === selectedCourse._id ? res.data.course : c
+        )
+      );
+
+      setShowEditCourseModal(false);
     } catch (error) {
       console.error(error);
     }
   };
 
+  // ================= TOGGLE STATUS =================
+  const handleToggleStatus = async (course) => {
+  try {
+    
+
+    const res = await axios.put(
+      `http://localhost:3001/admin/course/status/${course._id}`,
+      {},
+     
+    );
+
+    setCourses(
+      courses.map((c) =>
+        c._id === course._id ? res.data.data : c
+      )
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
   return (
     <div className="min-h-screen bg-[#EEF6FB] flex">
-      <div className="hidden md:block">
+      <div className="hidden md:block w-64">
         <Sidebar />
       </div>
 
-      <div className="flex-1 p-3 md:p-6 md:ml-15 ">
-
-
-      <div className="flex-1 p-4 md:p-6 md:ml-36">
-        <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46]">Courses</h1>
+      <div className="flex-1 p-6 ">
+        {/* HEADER */}
+        <div className="flex justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-[#141E46]">
+            Courses
+          </h1>
           <button
             onClick={() => setShowCourseModal(true)}
-            className="bg-[#141E46] text-white px-4 py-2 rounded-lg"
+            className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
           >
             Add Course
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-3xl">
-          <table className="w-full bg-white rounded-xl shadow-lg">
-            <thead className="bg-[#D1E8FF]">
-              <tr>
-                <th className="p-3 text-left">Course Name</th>
-                <th className="p-3 text-left">Duration</th>
-                <th className="p-3 text-center">Actions</th>
+        {/* TABLE */}
+        <div className="bg-white rounded-3xl shadow-2xl p-5">
+          <table className="w-full text-sm border-separate border-spacing-y-3">
+            <thead>
+              <tr className="text-[#1679AB]">
+                <th>#</th>
+                <th>Course Name</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {courses.length === 0 && (
-                <tr>
-                  <td colSpan="3" className="p-4 text-center text-gray-500">
-                    No courses added
+              {courses.map((course, index) => (
+                <tr
+                  key={course._id}
+                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF]"
+                >
+                  <td className="p-3">{index + 1}</td>
+                  <td  className="px-4 py-3 w-[200px] break-all text-center">{course.name}</td>
+                  <td  className="px-4 py-3 w-[200px] break-all text-center">{course.duration}</td>
+
+                  <td  className="px-4 py-3 w-[200px] break-all text-center">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        course.status === "active"
+                          ? "bg-green-100 text-green-700 px-8"
+                          : "bg-red-100 text-red-700 px-7"
+                      }`}
+                    >
+                      {course.status}
+                    </span>
+                  </td>
+
+                  <td   className="p-3 text-center flex flex-wrap gap-2 justify-center">
+                    <button
+                      onClick={() => handleViewBatch(course)}
+                      className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
+                    >
+                      Batches
+                    </button>
+
+                    <button
+                      onClick={() => handleEditClick(course)}
+                      className="px-3 py-1 text-xs rounded-lg bg-yellow-500 text-white"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleToggleStatus(course)}
+                      className={`px-3 py-1 text-xs rounded-lg text-white ${
+                        course.status === "active"
+                          ? "bg-red-600 hover:bg-red-700 px-5 "
+                          : "bg-green-600 hover:bg-green-700 px-6"
+                      }`}
+                    >
+                      {course.status === "active"
+                        ? "Inactive"
+                        : "Active"}
+                    </button>
                   </td>
                 </tr>
-              )}
-
-{courses.map((course) => ( 
-  <tr key={course?._id } className="border-b hover:bg-[#F0F8FF]">
-     <td className="p-3">{course?.name || "No Name"}</td>
-     <td className="p-3">{course?.duration || "No Duration"}</td>
-     <td className="p-3 text-center flex flex-wrap gap-2 justify-center"> 
-        <button
-         onClick={() => handleViewBatch(course)} 
-         className="bg-blue-600 text-white px-3 py-1 rounded" > View Batches </button> 
-        <button onClick={() => handleEditClick(course)} className="bg-yellow-500 text-white px-3 py-1 rounded" > Edit </button> 
-        <button onClick={() => handleDelete(course._id)} className="bg-red-600 text-white px-3 py-1 rounded" > Delete </button> 
-     </td> 
-  </tr> 
-))}
-
-
+              ))}
             </tbody>
           </table>
         </div>
-            
-        {/* ================= MODALS ================= */}
 
+        {/* ================= ADD COURSE MODAL ================= */}
         {showCourseModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-96 relative">
@@ -244,7 +270,9 @@ const handleEditCourse = async () => {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">Add Course</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Add Course
+              </h2>
               <input
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
@@ -267,56 +295,55 @@ const handleEditCourse = async () => {
           </div>
         )}
 
-       {showBatchModal && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg w-96 relative">
-      {/* Close button */}
-      <button
-        onClick={() => setShowBatchModal(false)}
-        className="absolute top-3 right-3 text-lg"
-      >
-        ✕
-      </button>
-
-      <h2 className="text-lg font-semibold mb-4">
-        Batches for {selectedCourse?.name}
-      </h2>
-
-      {/* Batch list */}
-      {batches.length === 0 ? (
-        <p className="text-gray-500 mb-4">No batches found</p>
-      ) : (
-        <ul className="mb-4 space-y-2 max-h-64 overflow-y-auto">
-          {batches.map((b) => (
-            <li
-              key={b._id}
-              className="flex justify-between items-center bg-gray-300 border border-gray-200 p-2 rounded shadow-sm hover:bg-gray-100 transition"
-            >
-              <span>{b.name}</span>
+        {/* ================= VIEW BATCH MODAL ================= */}
+        {showBatchModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96 relative">
               <button
-                onClick={() => handleDeleteBatch(b._id)}
-                className="text-red-600 hover:text-red-800 ml-2"
-                title="Delete Batch"
+                onClick={() => setShowBatchModal(false)}
+                className="absolute top-3 right-3"
               >
-                🗑️
+                ✕
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
 
-      {/* Open Add Batch modal */}
-      <button
-        onClick={() => setShowAddBatchModal(true)}
-        className="w-full bg-[#141E46] text-white py-2 rounded"
-      >
-        Add Batch
-      </button>
-    </div>
-  </div>
-)}
+              <h2 className="text-lg font-semibold mb-4">
+                Batches for {selectedCourse?.name}
+              </h2>
 
+              {batches.length === 0 ? (
+                <p className="text-gray-500">
+                  No batches found
+                </p>
+              ) : (
+                <ul className="space-y-2 mb-4">
+                  {batches.map((b) => (
+                    <li
+                      key={b._id}
+                      className="flex justify-between bg-gray-200 p-2 rounded"
+                    >
+                      <span>{b.name}</span>
+                      <button
+                        onClick={() => handleDeleteBatch(b._id)}
+                        className="text-red-600"
+                      >
+                        🗑️
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
+              <button
+                onClick={() => setShowAddBatchModal(true)}
+                className="w-full bg-[#141E46] text-white py-2 rounded"
+              >
+                Add Batch
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= ADD BATCH MODAL ================= */}
         {showAddBatchModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-96 relative">
@@ -326,13 +353,14 @@ const handleEditCourse = async () => {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">Add Batch</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Add Batch
+              </h2>
               <input
+                type="date"
                 value={batchName}
                 onChange={(e) => setBatchName(e.target.value)}
-                placeholder="yy/mm/dd"
                 className="w-full border p-2 rounded mb-4"
-                type="date"
               />
               <button
                 onClick={handleAddBatch}
@@ -344,6 +372,7 @@ const handleEditCourse = async () => {
           </div>
         )}
 
+        {/* ================= EDIT COURSE MODAL ================= */}
         {showEditCourseModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-96 relative">
@@ -353,15 +382,21 @@ const handleEditCourse = async () => {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">Edit Course</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Edit Course
+              </h2>
               <input
                 value={editCourseName}
-                onChange={(e) => setEditCourseName(e.target.value)}
+                onChange={(e) =>
+                  setEditCourseName(e.target.value)
+                }
                 className="w-full border p-2 rounded mb-3"
               />
               <input
                 value={editDuration}
-                onChange={(e) => setEditDuration(e.target.value)}
+                onChange={(e) =>
+                  setEditDuration(e.target.value)
+                }
                 className="w-full border p-2 rounded mb-4"
               />
               <button
@@ -374,10 +409,8 @@ const handleEditCourse = async () => {
           </div>
         )}
       </div>
-      </div>
     </div>
   );
 }
-
 
 export default Course;

@@ -186,7 +186,7 @@ function StudentCreate() {
           <table className="w-full text-sm border-separate border-spacing-y-3">
             <thead>
               <tr className="text-[#1679AB] text-left">
-                <th>#</th>
+                <th  className="p-3 text-center">#</th>
                 <th className="p-3 text-center">Name</th>
                 <th className="p-3 text-center">Email</th>
                 <th className="p-3 text-center">Course</th>
@@ -201,7 +201,7 @@ function StudentCreate() {
                   key={student._id}
                   className="bg-[#EEF6FB] hover:bg-[#D1E8FF]"
                 >
-                  <td className="px-3 py-3">{index + 1}</td>
+                  <td className="px-3 py-3 text-center">{index + 1}</td>
                   <td className="px-4 py-3 w-[200px] break-all text-center" >{student.name}</td>
                   <td className="px-4 py-3 w-[200px] break-all text-center">{student.email}</td>
                   {/* Display course name instead of ID */}
