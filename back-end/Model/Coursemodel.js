@@ -14,7 +14,8 @@ const courseSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "Active",
+      enum: ["active", "inactive"],
+      default: "active",
     },
   },
   { timestamps: true }
