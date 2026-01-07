@@ -168,10 +168,16 @@ function StudentCreate() {
 
   const handleToggleStatus = async (id) => {
    
-    
+    const token = localStorage.getItem("token")
+    const role = localStorage.getItem("role")
     try {
       const res = await axios.put(
-        `http://localhost:3001/admin/student/status/${id}`,
+        `http://localhost:3001/admin/student/status/${id}`,{
+          headers:{
+            Authorization:`Bearer ${token}`,
+            Role:role
+          }
+        }
       );
 
       if (res.data.success) {
