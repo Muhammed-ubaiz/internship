@@ -53,7 +53,7 @@ function LayoutRoutes() {
             }
           />
 
-          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+         
 
           <Route path="/sidebarstudent" element={<SideBarStudent />} />
 
@@ -65,7 +65,7 @@ function LayoutRoutes() {
           />
 
           
-          <Route path="/studentlogin" element={<StudentLogin />} />
+         
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />

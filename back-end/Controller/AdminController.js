@@ -122,6 +122,7 @@ export const addStudent = async (req, res) => {
 export const getStudents = async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
+    console.log(students);
     res.json(students);
   } catch (error) {
     res.status(500).json({ success: false });
@@ -288,7 +289,7 @@ const toggleCourseStatus = async (req, res) => {
       return res.status(404).json({ msg: "Course not found" });
     }
 
-    // Toggle status using lowercase values to match schema enum
+   
     course.status = course.status === "active" ? "inactive" : "active";
 
     await course.save();

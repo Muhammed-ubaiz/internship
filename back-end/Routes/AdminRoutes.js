@@ -21,14 +21,14 @@ adminRoutes.post("/login", Login);
 
 adminRoutes.post("/addCourse",verifyToken, addCourse);
 adminRoutes.get("/getCourse",verifyToken, getCourse);
-adminRoutes.delete("/deleteCourse/:id", deleteCourse);
-adminRoutes.post("/updateCourse/:_id", updateCourse);
+adminRoutes.delete("/deleteCourse/:id",verifyToken, deleteCourse);
+adminRoutes.post("/updateCourse/:_id",verifyToken, updateCourse);
 
 
 
-adminRoutes.get("/getBatches/:courseName",verifyToken, getBatches);
+adminRoutes.get("/getBatches/:courseName",verifyToken ,getBatches);
 adminRoutes.post("/addBatch/:courseName",verifyToken, addBatch);
-adminRoutes.delete("/deleteBatch/:batchId",verifyToken, deleteBatch);
+adminRoutes.delete("/deleteBatch/:batchId", deleteBatch);
 
 
 adminRoutes.post("/addStudent",verifyToken, addStudent);

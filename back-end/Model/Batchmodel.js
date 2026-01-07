@@ -5,4 +5,6 @@ const batchSchema = new mongoose.Schema({
   name: { type: String, required: true },       // batch name
 });
 
-export default mongoose.model("Batch", batchSchema);
+const Batch =mongoose.model("Batch", batchSchema);
+
+export default Batch

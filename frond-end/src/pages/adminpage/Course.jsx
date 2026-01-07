@@ -107,6 +107,7 @@ function Course() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            Role:role,
           },
         }
       );
@@ -177,8 +178,7 @@ function Course() {
 
   
   const handleToggleStatus = async (course) => {
-    const token = localStorage.getItem("token")
-    const role = localStorage.getItem("role")
+    
   try {
     
     const res = await axios.put(
@@ -286,7 +286,7 @@ function Course() {
           </table>
         </div>
 
-        {/* ================= ADD COURSE MODAL ================= */}
+
         {showCourseModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-96 relative">
@@ -321,7 +321,6 @@ function Course() {
           </div>
         )}
 
-        {/* ================= VIEW BATCH MODAL ================= */}
         {showBatchModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-96 relative">

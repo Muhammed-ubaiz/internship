@@ -16,6 +16,14 @@ function Sidebar() {
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+  
+    window.location.replace("/adminlogin"); 
+  };
+  
+
   const menuItem =
     "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-white hover:text-black cursor-pointer transition-all";
 
@@ -130,7 +138,8 @@ function Sidebar() {
         <div className="mt-auto border-t border-gray-700">
           <div
             className={menuItem}
-            onClick={() => navigate("/adminlogin")}
+            onClick={handleLogout}
+
           >
             <div className="flex items-center gap-3">
               <FaPowerOff />
