@@ -130,7 +130,7 @@ function Sidebar() {
         <div className="mt-auto border-t border-gray-700">
           <div
             className={menuItem}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/adminlogin")}
           >
             <div className="flex items-center gap-3">
               <FaPowerOff />

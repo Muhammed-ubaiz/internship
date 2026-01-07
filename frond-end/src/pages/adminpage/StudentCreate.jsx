@@ -56,8 +56,18 @@ function StudentCreate() {
   };
 
   const fetchStudents = async () => {
+ const token = localStorage.getItem("token");
+ const role = localStorage.getItem("role");
+
     try {
-      const res = await axios.get("http://localhost:3001/admin/getStudents");
+      const res = await axios.get("http://localhost:3001/admin/getStudents",
+        {
+          headers:{
+            Authorization: `Bearer ${token}`,
+            Role:role,
+          }
+        }
+      );
       setStudents(res.data);
     } catch (error) {
       console.error("Failed to fetch students", error);
@@ -74,6 +84,8 @@ function StudentCreate() {
   }, []);
 
   const handleAddStudent = async (e) => {
+    const token = localStorage.getItem("token")
+    const role = localStorage.getItem("role")
     e.preventDefault();
     try {
       const res = await axios.post("http://localhost:3001/admin/addStudent", {
@@ -82,7 +94,14 @@ function StudentCreate() {
         password,
         course,
         batch,
-      });
+      },
+      {
+        headers:{
+          Authorization:`Bearer ${token}`,
+          Role:role,
+        }
+      }
+    );
 
       if (res.data.success) {
         setStudents([...students, res.data.student]);
@@ -109,7 +128,7 @@ function StudentCreate() {
     setCourse(student.course);
     setBatch(student.batch);
 
-    // Load batches for selected course
+   
     const selectedCourse = courses.find((c) => c._id === student.course);
     if (selectedCourse) {
       fetchBatchesByCourse(selectedCourse.name);
@@ -120,11 +139,20 @@ function StudentCreate() {
   };
 
  const handleUpdateStudent = async (e) => {
+
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role")
   e.preventDefault();
   try {
     const res = await axios.put(
       `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
-      { name, email, course, batch, password } // optional password
+      { name, email, course, batch, password },
+      {
+        headers:{
+          Authorization: `Bearer ${token}`,
+          Role:role,
+        }
+      }
     );
 
     if (res.data.success) {
@@ -139,9 +167,11 @@ function StudentCreate() {
 
 
   const handleToggleStatus = async (id) => {
+   
+    
     try {
       const res = await axios.put(
-        `http://localhost:3001/admin/student/status/${id}`
+        `http://localhost:3001/admin/student/status/${id}`,
       );
 
       if (res.data.success) {

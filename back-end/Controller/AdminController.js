@@ -17,7 +17,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "35m" } //  expiry
+      { expiresIn: "10m" } //  expiry
     );
 
     return res.json({
@@ -140,7 +140,7 @@ export const getBatches = async (req, res) => {
   }
 };
 
-// ADD BATCH BY COURSE NAME
+
 export const addBatch = async (req, res) => {
   try {
     const { courseName } = req.params;
@@ -158,7 +158,7 @@ export const addBatch = async (req, res) => {
 };
 
 
-// UPDATE COURSE
+
 export const updateCourse = async (req, res) => {
   try {
     const { _id } = req.params;
@@ -249,7 +249,7 @@ export const updateStudent = async (req, res) => {
   try {
     const { id } = req.params; 
     const { name, email, course, batch, password } = req.body;
-
+  
     if (!name || !email || !course || !batch) {
       return res
         .status(400)
@@ -305,4 +305,7 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
+
+
+
 

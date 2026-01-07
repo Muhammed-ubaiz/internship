@@ -20,7 +20,7 @@ function Course() {
   const [editCourseName, setEditCourseName] = useState("");
   const [editDuration, setEditDuration] = useState("");
 
-  // ================= FETCH COURSES =================
+ 
   const fetchCourse = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -44,7 +44,7 @@ function Course() {
     fetchCourse();
   }, []);
 
-  // ================= ADD COURSE =================
+  
   const handleAddCourse = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -71,14 +71,23 @@ function Course() {
     }
   };
 
-  // ================= VIEW BATCH =================
+  
   const handleViewBatch = async (course) => {
     setSelectedCourse(course);
     setShowBatchModal(true);
 
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
     try {
       const res = await axios.get(
-        `http://localhost:3001/admin/getBatches/${course.name}`
+        `http://localhost:3001/admin/getBatches/${course.name}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
       );
       setBatches(res.data.batches);
     } catch (err) {
@@ -86,12 +95,20 @@ function Course() {
     }
   };
 
-  // ================= ADD BATCH =================
+
   const handleAddBatch = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
     try {
       const res = await axios.post(
         `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
-        { name: batchName }
+        { name: batchName.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       setBatches([...batches, res.data.batch]);
       setBatchName("");
@@ -101,11 +118,20 @@ function Course() {
     }
   };
 
-  // ================= DELETE BATCH =================
+ 
   const handleDeleteBatch = async (id) => {
+
+    const token = localStorage.getItem("token")
+    const role = localStorage.getItem("role")
     try {
       await axios.delete(
-        `http://localhost:3001/admin/deleteBatch/${id}`
+        `http://localhost:3001/admin/deleteBatch/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
       );
       setBatches(batches.filter((b) => b._id !== id));
     } catch (error) {
@@ -113,7 +139,7 @@ function Course() {
     }
   };
 
-  // ================= EDIT COURSE =================
+
   const handleEditClick = (course) => {
     setSelectedCourse(course);
     setEditCourseName(course.name);
@@ -149,15 +175,15 @@ function Course() {
     }
   };
 
-  // ================= TOGGLE STATUS =================
+  
   const handleToggleStatus = async (course) => {
+    const token = localStorage.getItem("token")
+    const role = localStorage.getItem("role")
   try {
     
-
     const res = await axios.put(
-      `http://localhost:3001/admin/course/status/${course._id}`,
-      {},
-     
+      `http://localhost:3001/admin/course/status/${course._id}`
+  
     );
 
     setCourses(

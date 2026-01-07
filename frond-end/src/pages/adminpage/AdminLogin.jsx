@@ -37,7 +37,7 @@ const handleSubmit = async (e) => {
     
       setTimeout(() => {
         localStorage.clear();
-        window.location.href = "/";
+        window.location.href = "/adminlogin";
       }, timeout);
     
       navigate("/admindashboard");

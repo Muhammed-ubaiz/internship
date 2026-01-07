@@ -26,18 +26,18 @@ adminRoutes.post("/updateCourse/:_id", updateCourse);
 
 
 
-adminRoutes.get("/getBatches/:courseName", getBatches);
-adminRoutes.post("/addBatch/:courseName", addBatch);
-adminRoutes.delete("/deleteBatch/:batchId", deleteBatch);
+adminRoutes.get("/getBatches/:courseName",verifyToken, getBatches);
+adminRoutes.post("/addBatch/:courseName",verifyToken, addBatch);
+adminRoutes.delete("/deleteBatch/:batchId",verifyToken, deleteBatch);
 
 
-adminRoutes.post("/addStudent", addStudent);
-adminRoutes.get("/getStudents", getStudents);
+adminRoutes.post("/addStudent",verifyToken, addStudent);
+adminRoutes.get("/getStudents",verifyToken, getStudents);
 
 adminRoutes.put("/student/status/:id", toggleStudentStatus);
 adminRoutes.put("/course/status/:id", toggleCourseStatus);
 
-adminRoutes.put("/updateStudent/:id", updateStudent);
+adminRoutes.put("/updateStudent/:id",verifyToken, updateStudent);
 
 
 
