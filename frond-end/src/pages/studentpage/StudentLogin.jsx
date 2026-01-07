@@ -66,6 +66,15 @@ const handleLogin = async (e) => {
             />
           </div>
 
+          <div className="flex items-center justify-between text-sm text-gray-400">
+            <label className="flex items-center gap-2">
+              
+            </label>
+            <a href="#" className="hover:text-[#1679AB]">
+              Forgot password?
+            </a>
+          </div>
+
           <button
             type="submit"
             className="w-full py-3 bg-[#141E46] text-white rounded-lg"

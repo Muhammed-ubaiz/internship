@@ -16,7 +16,8 @@ function LayoutRoutes() {
     <>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AdminLogin />} />
+          <Route path="/adminlogin" element={<AdminLogin />} />
+          <Route path="/" element={<StudentLogin />} />
           <Route
 
             path="/admindashboard"
@@ -57,7 +58,7 @@ function LayoutRoutes() {
           <Route path="/attendance" element={<Attendance />}
           
           />
-          <Route path="/studentlogin" element={<StudentLogin />} />
+          
 
 
 =======
