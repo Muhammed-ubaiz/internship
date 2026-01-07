@@ -13,6 +13,8 @@ import StudentLogin from "../pages/studentpage/StudentLogin";
 import DailyAttendance from "../pages/studentpage/DailyAttendance";
 import MonthlySummary from "../pages/adminpage/MonthlySummary";
 import AdminLeaveRequest from "../pages/adminpage/AdminLeaveRequest";
+import LeaveHistory from "../pages/adminpage/LeaveHistory";
+import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
 
 function LayoutRoutes() {
   return (
@@ -64,6 +66,8 @@ function LayoutRoutes() {
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
+          <Route path="/leaveHistory" element={<LeaveHistory />} />
+          <Route path="/studentMonthlySummary" element={<StudentMonthlySummary />} />
 
 
 

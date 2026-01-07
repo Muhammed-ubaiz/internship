@@ -49,6 +49,7 @@ function SideBarStudent() {
         >
           <div className="flex items-center gap-3">
             <FaCalendarCheck />
+            
             <span>Attendance</span>
           </div>
           <FaChevronDown
@@ -68,7 +69,7 @@ function SideBarStudent() {
             </div>
             <div
               className={subItem}
-              onClick={() => navigate()}
+              onClick={() => navigate("/studentMonthlySummary")}
             >
               Monthly Summary
             </div>
