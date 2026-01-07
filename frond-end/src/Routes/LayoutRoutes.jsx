@@ -8,8 +8,11 @@ import Admindashboard from "../pages/adminpage/Admindashboard";
 import Course from "../pages/adminpage/Course";
 import StudentCreate from "../pages/adminpage/StudentCreate";
 import SideBarStudent from "../pages/studentpage/SideBarStudent";
-import Attendance from "../pages/adminpage/Attendance";
+import Attendance from "../pages/adminpage/DailyAttendance";
 import StudentLogin from "../pages/studentpage/StudentLogin";
+import DailyAttendance from "../pages/studentpage/DailyAttendance";
+import MonthlySummary from "../pages/adminpage/MonthlySummary";
+import AdminLeaveRequest from "../pages/adminpage/AdminLeaveRequest";
 
 function LayoutRoutes() {
   return (
@@ -58,10 +61,16 @@ function LayoutRoutes() {
           <Route path="/attendance" element={<Attendance />}
           
           />
+
           
+          <Route path="/studentlogin" element={<StudentLogin />} />
+          <Route path="/dailyAttendance" element={<DailyAttendance />} />
+          <Route path="/monthlySummary" element={<MonthlySummary />} />
+          <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
 
 
-=======
+
+
             
 
 
