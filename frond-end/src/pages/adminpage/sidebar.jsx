@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaCalendarCheck,
@@ -81,12 +81,14 @@ function Sidebar() {
             >
               Daily Attendance
             </div>
+            <Link to ="/monthlySummary">
             <div
               className={subItem}
               onClick={() => navigate("/attendance/monthly")}
             >
               Monthly Summary
             </div>
+            </Link>
           </div>
         )}
 
@@ -110,7 +112,7 @@ function Sidebar() {
           <div>
             <div
               className={subItem}
-              onClick={() => navigate("/leave/apply")}
+              onClick={() => navigate("/adminLeaveRequest")}
             >
                Leave Request's
             </div>
