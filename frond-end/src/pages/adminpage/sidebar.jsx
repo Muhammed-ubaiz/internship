@@ -118,7 +118,7 @@ function Sidebar() {
             </div>
             <div
               className={subItem}
-              onClick={() => navigate("/leave/history")}
+              onClick={() => navigate("/leaveHistory")}
             >
               Leave History
             </div>

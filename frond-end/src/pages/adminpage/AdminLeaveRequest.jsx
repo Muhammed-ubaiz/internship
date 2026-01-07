@@ -75,30 +75,6 @@ function AdminLeaveRequest() {
               </div>
             </div>
           </div>
-
-          {/* Card 3 */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer flex flex-col justify-between">
-            <div>
-              <h3 className="font-semibold text-lg">Suresh</h3>
-              <p className="text-sm text-gray-500">UI/UX | Batch C</p>
-              <p className="mt-2 text-gray-700">Date: 2026-01-15</p>
-              <p className="text-gray-700">Reason: Family emergency</p>
-              <p className="text-gray-700 mt-1">Total Leaves Requests: 1 day</p>
-              <p className="inline-block px-3 py-1 text-sm rounded-full bg-yellow-100 text-yellow-700">Status: Pending</p>
-            </div>
-
-            <div className="mt-4 flex justify-between items-center">
-              <div className="flex gap-2">
-                <button className="px-2 py-1 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700">
-                  Approve
-                </button>
-                <button className="px-2 py-1 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700">
-                  Reject
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
