@@ -30,7 +30,8 @@ const handleLogin = async (e) => {
       const timeout = decoded.exp * 1000 - Date.now();
     
       setTimeout(() => {
-        localStorage.clear();
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
         window.location.href = "/";
       }, timeout);
       navigate("/studentsdashboard");
