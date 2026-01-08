@@ -18,7 +18,7 @@ function SideBarStudent() {
     "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-white hover:text-black cursor-pointer transition-all";
 
   const subItem =
-    "pl-12 py-2 text-xs text-gray-400 hover:text-black hover:bg-white cursor-pointer transition-all";
+    "pl-12 py-2 text-xs text-gray-300 hover:text-black hover:bg-white cursor-pointer transition-all";
 
   return (
     <div className="fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col">
@@ -34,7 +34,7 @@ function SideBarStudent() {
         {/* Dashboard */}
         <div
           className={menuItem}
-          onClick={() => navigate()}
+          onClick={() => navigate("/studentDashboard")}
         >
           <div className="flex items-center gap-3">
             <FaHome />
@@ -49,7 +49,6 @@ function SideBarStudent() {
         >
           <div className="flex items-center gap-3">
             <FaCalendarCheck />
-            
             <span>Attendance</span>
           </div>
           <FaChevronDown
@@ -63,7 +62,7 @@ function SideBarStudent() {
           <div>
             <div
               className={subItem}
-              onClick={() => navigate()}
+              onClick={() => navigate("/studentDailyAttendance")}
             >
               Daily Attendance
             </div>
@@ -96,23 +95,26 @@ function SideBarStudent() {
           <div>
             <div
               className={subItem}
-              onClick={() => navigate()}
+              onClick={() => navigate("/LeaveApply")}
             >
               Apply Leave
             </div>
             <div
               className={subItem}
-              onClick={() => navigate()}
+              onClick={() => navigate("/StudentLeaveHistory")}
             >
               Leave History
             </div>
           </div>
         )}
 
-        {/* Push Logout to Bottom */}
+        {/* Logout */}
         <div className="mt-auto border-t border-gray-700">
-          <div className={menuItem}>
-            <div onClick={()=> navigate("/studentlogin")} className="flex items-center gap-3">
+          <div
+            className={menuItem}
+            onClick={() => navigate("/studentlogin")}
+          >
+            <div className="flex items-center gap-3">
               <FaPowerOff />
               <span>Logout</span>
             </div>
