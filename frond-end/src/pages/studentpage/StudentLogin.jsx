@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 function StudentLogin() {
   const navigate = useNavigate();
@@ -20,17 +21,25 @@ const handleLogin = async (e) => {
     );
 
     if (res.data.success) {
-      alert("Login successful");
-      console.log(res.data.student);
-      navigate("/studentsdashboard");
+      const { token, role } = response.data;
+    
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+    
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+    
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = "/";
+      }, timeout);
+      navigate("/studentdashboard");
+    }
+    else {
+      alert("Check your email and password");
     }
   } catch (error) {
-    if (error.response) {
-      // 👇 backend message show cheyyuka
-      alert(error.response.data.message);
-    } else {
-      alert("Server error");
-    }
+    alert(error.response?.data?.message || "Something went wrong");
   }
 };
 

@@ -57,7 +57,12 @@ function LayoutRoutes() {
 
           <Route path="/sidebarstudent" element={<SideBarStudent />} />
 
-          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+          <Route path="/studentsdashboard" element={
+          <ProtectedRoute role="student">
+            <Studentsdashboard />
+          </ProtectedRoute>
+          
+          } />
 
 
           <Route path="/attendance" element={<Attendance />}
