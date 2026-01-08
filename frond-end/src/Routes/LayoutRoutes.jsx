@@ -27,7 +27,7 @@ function LayoutRoutes() {
 
             path="/admindashboard"
 
-           
+
 
             element={
               <ProtectedRoute role="admin">
@@ -53,19 +53,16 @@ function LayoutRoutes() {
             }
           />
 
-         
-
-          <Route path="/sidebarstudent" element={<SideBarStudent />} />
 
           <Route path="/studentsdashboard" element={<Studentsdashboard />} />
 
 
           <Route path="/attendance" element={<Attendance />}
-          
+
           />
 
-          
-         
+
+
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
@@ -75,7 +72,7 @@ function LayoutRoutes() {
 
 
 
-            
+
 
 
         </Routes>

@@ -4,6 +4,7 @@ import Course from "../Model/Coursemodel.js";
 import jwt from "jsonwebtoken";
 import Student from "../Model/Studentsmodel.js";
 import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
 
 
 const adminemail = "admin@gmail.com";
@@ -303,6 +304,62 @@ const toggleCourseStatus = async (req, res) => {
     console.error("Error toggling course status:", error);
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+
+let otpStore = {}; // temporary in-memory store
+
+export const sendOtp = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: "Email required" });
+
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000);
+
+  otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // expires in 5 min
+
+  // Nodemailer transporter (Gmail)
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.APP_EMAIL,
+      pass: process.env.APP_PASSWORD, // 16-char Gmail App Password
+    },
+    tls: { rejectUnauthorized: false },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: `"MENTOR LINK" <${process.env.APP_EMAIL}>`,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
+    });
+
+    res.json({ success: true, message: "OTP sent" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+
+// Verify OTP
+export const verifyOtp = (req, res) => {
+  const { email, otp } = req.body;
+  const record = otpStore[email];
+
+  if (!record) return res.json({ success: false, message: "No OTP found for this email" });
+  if (Date.now() > record.expiresAt) {
+    delete otpStore[email];
+    return res.json({ success: false, message: "OTP expired" });
+  }
+
+  if (record.otp.toString() === otp) {
+    delete otpStore[email];
+    return res.json({ success: true, message: "OTP verified" });
+  }
+
+  res.json({ success: false, message: "Invalid OTP" });
 };
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
