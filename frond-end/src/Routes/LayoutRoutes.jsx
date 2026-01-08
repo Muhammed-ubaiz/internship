@@ -28,6 +28,11 @@ function LayoutRoutes() {
           <Route path="/" element={<StudentLogin />} />
           <Route
             path="/admindashboard"
+
+
+
+
+
             element={
               <ProtectedRoute role="admin">
                 <Admindashboard />
@@ -52,16 +57,30 @@ function LayoutRoutes() {
             }
           />
 
+
           <Route path="/sidebarstudent" element={<SideBarStudent />} />
 
-          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+
+
+          <Route path="/studentsdashboard" element={
+          <ProtectedRoute role="student">
+            <Studentsdashboard />
+          </ProtectedRoute>
+          
+          } />
 
           <Route path="/attendance" element={<Attendance />} />
+
+
+          <Route path="/attendance" element={<Attendance />}
+
+          />
 
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
           <Route path="/leaveHistory" element={<LeaveHistory />} />
+
           <Route
             path="/studentMonthlySummary"
             element={<StudentMonthlySummary />}
@@ -70,6 +89,15 @@ function LayoutRoutes() {
             path="/StudentDailyAttendance"
             element={<StudentDailyAttendance />}
           />
+
+          <Route path="/studentMonthlySummary" element={<StudentMonthlySummary />} />
+
+
+
+
+
+
+
 
           <Route
             path="/StudentLeaveHistory"
