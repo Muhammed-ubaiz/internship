@@ -26,6 +26,8 @@ function Studentsdashboard() {
   };
 
   const handlePunchIn = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role")
     try {
       setLoading(true);
       const loc = await getCurrentLocation();
@@ -33,7 +35,14 @@ function Studentsdashboard() {
       const res = await axios.post("http://localhost:3001/student/punch-in", {
         latitude: loc.latitude,
         longitude: loc.longitude,
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role:role,
+        },
+      }
+    );
 
       setPunchInTime(res.data.attendance.punchInTime);
       alert("Punch In Successful");

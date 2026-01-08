@@ -28,8 +28,28 @@ function StudentLogin() {
       } else {
         alert("Check your email and password");
       }
+
+    );
+
+    if (res.data.success) {
+      const { token, role } = res.data;
+    
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+    
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+    
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/";
+      }, timeout);
+      navigate("/studentsdashboard");
+
     } catch (error) {
       alert(error.response?.data?.message || "Something went wrong");
+
     }
   };
 
@@ -164,7 +184,7 @@ function StudentLogin() {
 
             <button
               type="button"
-              onClick={() => setShowForgotPassword(false)}
+             
               className="w-full py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
             >
               Back to Login
@@ -174,49 +194,6 @@ function StudentLogin() {
         )}
       </div>
 
-      {showOtpModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
-            <h2 className="text-2xl font-bold text-center text-[#1679AB] mb-6">
-              Verify OTP
-            </h2>
-
-            <form onSubmit={handleOtpSubmit} className="space-y-5">
-              <div>
-                <label className="block text-[#1679AB] mb-2">Enter OTP</label>
-                <input
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter 6-digit OTP"
-                  type="text"
-                  value={otp}
-                  maxLength="6"
-                  required
-                  className="w-full px-4 py-3 rounded-lg text-black border text-center text-2xl tracking-widest"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={otpLoading}
-                className="w-full py-3 bg-[#141E46] text-white rounded-lg disabled:opacity-50"
-              >
-                {otpLoading ? "Verifying..." : "Verify OTP"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowOtpModal(false);
-                  setOtp("");
-                }}
-                className="w-full py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
