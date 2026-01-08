@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -36,40 +36,6 @@ function SideBarStudent() {
       {/* Overlay (mobile) */}
       {sidebarOpen && (
         <div
-
-          className={menuItem}
-          onClick={() => navigate("/studentDashboard")}
-        >
-          <div className="flex items-center gap-3">
-            <FaHome />
-            <span>Dashboard</span>
-          </div>
-        </div>
-
-        {/* Attendance */}
-        <div
-          className={menuItem}
-          onClick={() => setAttendanceOpen(!attendanceOpen)}
-        >
-          <div className="flex items-center gap-3">
-            <FaCalendarCheck />
-            <span>Attendance</span>
-          </div>
-          <FaChevronDown
-            className={`transition-transform ${
-              attendanceOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-
-        {attendanceOpen && (
-          <div>
-            <div
-              className={subItem}
-              onClick={() => navigate("/studentDailyAttendance")}
-            >
-              Daily Attendance
-
           className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -77,7 +43,7 @@ function SideBarStudent() {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col z-50
+        className={`fixed left-0 top-0 h-screen w-55 bg-[#141E46]/90 flex flex-col z-50
         transform transition-transform duration-300
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0`}
@@ -107,7 +73,6 @@ function SideBarStudent() {
             <div className="flex items-center gap-3">
               <FaHome />
               <span>Dashboard</span>
-
             </div>
           </div>
 
@@ -163,66 +128,35 @@ function SideBarStudent() {
             />
           </div>
 
-l
-        {leaveOpen && (
-          <div>
-            <div
-              className={subItem}
-              onClick={() => navigate("/LeaveApply")}
-            >
-              Apply Leave
-
           {leaveOpen && (
             <div>
               <div
                 className={subItem}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => navigate("/LeaveApply")}
               >
                 Apply Leave
               </div>
               <div
                 className={subItem}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => navigate("/StudentLeaveHistory")}
               >
                 Leave History
               </div>
-
             </div>
           )}
 
           {/* Logout */}
           <div className="mt-auto border-t border-gray-700">
             <div
-
-              className={subItem}
-              onClick={() => navigate("/StudentLeaveHistory")}
-            >
-              Leave History
-            </div>
-          </div>
-        )}
-
-        {/* Logout */}
-        <div className="mt-auto border-t border-gray-700">
-          <div
-            className={menuItem}
-            onClick={() => navigate("/studentlogin")}
-          >
-            <div className="flex items-center gap-3">
-              <FaPowerOff />
-              <span>Logout</span>
-
               className={menuItem}
-              onClick={() => navigate("/studentlogin")}
+              onClick={() => navigate("/")}
             >
               <div className="flex items-center gap-3">
                 <FaPowerOff />
                 <span>Logout</span>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </>

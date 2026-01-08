@@ -1,6 +1,5 @@
 import ProtectedRoute from "../../ProtectedRoute";
 
-import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AdminLogin from "../pages/adminpage/AdminLogin";
 import Studentsdashboard from "../pages/studentpage/Studentsdashboard";
@@ -28,11 +27,6 @@ function LayoutRoutes() {
           <Route path="/" element={<StudentLogin />} />
           <Route
             path="/admindashboard"
-
-
-
-
-
             element={
               <ProtectedRoute role="admin">
                 <Admindashboard />
@@ -47,7 +41,6 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/course"
             element={
@@ -57,15 +50,8 @@ function LayoutRoutes() {
             }
           />
 
-
-          <Route path="/sidebarstudent" element={<SideBarStudent />} />
-
-
-
           <Route path="/studentsdashboard" element={
-          <ProtectedRoute role="student">
             <Studentsdashboard />
-          </ProtectedRoute>
           
           } />
 

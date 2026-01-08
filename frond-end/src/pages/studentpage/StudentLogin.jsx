@@ -21,7 +21,7 @@ const handleLogin = async (e) => {
     );
 
     if (res.data.success) {
-      const { token, role } = response.data;
+      const { token, role } = res.data;
     
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
@@ -33,7 +33,7 @@ const handleLogin = async (e) => {
         localStorage.clear();
         window.location.href = "/";
       }, timeout);
-      navigate("/studentdashboard");
+      navigate("/studentsdashboard");
     }
     else {
       alert("Check your email and password");
