@@ -96,7 +96,10 @@ function SideBarStudent() {
             <div>
               <div
                 className={subItem}
-                onClick={() => setSidebarOpen(false)}
+                n
+                onClick={() =>{
+                  navigate("/StudentDailyAttendance")
+                  setSidebarOpen(false)}}
               >
                 Daily Attendance
               </div>

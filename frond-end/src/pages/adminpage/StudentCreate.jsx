@@ -76,7 +76,7 @@ function StudentCreate() {
     fetchCourses();
   }, []);
 
-  // --------------------- CREATE / EDIT ---------------------
+  // --------------------- CREATE ---------------------
   const handleAddStudent = async (e) => {
     e.preventDefault();
     if (!isVerified) {
@@ -115,8 +115,10 @@ function StudentCreate() {
     setOtp("");
     setMessage("");
     setShowCreateModal(false);
+    setShowEditModal(false);
   };
 
+  // --------------------- EDIT ---------------------
   const openEditModal = (student) => {
     setSelectedStudentId(student._id);
     setName(student.name);
@@ -129,6 +131,8 @@ function StudentCreate() {
 
     setPassword("");
     setShowEditModal(true);
+    setIsVerified(true); // skip OTP for edit
+    setMessage("");
   };
 
   const handleUpdateStudent = async (e) => {
@@ -225,9 +229,7 @@ function StudentCreate() {
       <div className="ml-52 p-6 max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46]">
-            Students Management
-          </h1>
+          <h1 className="text-2xl font-semibold text-[#141E46]">Students Management</h1>
 
           <button
             onClick={() => setShowCreateModal(true)}
@@ -309,9 +311,7 @@ function StudentCreate() {
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold text-center mb-5">
-              Create Student
-            </h2>
+            <h2 className="text-xl font-semibold text-center mb-5">Create Student</h2>
 
             <form onSubmit={handleAddStudent} className="space-y-3">
               <input
@@ -401,6 +401,93 @@ function StudentCreate() {
                 disabled={!isVerified}
               >
                 Create Student
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= EDIT MODAL ================= */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 relative">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-semibold text-center mb-5">
+              Edit Student
+            </h2>
+
+            <form onSubmit={handleUpdateStudent} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border p-2 rounded"
+                required
+              />
+
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border p-2 rounded"
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="New Password (optional)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border p-2 rounded"
+              />
+
+              <select
+                value={course}
+                onChange={(e) => {
+                  const selectedCourseId = e.target.value;
+                  setCourse(selectedCourseId);
+                  const selectedCourse = courses.find((c) => c._id === selectedCourseId);
+                  if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
+                  setBatch("");
+                }}
+                className="w-full border p-2 rounded"
+                required
+              >
+                <option value="">Select Course</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={batch}
+                onChange={(e) => setBatch(e.target.value)}
+                className="w-full border p-2 rounded"
+                required
+              >
+                <option value="">Select Batch</option>
+                {batches.map((b) => (
+                  <option key={b._id} value={b.name}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="submit"
+                className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
+              >
+                Update Student
               </button>
             </form>
           </div>
