@@ -15,6 +15,9 @@ import MonthlySummary from "../pages/adminpage/MonthlySummary";
 import AdminLeaveRequest from "../pages/adminpage/AdminLeaveRequest";
 import LeaveHistory from "../pages/adminpage/LeaveHistory";
 import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
+import StudentDailyAttendance from "../pages/studentpage/StudentDailyAttendance";
+import LeaveApply from "../pages/studentpage/LeaveApply";
+import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
 
 function LayoutRoutes() {
   return (
@@ -24,8 +27,9 @@ function LayoutRoutes() {
           <Route path="/adminlogin" element={<AdminLogin />} />
           <Route path="/" element={<StudentLogin />} />
           <Route
-
             path="/admindashboard"
+
+
 
 
 
@@ -54,6 +58,10 @@ function LayoutRoutes() {
           />
 
 
+          <Route path="/sidebarstudent" element={<SideBarStudent />} />
+
+
+
           <Route path="/studentsdashboard" element={
           <ProtectedRoute role="student">
             <Studentsdashboard />
@@ -61,17 +69,27 @@ function LayoutRoutes() {
           
           } />
 
+          <Route path="/attendance" element={<Attendance />} />
+
 
           <Route path="/attendance" element={<Attendance />}
 
           />
 
-
-
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
           <Route path="/leaveHistory" element={<LeaveHistory />} />
+
+          <Route
+            path="/studentMonthlySummary"
+            element={<StudentMonthlySummary />}
+          />
+          <Route
+            path="/StudentDailyAttendance"
+            element={<StudentDailyAttendance />}
+          />
+
           <Route path="/studentMonthlySummary" element={<StudentMonthlySummary />} />
 
 
@@ -80,6 +98,12 @@ function LayoutRoutes() {
 
 
 
+
+          <Route
+            path="/StudentLeaveHistory"
+            element={<StudentLeaveHistory />}
+          />
+          <Route path="/LeaveApply" element={<LeaveApply/>} />
         </Routes>
       </BrowserRouter>
     </>
