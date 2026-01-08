@@ -330,7 +330,7 @@ export const sendOtp = async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: `"MENTOR LINK" <${process.env.APP_EMAIL}>`,
+      from: `"PUNCHING APP" <${process.env.APP_EMAIL}>`,
       to: email,
       subject: "Your OTP Code",
       text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
