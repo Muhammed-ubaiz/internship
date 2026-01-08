@@ -1,9 +1,67 @@
-import React from "react";
+import React,{ useState } from "react";
 import LiveClockUpdate from "../LiveClockUpdate";
 import DashboardCalendar from "../Dashboardcalender";
 import SideBarStudent from "./SideBarStudent";
+import axios from "axios";
+
 
 function Studentsdashboard() {
+
+  const [location, setLocation] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const [punchInTime, setPunchInTime] = useState(null);
+
+
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject("Geolocation not supported");
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => reject(error.message)
+      );
+    });
+  };
+
+  const handlePunchIn = async () => {
+    try {
+      setLoading(true);
+
+      const loc = await getCurrentLocation();
+      setLocation(loc);
+
+      await axios.post("http://localhost:3001/student/punch-in", {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      });
+
+      setPunchInTime(res.data.attendance.punchInTime);
+
+      alert("Punch In Successful");
+    } catch (error) {
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (time) => {
+    if (!time) return "--:--";
+    return new Date(time).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-6">
       <SideBarStudent />
@@ -118,6 +176,20 @@ function Studentsdashboard() {
 
           <div className="hidden lg:block space-y-4">
 
+
+            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200 w-[50%]">
+              <p className="text-sm text-[#1679AB]">Punch in Time </p>
+              <p className="text-lg font-semibold text-[#141E46]">
+               {formatTime(punchInTime)}
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-200 w-[50%]">
+              <p className="text-sm text-[#1679AB]">Punch out Time </p>
+              <p className="text-lg font-semibold text-[#141E46]">
+                11:11 AM
+              </p>
+            </div>
+
             <div className="flex gap-3">
               <div className="bg-white rounded-2xl shadow-2xl p-4 border w-1/2">
                 <p className="text-sm text-[#1679AB]">Punch in Time</p>
@@ -127,6 +199,7 @@ function Studentsdashboard() {
                 <p className="text-sm text-[#1679AB]">Punch out Time</p>
                 <p className="text-lg font-semibold text-[#141E46]">11:11 AM</p>
               </div>
+
             </div>
 
             <div className="bg-white rounded-2xl shadow-2xl p-4 border">
@@ -143,6 +216,17 @@ function Studentsdashboard() {
               </p>
             </div>
 
+
+            <button onClick={handlePunchIn} 
+             disabled={loading}
+
+             className="w-full bg-[#0dd635] hover:bg-[#0dd664] text-white py-3 rounded-lg font-semibold transition">
+              Punch In
+            </button>
+            <button className="w-full bg-[#ed1717] hover:bg-[#d60d0de2] text-white py-3 rounded-lg font-semibold transition">
+              Punch Out
+            </button>
+
             <div className="flex gap-3">
               <button className="w-full bg-[#0dd635] text-white py-3 rounded-lg font-semibold">
                 Punch In
@@ -150,6 +234,7 @@ function Studentsdashboard() {
               <button className="w-full bg-[#ed1717] text-white py-3 rounded-lg font-semibold">
                 Punch Out
               </button>
+
             </div>
 
           </div>
