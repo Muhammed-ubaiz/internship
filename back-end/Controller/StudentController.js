@@ -5,7 +5,9 @@ import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
+// config/jwt.js
+ const JWT_SECRET = process.env.JWT_SECRET || "key321";
+
 
 export const checkstudent = async (req, res) => {
   try {
@@ -34,7 +36,7 @@ export const checkstudent = async (req, res) => {
     const token = jwt.sign(
       { id: student._id, email: student.email, role: "student" }, // payload
       JWT_SECRET,
-      { expiresIn: "10m" } 
+      { expiresIn: "9m" } 
     );
 
     // Send response
@@ -58,11 +60,15 @@ export const checkstudent = async (req, res) => {
     });
   }
 };
-
 export const punchIn = async (req, res) => {
   try {
-   
-    const { studentId, latitude, longitude } = req.body;
+    const { latitude, longitude } = req.body;
+
+    // ✅ get studentId from token
+    const studentId = req.user.id;
+
+    
+
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Location required" });
@@ -72,21 +78,21 @@ export const punchIn = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Check if already punched in today
-    const existing = await Attendance.findOne({
-     
-      date: today,
-    });
+    // ✅ Check punch-in for THIS student ONLY
+    // const existing = await Attendance.findOne({
+    //   studentId,
+    //   date: today,
+    // });
 
-    if (existing) {
-      return res.status(400).json({ message: "Already punched in today" });
-    }
+    // if (existing) {
+    //   return res.status(400).json({ message: "Already punched in today" });
+    // }
 
     const attendance = await Attendance.create({
-   
+      studentId,
+  
       punchInTime: new Date(),
       punchInLocation: { latitude, longitude },
-      studentId,
       date: today,
     });
 
@@ -99,6 +105,7 @@ export const punchIn = async (req, res) => {
     res.status(500).json({ message: "Punch in failed" });
   }
 };
+;
 ;
 
 export const forgotPassword = async (req, res) => {
