@@ -60,15 +60,14 @@ export const checkstudent = async (req, res) => {
     });
   }
 };
+
+
 export const punchIn = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
 
     // ✅ get studentId from token
     const studentId = req.user.id;
-
-    
-
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Location required" });
@@ -105,7 +104,6 @@ export const punchIn = async (req, res) => {
     res.status(500).json({ message: "Punch in failed" });
   }
 };
-;
 ;
 
 export const forgotPassword = async (req, res) => {
