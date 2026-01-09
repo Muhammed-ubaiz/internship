@@ -2,6 +2,7 @@ import React from "react";
 import DashboardCalendar from "../Dashboardcalender";
 import LiveClockUpdate from "../LiveClockUpdate";
 import Sidebar from "./sidebar";
+import Topbar from "./Topbar";
 
 
 function Admindashboard() {
@@ -18,8 +19,9 @@ function Admindashboard() {
 
           {/* Header */}
           <div className="flex justify-between items-center  ">
+            <Topbar/>
             <h1 className="text-2xl font-semibold text-[#141E46]">
-              Dashboard
+              
             </h1>
           </div>
 
