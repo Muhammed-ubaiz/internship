@@ -32,17 +32,20 @@ function Studentsdashboard() {
       setLoading(true);
       const loc = await getCurrentLocation();
 
-      const res = await axios.post("http://localhost:3001/student/punch-in", {
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Role:role,
+      const res = await axios.post(
+        "http://localhost:3001/student/punch-in",
+        {
+          latitude: loc.latitude,
+          longitude: loc.longitude,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            role: role,
+          },
+        }
+      );
+      
 
       setPunchInTime(res.data.attendance.punchInTime);
       alert("Punch In Successful");
@@ -60,7 +63,13 @@ function Studentsdashboard() {
       minute: "2-digit",
       hour12: true,
     });
+
   };
+  if (!location) {
+    alert("Please allow location access");
+    getLocation();
+    return;
+  }
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-6">
