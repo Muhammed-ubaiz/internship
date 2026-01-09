@@ -86,7 +86,7 @@ function SideBarStudent() {
               <span>Attendance</span>
             </div>
             <FaChevronDown
-              className={`transition-transform ${
+              className={`transition-transform ${ 
                 attendanceOpen ? "rotate-180" : ""
               }`}
             />

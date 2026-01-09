@@ -67,7 +67,7 @@ export const punchIn = async (req, res) => {
     const { latitude, longitude } = req.body;
 
     // ✅ get studentId from token
-    const studentId = req.user.id;
+    const studentEmail = req.user.email;
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: "Location required" });
@@ -88,7 +88,7 @@ export const punchIn = async (req, res) => {
     // }
 
     const attendance = await Attendance.create({
-      studentId,
+      studentEmail,
   
       punchInTime: new Date(),
       punchInLocation: { latitude, longitude },

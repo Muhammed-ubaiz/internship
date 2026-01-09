@@ -19,7 +19,7 @@ function Topbar() {
           placeholder="Search..."
           className="w-full outline-none text-sm"
         />
-      </div>
+      </div>   
 
       {/* Icons */}
       <div className="flex items-center gap-6">
@@ -28,13 +28,13 @@ function Topbar() {
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </div>
 
-        <div className="flex items-center gap-2 cursor-pointer">
+        {/* <div className="flex items-center gap-2 cursor-pointer">
           <FaUserCircle size={32} className="text-[#1679AB]" />
           <div className="text-sm">
             <p className="font-semibold text-[#141E46]">Admin</p>
             <p className="text-gray-400 text-xs">Administrator</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

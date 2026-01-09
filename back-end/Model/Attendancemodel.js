@@ -1,19 +1,38 @@
 import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema({
-  studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Student",
+  studentEmail: {
+    type: String,
     required: true,
+    lowercase: true,
+    trim: true,
   },
 
+  // 📅 Punch In Date (only date)
+  punchInDate: {
+    type: Date,
+    default: () => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    },
+  },
+
+  // ⏰ Punch In Time (only time stored as string)
   punchInTime: {
-    type: Date,   // ✅ CORRECT
+    type: String, // example: "09:15 AM"
     default: null,
   },
 
+  // 📅 Punch Out Date
+  punchOutDate: {
+    type: Date,
+    default: null,
+  },
+
+  // ⏰ Punch Out Time
   punchOutTime: {
-    type: Date,   // ✅ CORRECT
+    type: String, // example: "05:30 PM"
     default: null,
   },
 
@@ -26,19 +45,7 @@ const attendanceSchema = new mongoose.Schema({
     latitude: Number,
     longitude: Number,
   },
-
-  // Stores ONLY the date (00:00:00)
-  date: {
-    type: Date,
-    required: true,
-    default: () => {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      return d;
-    },
-  },
 });
 
 const Attendance = mongoose.model("Attendance", attendanceSchema);
-
 export default Attendance;
