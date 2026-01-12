@@ -17,6 +17,8 @@ import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
 import StudentDailyAttendance from "../pages/studentpage/StudentDailyAttendance";
 import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
+import Mentorlogin from "../pages/mentorpage/Mentorlogin";
+import Mentorcreate from "../pages/mentorpage/Mentorcreate";
 
 function LayoutRoutes() {
   return (
@@ -92,6 +94,10 @@ function LayoutRoutes() {
             element={<StudentLeaveHistory />}
           />
           <Route path="/LeaveApply" element={<LeaveApply/>} />
+
+           {/* mentor */}
+          <Route path="/mentorlogin" element={<Mentorlogin/>}/>
+          <Route path="/mentorcreate" element={<Mentorcreate/>}/>
         </Routes>
       </BrowserRouter>
     </>
