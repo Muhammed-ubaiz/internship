@@ -79,13 +79,24 @@ function AdminDashboard() {
                 <div className="h-10 rounded mt-4 bg-[#D1F7DC]"></div>
               </div>
 
+
               {/* Active Courses */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 hover:scale-105 transition">
                 <p className="text-sm text-[#1679AB]">Active Courses</p>
                 <h2 className="text-3xl font-bold text-[#141E46] mt-2">{activeCourseCount}</h2>
                 <p className="text-xs mt-1 text-green-500">+35% compared to January</p>
                 <div className="h-10 rounded mt-4 bg-[#FDE2E2]"></div>
-              </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl p-5  hover:scale-105 transition">
+              <p className="text-sm text-[#1679AB]">Absent Students</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
+              <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
+              <div className="h-10 rounded mt-4 bg-[#D1E8FF]"></div>
+            </div>
+
+            
+          </div>
+
 
               {/* Present Students */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 hover:scale-105 transition">
