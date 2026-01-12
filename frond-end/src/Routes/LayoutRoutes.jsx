@@ -69,6 +69,7 @@ function LayoutRoutes() {
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
           <Route path="/leaveHistory" element={<LeaveHistory />} />
 
+
           <Route
             path="/studentMonthlySummary"
             element={<StudentMonthlySummary />}

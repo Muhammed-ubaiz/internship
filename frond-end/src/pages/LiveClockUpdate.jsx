@@ -35,14 +35,14 @@ class LiveClockUpdate extends Component {
     return (
       <div className="w-full h-full flex items-center justify-center p-4">
         {/* Main Clock Face - Matching your image exactly */}
-        <div className="relative bg-white w-full h-full max-h-[250px] rounded-xl shadow-inner flex items-center justify-center overflow-hidden border border-gray-300">
+        <div className="relative w-full h-full max-h-[350px] rounded-xl  flex items-center justify-center overflow-hidden shadow-inner  border border-gray-100 bg-white ">
           
           
 
           {/* Top Right Decoration Circles */}
           <div className="absolute top-3 right-3 flex gap-2">
-            <div className="w-6 h-6 rounded-full border-2 border-blue-900"></div>
-            <div className="w-6 h-6 rounded-full bg-blue-900"></div>
+            <div className="w-5 h-5 rounded-full  bg-blue-200 "></div>
+            <div className="w-5 h-5 rounded-full bg-blue-900 "></div>
           </div>
 
           {/* Time Container */}
@@ -54,8 +54,8 @@ class LiveClockUpdate extends Component {
 
             {/* Separator Dots */}
             <div className="flex flex-col gap-4 mx-4">
-              <div className="w-3 h-3 bg-blue-900 rounded-full animate-pulse"></div>
-              <div className="w-3 h-3 bg-blue-900 rounded-full animate-pulse"></div>
+              <div className="w-3 h-5 bg-blue-900 rounded-full animate-pulse"></div>
+              <div className="w-3 h-5 bg-blue-900 rounded-full animate-pulse"></div>
             </div>
 
             {/* Minutes */}
@@ -66,9 +66,9 @@ class LiveClockUpdate extends Component {
             {/* AM/PM Column */}
             {!is24Hour && (
               <div className="ml-3 flex flex-col font-bold text-blue-900 leading-none">
-                <span style={{ opacity: isPm ? 0.1 : 1 }} className="text-xl">A</span>
-                <span style={{ opacity: isPm ? 1 : 0.1 }} className="text-xl">P</span>
-                <span className="text-sm border-t border-blue-200 mt-1">M</span>
+                <span style={{ opacity: isPm ? 0.1 : 1 }} className="text-xl font-[Mitr]">A</span>
+                <span style={{ opacity: isPm ? 1 : 0.1 }} className="text-xl font-[Mitr]">P</span>
+                <span className="text-xl border-t border-blue-200 mt-1 font-[Mitr]">M</span>
               </div>
             )}
           </div>

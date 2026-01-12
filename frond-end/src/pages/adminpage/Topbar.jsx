@@ -7,19 +7,12 @@ function Topbar() {
                     flex items-center justify-between px-6">
 
       {/* App Name */}
-      <h2 className="text-xl font-semibold text-[#141E46]">
+      <h2 className=" font-[Montserrat] text-xl font-semibold text-[#141E46] ">
         Dashboard
       </h2>
 
-      {/* Search */}
-      <div className="hidden md:flex items-center bg-white border border-[#1679AB] rounded-lg px-3 py-2 w-1/3">
-        <FaSearch className="text-gray-400 mr-2" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full outline-none text-sm"
-        />
-      </div>   
+     
+      
 
       {/* Icons */}
       <div className="flex items-center gap-6">

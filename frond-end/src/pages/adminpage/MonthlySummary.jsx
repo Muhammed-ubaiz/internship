@@ -23,17 +23,16 @@ function MonthlySummary() {
     );
 
   return (
-    <div className="flex min-h-screen bg-[#eef5f9]">
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64">
         <Sidebar />
-      </div>
+      
 
       {/* Main */}
-      <div className="ml-64 flex-1 p-8">
+      <div className="ml-52 p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#0a2540]">
+          <h2 className="text-2xl font-bold text-[#0a2540] font-[Montserrat]">
             Monthly Attendance Summary
           </h2>
         </div>
@@ -82,7 +81,7 @@ function MonthlySummary() {
 
             <tbody>
               {filteredData.map((item, index) => (
-                <tr key={index} className="bg-[#f1f8fd]">
+                <tr key={index} className="bg-[#f1f8fd]  transform transition-all duration-500 hover:scale-98">
                   <td className="px-4 py-3 rounded-l-lg font-medium">
                     {item.name}
                   </td>
