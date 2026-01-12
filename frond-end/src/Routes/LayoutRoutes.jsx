@@ -18,7 +18,7 @@ import StudentDailyAttendance from "../pages/studentpage/StudentDailyAttendance"
 import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
 import Mentorlogin from "../pages/mentorpage/Mentorlogin";
-import Mentorcreate from "../pages/mentorpage/Mentorcreate";
+import Mentorcreate from "../pages/adminpage/Mentorcreate";
 
 function LayoutRoutes() {
   return (

@@ -385,46 +385,39 @@ export const saveLocation = async (req, res) => {
 };
 
 
-export const addMentor = async (req, res)=>{
-  try{
-    const {name , email , password , course} = req.body
+export const addMentor = async (req, res) => {
+  try {
+    const { name, email, password, course } = req.body;
 
-    if(!name || !email || !password || !course){
-      return res.status(400).json({success:false,message:"All fields required"})
+    if (!name || !email || !password || !course) {
+      return res.status(400).json({ success: false, message: "All fields required" });
     }
 
-    const exists = await Mentor.findOne({email});
-    if(exists){
-      return res.status(400).json({success: false, message: "Student already exists"})
+    const exists = await Mentor.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ success: false, message: "Mentor already exists" }); // corrected message
     }
 
-    const handedPassword  =  await bcrypt.hash(password,10)
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const mentor = await Mentor.create({
       name,
       email,
-      password:handedPassword,
+      password: hashedPassword,
       course,
-      status:"Active"
-    })
-    
-    res.status(201).json({ success: true, mentor})
-  }catch(error){
-    console.log(error);
-    res.status(500).json({success: false, message: "Server error" })
+      status: "Active",
+    });
+
+    res.status(201).json({ success: true, mentor });
+  } catch (error) {
+    console.error("Add Mentor Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
-}
+};
 
 
-export const getMentor = async(req, res)=>{
-  try{
-    const mentor = await Mentor.find().sort({createdAt:-1})
-    console.log(mentor);
-    res.json(mentor)
-  }catch(error){
-    res.status(500).json({success:false})
-  }
-}
+
+
 
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
