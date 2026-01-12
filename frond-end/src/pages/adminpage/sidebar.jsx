@@ -8,6 +8,8 @@ import {
   FaBook,
   FaPowerOff,
   FaChevronDown,
+  FaElementor,
+  FaUsers,
 } from "react-icons/fa";
 
 function Sidebar() {
@@ -25,17 +27,17 @@ function Sidebar() {
   
 
   const menuItem =
-    "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-white hover:text-black cursor-pointer transition-all";
+    "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-[#EEF6FB] hover:text-black cursor-pointer transition-all";
 
   const subItem =
     "pl-12 py-2 text-xs text-gray-300 hover:text-black hover:bg-white cursor-pointer transition-all";
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col">
+    <div className="fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col ">
 
       {/* Title */}
-      <div className="px-6 py-5 text-white font-bold text-lg border-b border-gray-700">
-        Admin Panel
+      <div className=" text-white font-bold text-lg  border-b border-gray-700">
+        <img src="https://res.cloudinary.com/daadrhhk9/image/upload/v1768208933/36F737FD-D312-4078-9846-4B9C9B266231_1_201_a_1_kuzwta.png" alt="" />
       </div>
 
       {/* Menu */}
@@ -56,11 +58,18 @@ function Sidebar() {
             <span>Courses</span>
           </div>
         </div>
+
+        <div className={menuItem} onClick={() => navigate("/course")}>
+          <div className="flex items-center gap-3">
+            <FaUserClock />
+            <span>Mentors</span>
+          </div>
+        </div>
         
           {/* Students */}
         <div className={menuItem} onClick={() => navigate("/student")}>
           <div className="flex items-center gap-3">
-            <FaUserClock />
+            <FaUsers />
             <span>Students</span>
           </div>
         </div>

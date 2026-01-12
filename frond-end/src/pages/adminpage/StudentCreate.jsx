@@ -12,6 +12,9 @@ function StudentCreate() {
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -184,7 +187,9 @@ function StudentCreate() {
     setMessage("Sending OTP...");
 
     try {
-      const res = await axios.post("http://localhost:3001/admin/send-otp", { email });
+      const res = await axios.post("http://localhost:3001/admin/send-otp", {
+        email,
+      });
       if (res.data.success) {
         setShowOtpModal(true);
         setMessage("OTP sent! Check your email");
@@ -206,7 +211,10 @@ function StudentCreate() {
     setMessage("Verifying OTP...");
 
     try {
-      const res = await axios.post("http://localhost:3001/admin/verify-otp", { email, otp });
+      const res = await axios.post("http://localhost:3001/admin/verify-otp", {
+        email,
+        otp,
+      });
       if (res.data.success) {
         setIsVerified(true);
         setShowOtpModal(false);
@@ -222,14 +230,34 @@ function StudentCreate() {
     }
   };
 
+  const filteredStudents = students.filter((student) => {
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      student.name.toLowerCase().includes(search) ||
+      student.email.toLowerCase().includes(search) ||
+      (student.batch && student.batch.toLowerCase().includes(search)) ||
+      courses
+        .find((c) => c._id === student.course)
+        ?.name.toLowerCase()
+        .includes(search);
+
+    const matchesStatus =
+      statusFilter === "All" || student.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
       <Sidebar />
 
       <div className="ml-52 p-6 max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46]">Students Management</h1>
+          <h1 className="text-2xl font-semibold text-[#141E46] font-[Montserrat]">
+            Students Management
+          </h1>
 
           <button
             onClick={() => setShowCreateModal(true)}
@@ -240,9 +268,149 @@ function StudentCreate() {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-2xl p-5">
-          <table className="w-full text-sm border-separate border-spacing-y-3">
-            <thead>
+        <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0 ">
+
+
+          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
+            {/* Search */}
+            <div className="group relative w-80">
+              {/* Container */}
+              <div
+                className="
+      flex items-center bg-white rounded-full
+      shadow-md
+      transition-all duration-300 ease-out
+      hover:shadow-xl hover:-translate-y-[1px]
+      focus-within:shadow-2xl focus-within:-translate-y-[2px]
+      focus-within:ring-2 focus-within:ring-[#141E46]/40
+      active:scale-[0.98]
+    "
+              >
+                {/* Input */}
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="
+        flex-1 px-5 py-3 text-sm
+        text-gray-700 placeholder-gray-400
+        bg-transparent
+        outline-none
+      "
+                />
+
+                {/* Search Button */}
+                <button
+                  className="
+        relative flex items-center justify-center
+        w-8 h-8 m-1
+        rounded-full
+        bg-[#141E46]
+        transition-all duration-300 ease-out
+        group-hover:scale-105
+        hover:scale-110
+        active:scale-95
+      "
+                >
+                  {/* Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="
+          h-4 w-4 text-white
+          transition-transform duration-300
+          group-hover:rotate-12
+        "
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                    />
+                  </svg>
+
+                  {/* Ripple Effect */}
+                  <span
+                    className="
+        absolute inset-0 rounded-full
+        bg-white/20
+        scale-0
+        active:scale-100
+        transition-transform duration-300
+      "
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative w-72 group">
+              {/* Animated Container */}
+              <div
+                className="
+      flex items-center bg-white rounded-full
+      shadow-md
+      transition-all duration-300 ease-out
+      hover:shadow-xl hover:-translate-y-[1px]
+      focus-within:shadow-2xl focus-within:-translate-y-[2px]
+      focus-within:ring-2 focus-within:ring-[#141E46]/40
+      active:scale-[0.98]
+    "
+              >
+                {/* Select */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="
+        appearance-none w-full bg-transparent
+        px-5 py-3 pr-12
+        text-sm text-gray-700
+        rounded-full cursor-pointer
+        outline-none
+        transition-all duration-300
+        focus:text-[#141E46]
+      "
+                >
+                  <option value="All">All Students</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+
+                {/* Animated Arrow */}
+                <span
+                  className="
+        absolute right-5 text-[#141E46]
+        transition-all duration-300
+        group-hover:rotate-180
+        group-focus-within:rotate-180
+        group-active:scale-90
+      "
+                >
+                  ▼
+                </span>
+
+                {/* Focus Glow */}
+                <span
+                  className="
+        pointer-events-none absolute inset-0 rounded-full
+        opacity-0
+        group-focus-within:opacity-100
+        transition-opacity duration-300
+        ring-2 ring-[#141E46]/30
+      "
+                />
+              </div>
+            </div>
+          </div>
+
+          
+
+          <table className="w-full text-sm border-separate border-spacing-y-3 ">
+            <thead className=" sticky top-24 bg-white">
               <tr className="text-[#1679AB] text-left">
                 <th className="p-3 text-center">#</th>
                 <th className="p-3 text-center">Name</th>
@@ -254,15 +422,25 @@ function StudentCreate() {
               </tr>
             </thead>
             <tbody>
-              {students.map((student, index) => (
-                <tr key={student._id} className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+              {filteredStudents.map((student, index) => (
+                <tr
+                  key={student._id}
+                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
+                >
                   <td className="px-3 py-3 text-center">{index + 1}</td>
-                  <td className="px-4 py-3 w-50 break-all text-center">{student.name}</td>
-                  <td className="px-4 py-3 w-50 break-all text-center">{student.email}</td>
-                  <td className="px-4 py-3 w-37.5 break-all text-center">
-                    {courses.find((c) => c._id === student.course)?.name || "N/A"}
+                  <td className="px-4 py-3 w-50 break-all text-center">
+                    {student.name}
                   </td>
-                  <td className="px-4 py-3 w-37.5 break-all text-center">{student.batch || "N/A"}</td>
+                  <td className="px-4 py-3 w-50 break-all text-center">
+                    {student.email}
+                  </td>
+                  <td className="px-4 py-3 w-37.5 break-all text-center">
+                    {courses.find((c) => c._id === student.course)?.name ||
+                      "N/A"}
+                  </td>
+                  <td className="px-4 py-3 w-37.5 break-all text-center">
+                    {student.batch || "N/A"}
+                  </td>
                   <td className="px-4 py-3 w-37.5 break-all text-center">
                     <span
                       className={`px-3 py-1 rounded-full text-xs ${
@@ -311,7 +489,9 @@ function StudentCreate() {
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold text-center mb-5">Create Student</h2>
+            <h2 className="text-xl font-semibold text-center mb-5">
+              Create Student
+            </h2>
 
             <form onSubmit={handleAddStudent} className="space-y-3">
               <input
@@ -366,7 +546,9 @@ function StudentCreate() {
                 onChange={(e) => {
                   const selectedCourseId = e.target.value;
                   setCourse(selectedCourseId);
-                  const selectedCourse = courses.find((c) => c._id === selectedCourseId);
+                  const selectedCourse = courses.find(
+                    (c) => c._id === selectedCourseId
+                  );
                   if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
                   setBatch("");
                 }}
@@ -454,7 +636,9 @@ function StudentCreate() {
                 onChange={(e) => {
                   const selectedCourseId = e.target.value;
                   setCourse(selectedCourseId);
-                  const selectedCourse = courses.find((c) => c._id === selectedCourseId);
+                  const selectedCourse = courses.find(
+                    (c) => c._id === selectedCourseId
+                  );
                   if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
                   setBatch("");
                 }}
@@ -528,7 +712,11 @@ function StudentCreate() {
               Verify OTP
             </button>
 
-            {message && <p className="text-sm text-gray-600 mt-2 text-center">{message}</p>}
+            {message && (
+              <p className="text-sm text-gray-600 mt-2 text-center">
+                {message}
+              </p>
+            )}
           </div>
         </div>
       )}

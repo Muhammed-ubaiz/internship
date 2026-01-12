@@ -53,12 +53,53 @@ function AdminDashboard() {
   const absentStudents = 25;   // original fixed value
 
   return (
+
+    <div className="min-h-screen bg-[#EEF6FB] ">
+      
+
     <div className="min-h-screen bg-[#EEF6FB]">
+
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 p-3 md:p-6 md:ml-15">
+
+      <div className="ml-37 p-6 ">
+        <div className="max-w-7xl mx-auto">
+
+          {/* Header */}
+          <div className="flex justify-between items-center  ">
+            <Topbar/>
+            <h1 className="text-2xl font-semibold text-[#141E46]">
+              
+            </h1>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-15">
+            
+            <div className="bg-white rounded-2xl shadow-2xl p-5   transform transition-all duration-500 hover:scale-105">
+              <p className="text-sm text-[#1679AB]">Total Students</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">205</h2>
+              <p className="text-xs mt-1 text-red-500">-25% compared to January</p>
+              <div className="h-10 rounded mt-4 bg-[#D1F7DC]"></div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
+              <p className="text-sm text-[#1679AB]">Total Courses</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">5</h2>
+              <p className="text-xs mt-1 text-green-500">+35% compared to January</p>
+              <div className="h-10 rounded mt-4 bg-[#FDE2E2]"></div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
+              <p className="text-sm text-[#1679AB]">Present Students</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
+              <p className="text-xs mt-1 text-red-500">-13% compared to January</p>
+              <div className="h-10 rounded mt-4 bg-[#FFE7D1]"></div>
+            </div>
+
         <div className="ml-37 p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
@@ -87,7 +128,8 @@ function AdminDashboard() {
                 <p className="text-xs mt-1 text-green-500">+35% compared to January</p>
                 <div className="h-10 rounded mt-4 bg-[#FDE2E2]"></div>
 
-            <div className="bg-white rounded-2xl shadow-2xl p-5  hover:scale-105 transition">
+
+            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
               <p className="text-sm text-[#1679AB]">Absent Students</p>
               <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
               <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
@@ -97,6 +139,33 @@ function AdminDashboard() {
             
           </div>
 
+
+
+            <div className="  transform transition-all duration-500 hover:scale-105">
+              <DashboardCalendar />
+            </div>
+
+            <div className="h-80 bg-blue-50 rounded-2xl shadow-2xl flex justify-center items-center   transform transition-all duration-500 hover:scale-105">
+              <LiveClockUpdate />
+            </div>
+
+            <div className="space-y-4 flex flex-col justify-between">
+              <div className="h-35 bg-white rounded-2xl shadow-2xl p-4   transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">
+                  Total Students Working Hours
+                </p>
+                <p className="text-lg font-semibold text-[#141E46]">
+                  00 Hr 00 Min 00 Sec
+                </p>
+              </div>
+
+              <div className= "h-35 bg-white rounded-2xl shadow-2xl p-4    transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">
+                  Total Students Break Hours
+                </p>
+                <p className="text-lg font-semibold text-[#141E46]">
+                  00 Hr 00 Min 55 Sec
+                </p>
 
               {/* Present Students */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 hover:scale-105 transition">
@@ -123,6 +192,7 @@ function AdminDashboard() {
 
               <div className="h-80 bg-white rounded-2xl shadow-2xl flex justify-center items-center hover:scale-105 transition">
                 <LiveClockUpdate />
+
               </div>
 
               <div className="space-y-4 flex flex-col justify-between">

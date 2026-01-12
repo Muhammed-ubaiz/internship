@@ -54,12 +54,12 @@ const handleSubmit = async (e) => {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white ">
       <div className="bg-[#EEF6FB] p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
         
         {/* Title */}
         <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-6">
-         ADMIN LOGIN
+         ADMIN LOGIN 
         </h2>
         <p className="text-center text-gray-400 mb-8">
           Login to your account

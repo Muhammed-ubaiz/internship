@@ -3,19 +3,18 @@ import Sidebar from "./sidebar";
 
 function LeaveHistory() {
   return (
-    <div className="flex min-h-screen bg-[#eef5f9]">
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
 
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64">
         <Sidebar />
-      </div>
+      
 
-      {/* Main Content */}
-      <div className="ml-64 flex-1 p-8">
+      
+      <div className="ml-52 p-6 max-w-7xl mx-auto">
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-[#0a2540]">Leave History (Admin)</h2>
+          <h2 className="text-2xl font-bold text-[#0a2540] font-[Montserrat]">Leave History</h2>
           <p className="text-sm text-gray-500 mt-1">Student Leave Records</p>
         </div>
 
@@ -42,7 +41,7 @@ function LeaveHistory() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
           {/* Card 1 */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer flex flex-col justify-between">
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl  cursor-pointer flex flex-col justify-between   transform transition-all duration-500 hover:scale-102">
             <div>
               <h3 className="font-semibold text-lg">Rahul</h3>
               <p className="text-sm text-gray-500">React JS | Batch A</p>
@@ -58,7 +57,7 @@ function LeaveHistory() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer flex flex-col justify-between">
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl  cursor-pointer flex flex-col justify-between  transform transition-all duration-500 hover:scale-102">
             <div>
               <h3 className="font-semibold text-lg">Anu</h3>
               <p className="text-sm text-gray-500">Python | Batch B</p>
@@ -74,7 +73,7 @@ function LeaveHistory() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer flex flex-col justify-between">
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl  cursor-pointer flex flex-col justify-between   transform transition-all duration-500 hover:scale-102">
             <div>
               <h3 className="font-semibold text-lg">Suresh</h3>
               <p className="text-sm text-gray-500">UI/UX | Batch C</p>

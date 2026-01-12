@@ -54,16 +54,15 @@ function DailyAttendance() {
     });
 
   return (
-    <div className="flex min-h-screen bg-[#eef5f9]">
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64">
         <Sidebar />
-      </div>
+      
 
       {/* Content */}
-      <div className="ml-64 flex-1 p-8">
-        <h2 className="text-2xl font-bold text-[#0a2540] mb-1">
-          Daily Attendance (Admin)
+      <div className="ml-52 p-6 max-w-7xl mx-auto">
+        <h2 className="text-2xl font-bold text-[#0a2540] mb-1 font-[Montserrat]">
+          Daily Attendance
         </h2>
         <p className="text-sm text-gray-500 mb-4">Date : 2026-01-07</p>
 
@@ -137,7 +136,7 @@ function DailyAttendance() {
 
             <tbody>
               {filteredData.map((i, idx) => (
-                <tr key={idx} className="bg-[#f1f8fd]">
+                <tr key={idx} className="bg-[#f1f8fd]  transform transition-all duration-500 hover:scale-98">
                   <td className="px-4 py-3 rounded-l-lg font-medium">
                     {i.name}
                   </td>

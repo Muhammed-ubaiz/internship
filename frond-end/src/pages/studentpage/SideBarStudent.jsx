@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -6,8 +6,6 @@ import {
   FaUmbrellaBeach,
   FaPowerOff,
   FaChevronDown,
-  FaBars,
-  FaTimes,
 } from "react-icons/fa";
 
 function SideBarStudent() {
@@ -15,7 +13,12 @@ function SideBarStudent() {
 
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.location.replace("/"); // redirect to login or home
+  };
 
   const menuItem =
     "flex items-center justify-between px-6 py-3 text-sm text-white hover:bg-white hover:text-black cursor-pointer transition-all";
@@ -24,145 +27,109 @@ function SideBarStudent() {
     "pl-12 py-2 text-xs text-gray-300 hover:text-black hover:bg-white cursor-pointer transition-all";
 
   return (
-    <>
-      {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between bg-[#141E46]/90 px-4 py-3 text-white">
-        <h2 className="font-bold">Student Panel</h2>
-        <button onClick={() => setSidebarOpen(true)}>
-          <FaBars size={22} />
-        </button>
-      </div>
+    <div className="fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col">
 
-      {/* Overlay (mobile) */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+      {/* Title / Logo */}
+      <div className="text-white font-bold text-lg border-b border-gray-700 ">
+        <img
+          src="https://res.cloudinary.com/daadrhhk9/image/upload/v1768208933/36F737FD-D312-4078-9846-4B9C9B266231_1_201_a_1_kuzwta.png"
+          alt="Student Panel Logo"
+          className="w-full object-contain"
         />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-screen w-55 bg-[#141E46]/90 flex flex-col z-50
-        transform transition-transform duration-300
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
-      >
-        {/* Title */}
-        <div className="px-6 py-5 text-white font-bold text-lg border-b border-gray-700 flex justify-between items-center">
-          Student Panel
-          <button
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Menu */}
-        <div className="flex flex-col flex-1 mt-2">
-
-          {/* Dashboard */}
-          <div
-            className={menuItem}
-            onClick={() => {
-              navigate("/studentsdashboard");
-              setSidebarOpen(false);
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <FaHome />
-              <span>Dashboard</span>
-            </div>
-          </div>
-
-          {/* Attendance */}
-          <div
-            className={menuItem}
-            onClick={() => setAttendanceOpen(!attendanceOpen)}
-          >
-            <div className="flex items-center gap-3">
-              <FaCalendarCheck />
-              <span>Attendance</span>
-            </div>
-            <FaChevronDown
-              className={`transition-transform ${ 
-                attendanceOpen ? "rotate-180" : ""
-              }`}
-            />
-          </div>
-
-          {attendanceOpen && (
-            <div>
-              <div
-                className={subItem}
-                n
-                onClick={() =>{
-                  navigate("/StudentDailyAttendance")
-                  setSidebarOpen(false)}}
-              >
-                Daily Attendance
-              </div>
-              <div
-                className={subItem}
-                onClick={() => {
-                  navigate("/studentMonthlySummary");
-                  setSidebarOpen(false);
-                }}
-              >
-                Monthly Summary
-              </div>
-            </div>
-          )}
-
-          {/* Leave */}
-          <div
-            className={menuItem}
-            onClick={() => setLeaveOpen(!leaveOpen)}
-          >
-            <div className="flex items-center gap-3">
-              <FaUmbrellaBeach />
-              <span>Leave</span>
-            </div>
-            <FaChevronDown
-              className={`transition-transform ${
-                leaveOpen ? "rotate-180" : ""
-              }`}
-            />
-          </div>
-
-          {leaveOpen && (
-            <div>
-              <div
-                className={subItem}
-                onClick={() => navigate("/LeaveApply")}
-              >
-                Apply Leave
-              </div>
-              <div
-                className={subItem}
-                onClick={() => navigate("/StudentLeaveHistory")}
-              >
-                Leave History
-              </div>
-            </div>
-          )}
-
-          {/* Logout */}
-          <div className="mt-auto border-t border-gray-700">
-            <div
-              className={menuItem}
-              onClick={() => navigate("/")}
-            >
-              <div className="flex items-center gap-3">
-                <FaPowerOff />
-                <span>Logout</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-    </>
+
+      {/* Menu */}
+      <div className="flex flex-col flex-1 mt-2">
+
+        {/* Dashboard */}
+        <div
+          className={menuItem}
+          onClick={() => navigate("/studentsdashboard")}
+        >
+          <div className="flex items-center gap-3">
+            <FaHome />
+            <span>Dashboard</span>
+          </div>
+        </div>
+
+        {/* Attendance */}
+        <div
+          className={menuItem}
+          onClick={() => setAttendanceOpen(!attendanceOpen)}
+        >
+          <div className="flex items-center gap-3">
+            <FaCalendarCheck />
+            <span>Attendance</span>
+          </div>
+          <FaChevronDown
+            className={`transition-transform ${
+              attendanceOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {attendanceOpen && (
+          <div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/StudentDailyAttendance")}
+            >
+              Daily Attendance
+            </div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/studentMonthlySummary")}
+            >
+              Monthly Summary
+            </div>
+          </div>
+        )}
+
+        {/* Leave */}
+        <div
+          className={menuItem}
+          onClick={() => setLeaveOpen(!leaveOpen)}
+        >
+          <div className="flex items-center gap-3">
+            <FaUmbrellaBeach />
+            <span>Leave</span>
+          </div>
+          <FaChevronDown
+            className={`transition-transform ${
+              leaveOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {leaveOpen && (
+          <div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/LeaveApply")}
+            >
+              Apply Leave
+            </div>
+            <div
+              className={subItem}
+              onClick={() => navigate("/StudentLeaveHistory")}
+            >
+              Leave History
+            </div>
+          </div>
+        )}
+
+        {/* Logout */}
+        <div className="mt-auto border-t border-gray-700">
+          <div className={menuItem} onClick={handleLogout}>
+            <div className="flex items-center gap-3">
+              <FaPowerOff />
+              <span>Logout</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   );
 }
 

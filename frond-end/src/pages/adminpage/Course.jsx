@@ -17,23 +17,22 @@ function Course() {
   const [batches, setBatches] = useState([]);
   const [batchName, setBatchName] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+
   const [editCourseName, setEditCourseName] = useState("");
   const [editDuration, setEditDuration] = useState("");
 
- 
   const fetchCourse = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get(
-        "http://localhost:3001/admin/getCourse",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
+      const res = await axios.get("http://localhost:3001/admin/getCourse", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      });
       setCourses(res.data);
     } catch (error) {
       console.error(error);
@@ -44,7 +43,6 @@ function Course() {
     fetchCourse();
   }, []);
 
-  
   const handleAddCourse = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -71,7 +69,6 @@ function Course() {
     }
   };
 
-  
   const handleViewBatch = async (course) => {
     setSelectedCourse(course);
     setShowBatchModal(true);
@@ -95,7 +92,6 @@ function Course() {
     }
   };
 
-
   const handleAddBatch = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -107,7 +103,7 @@ function Course() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            Role:role,
+            Role: role,
           },
         }
       );
@@ -119,27 +115,21 @@ function Course() {
     }
   };
 
- 
   const handleDeleteBatch = async (id) => {
-
-    const token = localStorage.getItem("token")
-    const role = localStorage.getItem("role")
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
     try {
-      await axios.delete(
-        `http://localhost:3001/admin/deleteBatch/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
+      await axios.delete(`http://localhost:3001/admin/deleteBatch/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      });
       setBatches(batches.filter((b) => b._id !== id));
     } catch (error) {
       console.error(error);
     }
   };
-
 
   const handleEditClick = (course) => {
     setSelectedCourse(course);
@@ -165,9 +155,7 @@ function Course() {
       );
 
       setCourses(
-        courses.map((c) =>
-          c._id === selectedCourse._id ? res.data.course : c
-        )
+        courses.map((c) => (c._id === selectedCourse._id ? res.data.course : c))
       );
 
       setShowEditCourseModal(false);
@@ -176,51 +164,75 @@ function Course() {
     }
   };
 
-  
   const handleToggleStatus = async (course) => {
-    
-  try {
-    
-    const res = await axios.put(
-      `http://localhost:3001/admin/course/status/${course._id}`
-  
-    );
+    try {
+      const res = await axios.put(
+        `http://localhost:3001/admin/course/status/${course._id}`
+      );
 
-    setCourses(
-      courses.map((c) =>
-        c._id === course._id ? res.data.data : c
-      )
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
+      setCourses(
+        courses.map((c) => (c._id === course._id ? res.data.data : c))
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
+  const filteredCourses = courses.filter((course) => {
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      course.name.toLowerCase().includes(search) ||
+      course.duration.toLowerCase().includes(search);
+
+    const matchesStatus =
+      statusFilter === "All" || course.status === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] flex">
-      <div className="hidden md:block w-64">
-        <Sidebar />
-      </div>
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
+      <Sidebar />
 
-      <div className="flex-1 p-6 ">
+      <div className="ml-52 p-6 max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46]">
-            Courses
-          </h1>
+          <h1 className="text-2xl font-semibold text-[#141E46] font-[Montserrat]">Courses</h1>
           <button
             onClick={() => setShowCourseModal(true)}
             className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
           >
-            Add Course
+            + Add Course
           </button>
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-2xl p-5">
+        <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0 ">
+          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border px-4 py-2 rounded-lg w-72   focus:outline-[#141E46]"
+            />
+
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border px-4 py-2 rounded-lg   focus:outline-[#141E46]"
+            >
+              <option value="All">All Courses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
           <table className="w-full text-sm border-separate border-spacing-y-3">
-            <thead>
+            <thead className=" h-15 sticky top-18 bg-white">
               <tr className="text-[#1679AB]">
                 <th>#</th>
                 <th>Course Name</th>
@@ -231,16 +243,20 @@ function Course() {
             </thead>
 
             <tbody>
-              {courses.map((course, index) => (
+              {filteredCourses.map((course, index) => (
                 <tr
                   key={course._id}
-                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF]"
+                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
                 >
                   <td className="p-3">{index + 1}</td>
-                  <td  className="px-4 py-3 w-[200px] break-all text-center">{course.name}</td>
-                  <td  className="px-4 py-3 w-[200px] break-all text-center">{course.duration}</td>
+                  <td className="px-4 py-3 w-[200px] break-all text-center">
+                    {course.name}
+                  </td>
+                  <td className="px-4 py-3 w-[200px] break-all text-center">
+                    {course.duration}
+                  </td>
 
-                  <td  className="px-4 py-3 w-[200px] break-all text-center">
+                  <td className="px-4 py-3 w-[200px] break-all text-center">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         course.status === "active"
@@ -252,7 +268,7 @@ function Course() {
                     </span>
                   </td>
 
-                  <td   className="p-3 text-center flex flex-wrap gap-2 justify-center">
+                  <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
                     <button
                       onClick={() => handleViewBatch(course)}
                       className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
@@ -275,9 +291,7 @@ function Course() {
                           : "bg-green-600 hover:bg-green-700 px-6"
                       }`}
                     >
-                      {course.status === "active"
-                        ? "Inactive"
-                        : "Active"}
+                      {course.status === "active" ? "Inactive" : "Active"}
                     </button>
                   </td>
                 </tr>
@@ -285,7 +299,6 @@ function Course() {
             </tbody>
           </table>
         </div>
-
 
         {showCourseModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
@@ -296,9 +309,7 @@ function Course() {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">
-                Add Course
-              </h2>
+              <h2 className="text-lg font-semibold mb-4">Add Course</h2>
               <input
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
@@ -336,9 +347,7 @@ function Course() {
               </h2>
 
               {batches.length === 0 ? (
-                <p className="text-gray-500">
-                  No batches found
-                </p>
+                <p className="text-gray-500">No batches found</p>
               ) : (
                 <ul className="space-y-2 mb-4">
                   {batches.map((b) => (
@@ -378,9 +387,7 @@ function Course() {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">
-                Add Batch
-              </h2>
+              <h2 className="text-lg font-semibold mb-4">Add Batch</h2>
               <input
                 type="date"
                 value={batchName}
@@ -407,21 +414,15 @@ function Course() {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">
-                Edit Course
-              </h2>
+              <h2 className="text-lg font-semibold mb-4">Edit Course</h2>
               <input
                 value={editCourseName}
-                onChange={(e) =>
-                  setEditCourseName(e.target.value)
-                }
+                onChange={(e) => setEditCourseName(e.target.value)}
                 className="w-full border p-2 rounded mb-3"
               />
               <input
                 value={editDuration}
-                onChange={(e) =>
-                  setEditDuration(e.target.value)
-                }
+                onChange={(e) => setEditDuration(e.target.value)}
                 className="w-full border p-2 rounded mb-4"
               />
               <button
