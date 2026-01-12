@@ -24,6 +24,7 @@ app.use("/admin", adminRoutes);
 app.use("/student",studentroutes)
 
 
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
