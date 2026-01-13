@@ -14,6 +14,40 @@ function Studentsdashboard() {
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [liveWorkingTime, setLiveWorkingTime] = useState("00 Hr 00 Mins 00 Secs");
 
+  // Load today's attendance on component mount
+  useEffect(() => {
+    const loadTodayAttendance = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      try {
+        const res = await axios.get("http://localhost:3001/student/today-attendance", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            role: role,
+          },
+        });
+
+        if (res.data.attendance) {
+          const attendance = res.data.attendance;
+          setPunchInTime(attendance.punchInTime);
+          setPunchOutTime(attendance.punchOutTime);
+          setIsPunchedIn(!attendance.punchOutTime);
+
+          if (attendance.punchOutTime) {
+            // Calculate total working hours
+            const workTime = calculateWorkingHours(attendance.punchInTime, attendance.punchOutTime);
+            setWorkingHours(workTime.formatted);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading today's attendance:", error);
+      }
+    };
+
+    loadTodayAttendance();
+  }, []);
+
   // Institution coordinates from Google Maps link
   // Aviv Digital Academy - Kozhikode, Kerala
   const INSTITUTION_LAT = 11.278746549272379;
@@ -265,7 +299,7 @@ function Studentsdashboard() {
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Total Working Hours</p>
-            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 00m 00s</h2>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">{isPunchedIn ? liveWorkingTime : workingHours}</h2>
             <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
             <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
           </div>
@@ -300,7 +334,7 @@ function Studentsdashboard() {
             <div className="bg-white rounded-2xl shadow-2xl p-4">
               <p className="text-sm text-[#1679AB]">Today Break Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">
-                00 Hr 00 Mins 55 Secs
+                00 Hr 00 Mins 00 Secs
               </p>
             </div>
 
