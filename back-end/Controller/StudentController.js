@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
+import Location from "../Model/Locationmodel.js";
 
 // config/jwt.js
  const JWT_SECRET = process.env.JWT_SECRET || "key321";
@@ -187,3 +188,19 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+export const saveLocations = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body; // req.body must exist
+
+    if (latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ message: "Latitude & longitude required" });
+    }
+
+    await Location.create({ latitude, longitude });
+
+    res.status(201).json({ message: "Location saved successfully" });
+  } catch (error) {
+    console.error("SAVE LOCATION ERROR:", error);
+    res.status(500).json({ message: "Failed to save location" });
+  }
+};
