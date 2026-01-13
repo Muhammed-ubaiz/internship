@@ -1,76 +1,9 @@
 import { useState, useEffect } from "react";
-import { FaBell, FaSearch, FaMapMarkerAlt } from "react-icons/fa";
 import LiveClockUpdate from "../LiveClockUpdate";
 import DashboardCalendar from "../Dashboardcalender";
 import SideBarStudent from "./SideBarStudent";
+import StudentTopbar from "./StudentTopbar";
 import axios from "axios";
-
-function StudentTopbar({ onLocationSave }) {
-  const getLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const latitude = pos.coords.latitude;
-        const longitude = pos.coords.longitude;
-
-        try {
-          const res = await fetch("http://localhost:3001/admin/location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latitude, longitude }),
-          });
-          const data = await res.json();
-
-          if (!res.ok) {
-            alert("Error: " + data.message);
-            return;
-          }
-
-          alert(data.message);
-          if (onLocationSave) onLocationSave();
-        } catch (err) {
-          alert("Error saving location: " + err.message);
-        }
-      },
-      () => alert("Location permission denied")
-    );
-  };
-
-  return (
-    <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
-      <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]">
-        Dashboard
-      </h2>
-
-      <div className="hidden md:flex items-center bg-white border border-[#1679AB] rounded-lg px-3 py-2 w-1/3">
-        <FaSearch className="text-gray-400 mr-2" />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="w-full outline-none text-sm"
-        />
-      </div>
-
-      <div className="flex items-center gap-6">
-        <div
-          onClick={getLocation}
-          className="cursor-pointer text-[#1679AB] hover:text-[#141E46]"
-          title="Save Location"
-        >
-          <FaMapMarkerAlt size={20} />
-        </div>
-
-        <div className="relative cursor-pointer">
-          <FaBell className="text-[#1679AB]" size={20} />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Studentsdashboard() {
   const [loading, setLoading] = useState(false);
@@ -83,9 +16,9 @@ function Studentsdashboard() {
 
   // Institution coordinates from Google Maps link
   // Aviv Digital Academy - Kozhikode, Kerala
-  const INSTITUTION_LAT = 11.2595832;
-  const INSTITUTION_LNG = 75.7808613;
-  const MAX_DISTANCE = 50; // meters
+  const INSTITUTION_LAT = 11.278746549272379;
+  const INSTITUTION_LNG = 75.77908191030914;
+  const MAX_DISTANCE = 1000; // 5 meters only - Very strict geofencing
 
   // Live timer for working hours
   useEffect(() => {
@@ -177,12 +110,17 @@ function Studentsdashboard() {
         INSTITUTION_LNG
       );
 
+      console.log("Current Location:", loc);
+      console.log("Institution Location:", { lat: INSTITUTION_LAT, lng: INSTITUTION_LNG });
+      console.log("Distance:", distance, "meters");
+
       setLocationStatus(`Distance from institution: ${Math.round(distance)}m`);
 
       // Check if within 50 meters
       if (distance > MAX_DISTANCE) {
+        const distanceInKm = (distance / 1000).toFixed(2);
         alert(
-          `You are ${Math.round(distance)} meters away from the institution. You must be within ${MAX_DISTANCE} meters to punch in.`
+          `❌ Punch In Denied\n\nYou are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\nYou must be within ${MAX_DISTANCE} meters to punch in.\n\nPlease come to the institution premises.`
         );
         setLocationStatus(`❌ Too far from institution (${Math.round(distance)}m)`);
         setLoading(false);
@@ -212,6 +150,7 @@ function Studentsdashboard() {
       setPunchOutTime(null);
       setWorkingHours("00 Hr 00 Mins 00 Secs");
       alert("Punch In Successful! ✅");
+      setLocationStatus(`✅ Punched in successfully at ${Math.round(distance)}m from institution`);
     } catch (error) {
       alert(error?.response?.data?.message || error.message || "Punch In Failed");
       setLocationStatus("❌ Location error");
@@ -319,14 +258,14 @@ function Studentsdashboard() {
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Total Break Hours</p>
-            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 40m 55s</h2>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 00m 00s</h2>
             <p className="text-xs mt-1 text-red-500">-13% compared to January</p>
             <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Total Working Hours</p>
-            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 40m 55s</h2>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 00m 00s</h2>
             <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
             <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
           </div>

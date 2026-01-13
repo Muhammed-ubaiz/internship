@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
-import Location from "../Model/Locationmodel.js";
 
 // config/jwt.js
  const JWT_SECRET = process.env.JWT_SECRET || "key321";
@@ -188,19 +187,100 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-export const saveLocations = async (req, res) => {
+export const saveLocation = async (req, res) => {
   try {
-    const { latitude, longitude } = req.body; // req.body must exist
+    const { latitude, longitude, accuracy } = req.body;
+    const studentId = req.user.id; // From JWT token
 
-    if (latitude === undefined || longitude === undefined) {
-      return res.status(400).json({ message: "Latitude & longitude required" });
+    // Validate coordinates
+    if (!latitude || !longitude) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Latitude and longitude are required' 
+      });
     }
 
-    await Location.create({ latitude, longitude });
+    if (latitude < -90 || latitude > 90) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid latitude value' 
+      });
+    }
 
-    res.status(201).json({ message: "Location saved successfully" });
+    if (longitude < -180 || longitude > 180) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid longitude value' 
+      });
+    }
+
+    // Create location document
+    const locationData = new Location({
+      studentId,
+      latitude,
+      longitude,
+      accuracy,
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude] // GeoJSON format: [lng, lat]
+      }
+    });
+
+    await locationData.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Location saved successfully',
+      data: {
+        latitude,
+        longitude,
+        accuracy,
+        timestamp: locationData.timestamp
+      }
+    });
+
   } catch (error) {
-    console.error("SAVE LOCATION ERROR:", error);
-    res.status(500).json({ message: "Failed to save location" });
+    console.error('Error saving location:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving location',
+      error: error.message
+    });
+  }
+};
+
+// Get location history
+export const getLocationHistory = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { limit = 10, startDate, endDate } = req.query;
+
+    const query = { studentId };
+
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) query.timestamp.$gte = new Date(startDate);
+      if (endDate) query.timestamp.$lte = new Date(endDate);
+    }
+
+    const locations = await Location.find(query)
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit))
+      .select('-__v');
+
+    res.status(200).json({
+      success: true,
+      count: locations.length,
+      data: locations
+    });
+
+  } catch (error) {
+    console.error('Error fetching location history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching location history',
+      error: error.message
+    });
   }
 };
