@@ -147,14 +147,7 @@ function StudentTopbar({ onLocationSave }) {
           Dashboard
         </h2>
 
-        <div className="hidden md:flex items-center bg-white border border-[#1679AB] rounded-lg px-3 py-2 w-1/3">
-          <FaSearch className="text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full outline-none text-sm"
-          />
-        </div>
+      
 
         <div className="flex items-center gap-6">
           {/* 📍 Location - Opens Map Modal */}
@@ -211,7 +204,7 @@ function StudentTopbar({ onLocationSave }) {
               </div>
             </div>
 
-            {/* Modal Footer */}
+           
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <a
                 href="https://maps.app.goo.gl/uCAETrGA2yTEmEDz9?g_st=aw"  // Updated to the new link
