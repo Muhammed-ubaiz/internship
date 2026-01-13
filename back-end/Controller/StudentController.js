@@ -64,28 +64,27 @@ export const checkstudent = async (req, res) => {
 
 export const punchIn = async (req, res) => {
   try {
-    const studentId = req.user.id; // assuming auth middleware sets req.user
+    const studentemail = req.user.id;
     const { latitude, longitude, distance } = req.body;
 
-    // Get today's date (midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Check if already punched in today
-    const alreadyPunched = await Attendance.findOne({
-      studentId,
+    // ❌ Block only if ACTIVE session exists
+    const activeSession = await Attendance.findOne({
+      studentemail,
       date: today,
+      punchOutTime: { $exists: false },
     });
 
-    if (alreadyPunched) {
+    if (activeSession) {
       return res.status(400).json({
-        message: "❌ Already punched in today",
+        message: "Already punched in. Please punch out first.",
       });
     }
 
-    // Create new attendance record
     const attendance = await Attendance.create({
-      studentId,
+      studentemail,
       punchInTime: new Date(),
       latitude,
       longitude,
@@ -93,20 +92,17 @@ export const punchIn = async (req, res) => {
       date: today,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "✅ Punch in successful",
-      attendance,
-    });
+    res.status(200).json({ attendance });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+
 // Punch Out
 export const punchOut = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentemail = req.user.id;
     const { latitude, longitude, workingHours } = req.body;
 
     const today = new Date();
@@ -114,7 +110,7 @@ export const punchOut = async (req, res) => {
 
     // Find today's attendance that has not punched out yet
     const attendance = await Attendance.findOne({
-      studentId,
+      studentemail,
       date: today,
       $or: [{ punchOutTime: null }, { punchOutTime: { $exists: false } }],
     });
@@ -144,13 +140,13 @@ export const punchOut = async (req, res) => {
 
 export const getTodayAttendance = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentemail = req.user.id;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const attendance = await Attendance.findOne({
-      studentId,
+      studentemail,
       date: today,
     });
 

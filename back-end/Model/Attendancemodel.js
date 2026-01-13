@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema({
-  studentId: {
+  studentemail: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Student",
     required: true,
