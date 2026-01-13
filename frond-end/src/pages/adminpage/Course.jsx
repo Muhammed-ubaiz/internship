@@ -198,7 +198,9 @@ function Course() {
       <div className="ml-52 p-6 max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46] font-[Montserrat]">Courses</h1>
+          <h1 className="text-2xl font-semibold text-[#141E46] font-[Montserrat]">
+            Courses Management
+          </h1>
           <button
             onClick={() => setShowCourseModal(true)}
             className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
@@ -209,26 +211,139 @@ function Course() {
 
         {/* TABLE */}
         <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0 ">
-          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
+          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5 z-20">
             {/* Search */}
-            <input
-              type="text"
-              placeholder="Search courses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border px-4 py-2 rounded-lg w-72   focus:outline-[#141E46]"
-            />
+            <div className="group relative w-80">
+              {/* Container */}
+              <div
+                className="
+            flex items-center bg-white rounded-full
+            shadow-md
+            transition-all duration-300 ease-out
+            hover:shadow-xl hover:-translate-y-[1px]
+            focus-within:shadow-2xl focus-within:-translate-y-[2px]
+            focus-within:ring-2 focus-within:ring-[#141E46]/40
+            active:scale-[0.98]
+          "
+              >
+                {/* Input */}
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="
+              flex-1 px-5 py-3 text-sm
+              text-gray-700 placeholder-gray-400
+              bg-transparent
+              outline-none
+            "
+                />
+
+                {/* Search Button */}
+                <button
+                  className="
+              relative flex items-center justify-center
+              w-8 h-8 m-1
+              rounded-full
+              bg-[#141E46]
+              transition-all duration-300 ease-out
+              group-hover:scale-105
+              hover:scale-110
+              active:scale-95
+            "
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="
+                h-4 w-4 text-white
+                transition-transform duration-300
+                group-hover:rotate-12
+              "
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                    />
+                  </svg>
+
+                  {/* Ripple Effect */}
+                  <span
+                    className="
+                absolute inset-0 rounded-full
+                bg-white/20
+                scale-0
+                active:scale-100
+                transition-transform duration-300
+              "
+                  />
+                </button>
+              </div>
+            </div>
 
             {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border px-4 py-2 rounded-lg   focus:outline-[#141E46]"
-            >
-              <option value="All">All Courses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+            <div className="relative w-72 group">
+              {/* Animated Container */}
+              <div
+                className="
+            flex items-center bg-white rounded-full
+            shadow-md
+            transition-all duration-300 ease-out
+            hover:shadow-xl hover:-translate-y-[1px]
+            focus-within:shadow-2xl focus-within:-translate-y-[2px]
+            focus-within:ring-2 focus-within:ring-[#141E46]/40
+            active:scale-[0.98]
+          "
+              >
+                {/* Select */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="
+              appearance-none w-full bg-transparent
+              px-5 py-3 pr-12
+              text-sm text-gray-700
+              rounded-full cursor-pointer
+              outline-none
+              transition-all duration-300
+              focus:text-[#141E46]
+            "
+                >
+                  <option value="All">All Courses</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+
+                {/* Animated Arrow */}
+                <span
+                  className="
+              absolute right-5 text-[#141E46]
+              transition-all duration-300
+              group-hover:rotate-180
+              group-focus-within:rotate-180
+              group-active:scale-90
+            "
+                >
+                  ▼
+                </span>
+
+                {/* Focus Glow */}
+                <span
+                  className="
+              pointer-events-none absolute inset-0 rounded-full
+              opacity-0
+              group-focus-within:opacity-100
+              transition-opacity duration-300
+              ring-2 ring-[#141E46]/30
+            "
+                />
+              </div>
+            </div>
           </div>
 
           <table className="w-full text-sm border-separate border-spacing-y-3">
@@ -258,10 +373,10 @@ function Course() {
 
                   <td className="px-4 py-3 w-[200px] break-all text-center">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      className={`px-3 py-1 rounded-full text-xs  ${
                         course.status === "active"
                           ? "bg-green-100 text-green-700 px-8"
-                          : "bg-red-100 text-red-700 px-7"
+                          : "bg-red-100 text-red-700 px-7 "
                       }`}
                     >
                       {course.status}
