@@ -28,7 +28,7 @@ adminRoutes.post("/updateCourse/:_id",verifyToken, updateCourse);
 
 adminRoutes.get("/getBatches/:courseName",verifyToken ,getBatches);
 adminRoutes.post("/addBatch/:courseName",verifyToken, addBatch);
-adminRoutes.delete("/deleteBatch/:batchId", deleteBatch);
+adminRoutes.delete("/deleteBatch/:batchId",verifyToken, deleteBatch);
 
 adminRoutes.post("/addStudent",verifyToken, addStudent);
 adminRoutes.get("/getStudents",verifyToken, getStudents);
