@@ -43,24 +43,17 @@ function Topbar() {
   return (
     <>
       <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
-        {/* App Name */}
+        
         <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]">
           Dashboard
         </h2>
 
-        {/* Search */}
-        <div className="hidden md:flex items-center bg-white border border-[#1679AB] rounded-lg px-3 py-2 w-1/3">
-          <FaSearch className="text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full outline-none text-sm"
-          />
-        </div>
+     
+     
 
-        {/* Icons */}
+        
         <div className="flex items-center gap-6">
-          {/* 📍 Location - Opens Map Modal */}
+       
           <div
             onClick={toggleMapModal}
             className="cursor-pointer text-[#1679AB] hover:text-[#141E46] transition-colors"
@@ -69,7 +62,7 @@ function Topbar() {
             <FaMapMarkerAlt size={20} />
           </div>
 
-          {/* 🔔 Notification */}
+      
           <div className="relative cursor-pointer">
             <FaBell className="text-[#1679AB]" size={20} />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -77,7 +70,7 @@ function Topbar() {
         </div>
       </div>
 
-      {/* Map Modal */}
+  
       {showMapModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -87,7 +80,7 @@ function Topbar() {
             className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+      
             <div className="flex items-center justify-between p-4 border-b border-[#1679AB]">
               <h3 className="text-xl font-semibold text-[#141E46]">
                 Aviv Digital Academy Location
@@ -100,7 +93,7 @@ function Topbar() {
               </button>
             </div>
 
-            {/* Modal Body - Google Maps Iframe */}
+          
             <div className="p-4">
               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                 <iframe
@@ -115,7 +108,7 @@ function Topbar() {
               </div>
             </div>
 
-            {/* Modal Footer */}
+           
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <a
                 href="https://maps.app.goo.gl/pVGovdtuynCpghqY6"
@@ -136,21 +129,6 @@ function Topbar() {
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-      `}</style>
     </>
   );
 }
