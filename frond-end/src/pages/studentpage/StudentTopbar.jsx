@@ -55,7 +55,7 @@ function StudentTopbar({ onLocationSave }) {
 
         // Check if within 5 meters
         if (distance > MAX_DISTANCE) {
-          const distanceInKm = (distance / 100).toFixed(2);
+          const distanceInKm = (distance / 5).toFixed(2);
           alert(
             `❌ Location Save Denied\n\n` +
             `You are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\n` +
