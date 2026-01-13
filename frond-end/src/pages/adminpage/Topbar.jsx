@@ -104,7 +104,7 @@ function Topbar() {
             <div className="p-4">
               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d250414.9858769244!2d75.46577453613278!3d11.28094212608283!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba65ecdd0f2eaff%3A0x46429c97d27bcc64!2sAviv%20Digital%20Academy!5e0!3m2!1sen!2sin!4v1768230052479!5m2!1sen!2sin"
+                  src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d488.8253478741679!2d75.77882836155267!3d11.278746549272383!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTHCsDE2JzQzLjUiTiA3NcKwNDYnNDQuNyJF!5e0!3m2!1sen!2sin!4v1737029715743!5m2!1sen!2sin"
                   className="absolute top-0 left-0 w-full h-full rounded-lg"
                   style={{ border: 0 }}
                   allowFullScreen=""
@@ -118,7 +118,7 @@ function Topbar() {
             {/* Modal Footer */}
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <a
-                href="https://www.google.com/maps/place/Aviv+Digital+Academy/@11.2809421,75.4657745,250415m/data=!3m1!1e3!4m6!3m5!1s0x3ba65ecdd0f2eaff:0x46429c97d27bcc64!8m2!3d11.2595832!4d75.7808613!16s%2Fg%2F11vys4q91m?entry=ttu"
+                href="https://maps.app.goo.gl/pVGovdtuynCpghqY6"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#1679AB] hover:text-[#141E46] font-semibold underline"
