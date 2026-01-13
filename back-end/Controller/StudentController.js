@@ -64,47 +64,83 @@ export const checkstudent = async (req, res) => {
 
 export const punchIn = async (req, res) => {
   try {
-    const { latitude, longitude } = req.body;
+    const studentId = req.user.id;
+    const { latitude, longitude, distance } = req.body;
 
-    // ✅ get studentId from token
-    const studentEmail = req.user.email;
-
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: "Location required" });
-    }
-
-    // Get today's date at 00:00
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ✅ Check punch-in for THIS student ONLY
-    // const existing = await Attendance.findOne({
-    //   studentId,
-    //   date: today,
-    // });
-
-    // if (existing) {
-    //   return res.status(400).json({ message: "Already punched in today" });
-    // }
-
-    const attendance = await Attendance.create({
-      studentEmail,
-  
-      punchInTime: new Date(),
-      punchInLocation: { latitude, longitude },
+    const alreadyPunched = await Attendance.findOne({
+      studentId,
       date: today,
     });
 
-    res.status(201).json({
+    if (alreadyPunched) {
+      return res.status(400).json({
+        message: "Already punched in today",
+      });
+    }
+
+    const attendance = await Attendance.create({
+      studentId,
+      punchInTime: new Date(),
+      latitude,
+      longitude,
+      distance,
+      date: today,
+    });
+
+    res.status(200).json({
+      success: true,
       message: "Punch in successful",
       attendance,
     });
   } catch (error) {
-    console.error("Punch In Error:", error);
-    res.status(500).json({ message: "Punch in failed" });
+    res.status(500).json({ message: error.message });
   }
 };
-;
+
+
+export const punchOut = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { latitude, longitude, workingHours } = req.body;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: today,
+      $or: [
+        { punchOutTime: null },
+        { punchOutTime: { $exists: false } },
+      ],
+    });
+
+    if (!attendance) {
+      return res.status(400).json({
+        message: "Punch in not found or already punched out",
+      });
+    }
+
+    attendance.punchOutTime = new Date();
+    attendance.latitude = latitude;
+    attendance.longitude = longitude;
+    attendance.workingHours = workingHours;
+
+    await attendance.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Punch out successful",
+      punchOutTime: attendance.punchOutTime,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 
 export const forgotPassword = async (req, res) => {
   try {
