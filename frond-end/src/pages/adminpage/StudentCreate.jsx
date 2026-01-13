@@ -268,7 +268,7 @@ function StudentCreate() {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0 ">
+        <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0  ">
 
 
           <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
@@ -446,7 +446,7 @@ function StudentCreate() {
                       className={`px-3 py-1 rounded-full text-xs ${
                         student.status === "Active"
                           ? "bg-green-100 text-green-700 px-8"
-                          : "bg-red-100 text-red-700 px-7"
+                          : "bg-red-100 text-red-700 px-7 "
                       }`}
                     >
                       {student.status}
@@ -466,7 +466,7 @@ function StudentCreate() {
 
                     <button
                       onClick={() => openEditModal(student)}
-                      className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                      className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white "
                     >
                       Edit
                     </button>
@@ -623,13 +623,7 @@ function StudentCreate() {
                 required
               />
 
-              <input
-                type="password"
-                placeholder="New Password (optional)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border p-2 rounded"
-              />
+             
 
               <select
                 value={course}
