@@ -16,9 +16,9 @@ function Studentsdashboard() {
 
   // Institution coordinates from Google Maps link
   // Aviv Digital Academy - Kozhikode, Kerala
-  const INSTITUTION_LAT = 11.278746549272379;
-  const INSTITUTION_LNG = 75.77908191030914;
-  const MAX_DISTANCE = 1000; // 5 meters only - Very strict geofencing
+  const INSTITUTION_LAT =  11.28095887445068;
+  const INSTITUTION_LNG = 75.77064733741511 ;
+  const MAX_DISTANCE = 30; 
 
   // Live timer for working hours
   useEffect(() => {
