@@ -14,8 +14,16 @@ function Mentorcreate() {
   const [password, setPassword] = useState("");
   const [course, setCourse] = useState("");
 
+  const [courses, setCourses] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  const [otp, setOtp] = useState("");
+const [showOtpModal, setShowOtpModal] = useState(false);
+const [isVerified, setIsVerified] = useState(false);
+const [message, setMessage] = useState("");
+const [loading, setLoading] = useState(false);
 
   // ================= FETCH MENTORS =================
   const fetchMentors = async () => {
@@ -30,9 +38,21 @@ function Mentorcreate() {
     }
   };
 
-  useEffect(() => {
-    fetchMentors();
-  }, []);
+  const fetchCourses = async () => {
+  try {
+    const res = await axios.get("http://localhost:3001/admin/getCourse", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    setCourses(res.data);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+ useEffect(() => {
+  fetchMentors();
+  fetchCourses(); 
+}, []);
 
   // ================= ADD MENTOR =================
   const handleAddMentor = async (e) => {
@@ -68,25 +88,27 @@ function Mentorcreate() {
     setShowEditModal(true);
   };
 
-  const handleUpdateMentor = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
-        { name, email, course, password },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      if (res.data.success) {
-        fetchMentors();
-        setShowEditModal(false);
+ const handleUpdateMentor = async (e) => {
+  e.preventDefault();
+  try {
+    const res = await axios.put(
+      `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
+      { name, email, course },
+      {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       }
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Failed to update mentor");
+    );
+
+    if (res.data.success) {
+      fetchMentors();
+      setShowEditModal(false);
+      resetForm();
     }
-  };
+  } catch (error) {
+    console.error(error);
+    alert(error.response?.data?.message || "Failed to update mentor");
+  }
+};
 
   // ================= TOGGLE STATUS =================
   const handleToggleStatus = async (id) => {
@@ -105,15 +127,20 @@ function Mentorcreate() {
     }
   };
 
-  // ================= RESET FORM =================
-  const resetForm = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setCourse("");
-    setShowModal(false);
-    setShowEditModal(false);
-  };
+  
+ const resetForm = () => {
+  setName("");
+  setEmail("");
+  setPassword("");
+  setCourse("");
+  setOtp("");
+  setIsVerified(false);
+  setMessage("");
+  setShowModal(false);
+  setShowEditModal(false);
+  setShowOtpModal(false);
+};
+
 
   // ================= FILTERED MENTORS =================
   const filteredMentors = mentors.filter((mentor) => {
@@ -126,6 +153,59 @@ function Mentorcreate() {
       statusFilter === "All" || mentor.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const sendOtp = async () => {
+  if (!email) return setMessage("Enter email");
+
+  setLoading(true);
+  setMessage("Sending OTP...");
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/admin/send-otp",
+      { email }
+    );
+
+    if (res.data.success) {
+      setShowOtpModal(true);
+      setMessage("OTP sent! Check your email.");
+    } else {
+      setMessage(res.data.message || "Failed to send OTP");
+    }
+  } catch (err) {
+    console.error(err);
+    setMessage("Error sending OTP");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const verifyOtp = async () => {
+  if (!otp) return setMessage("Enter OTP");
+
+  setLoading(true);
+  setMessage("Verifying OTP...");
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/admin/verify-otp",
+      { email, otp }
+    );
+
+    if (res.data.success) {
+      setIsVerified(true);
+      setShowOtpModal(false);
+      setMessage("Email verified successfully!");
+    } else {
+      setMessage(res.data.message || "Invalid OTP");
+    }
+  } catch (err) {
+    console.error(err);
+    setMessage("Error verifying OTP");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
@@ -266,7 +346,7 @@ function Mentorcreate() {
             <tbody>
               {filteredMentors.length === 0 ? (
                 <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                  <td colSpan="6" className="text-center p-3">
+                  <td colSpan="6" className="text-center p-3 rounded-2xl">
                     No mentors found
                   </td>
                 </tr>
@@ -348,14 +428,34 @@ function Mentorcreate() {
                 className="w-full border p-2 rounded"
                 required
               />
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border p-2 rounded"
-                required
-              />
+              <div className="flex gap-2">
+  <input
+    type="email"
+    placeholder="Email"
+    value={email}
+    onChange={(e) => {
+      setEmail(e.target.value);
+      setIsVerified(false);
+    }}
+    className="flex-1 border p-2 rounded"
+    required
+  />
+  <button
+    type="button"
+    onClick={sendOtp}
+    className={`px-4 rounded text-white ${
+      isVerified
+        ? "bg-green-500 cursor-not-allowed"
+        : "bg-[#141E46] hover:bg-[#0f2040]"
+    }`}
+    disabled={isVerified || loading}
+  >
+    {isVerified ? "Verified" : loading ? "Sending..." : "Verify"}
+  </button>
+</div>
+
+{message && <p className="text-sm text-gray-600">{message}</p>}
+
               <input
                 type="password"
                 placeholder="Password"
@@ -364,18 +464,29 @@ function Mentorcreate() {
                 className="w-full border p-2 rounded"
                 required
               />
-              <input
-                type="text"
-                placeholder="Course"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className="w-full border p-2 rounded"
-                required
-              />
+             <select
+  value={course}
+  onChange={(e) => setCourse(e.target.value)}
+  className="w-full border p-2 rounded "
+  required
+>
+  <option value="">Select course</option>
+  {courses.map((c) => (
+    <option key={c._id} value={c.name}>
+      {c.name}
+    </option>
+  ))}
+</select>
 
-              <button className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]">
-                Create Mentor
-              </button>
+
+             <button
+  className="w-full bg-[#141E46] text-white py-2 rounded disabled:opacity-50"
+  type="submit"
+  disabled={!isVerified || !course}
+>
+  Create Mentor
+</button>
+
             </form>
           </div>
         </div>
@@ -413,21 +524,21 @@ function Mentorcreate() {
                 className="w-full border p-2 rounded"
                 required
               />
-              <input
-                type="password"
-                placeholder="New Password (optional)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border p-2 rounded"
-              />
-              <input
-                type="text"
-                placeholder="Course"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className="w-full border p-2 rounded"
-                required
-              />
+             
+              <select
+  value={course}
+  onChange={(e) => setCourse(e.target.value)}
+  className="w-full border p-2 rounded"
+  required
+>
+  <option value="">Select course</option>
+  {courses.map((c) => (
+    <option key={c._id} value={c.name}>
+      {c.name}
+    </option>
+  ))}
+</select>
+
 
               <button
                 type="submit"
@@ -439,8 +550,51 @@ function Mentorcreate() {
           </div>
         </div>
       )}
+
+      {showOtpModal && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
+      <button
+        onClick={() => setShowOtpModal(false)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-xl font-semibold text-center mb-4">
+        Enter OTP
+      </h2>
+
+      <p className="text-sm text-gray-600 text-center mb-4">
+        OTP sent to <span className="font-semibold">{email}</span>
+      </p>
+
+      <input
+        type="text"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        placeholder="Enter OTP"
+        className="w-full border p-2 rounded mb-4 text-center"
+      />
+
+      <button
+        onClick={verifyOtp}
+        className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
+      >
+        Verify OTP
+      </button>
+
+      {message && (
+        <p className="text-sm text-gray-600 mt-2 text-center">{message}</p>
+      )}
+    </div>
+  </div>
+)}
     </div>
   );
 }
+
+
+
 
 export default Mentorcreate;

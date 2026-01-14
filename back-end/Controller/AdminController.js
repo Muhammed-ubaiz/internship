@@ -425,7 +425,49 @@ export const getMentors = async (req, res) => {
   }
 };
 
+export const updateMentor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, course } = req.body;
 
+    if (!name || !email || !course) {
+      return res.status(400).json({ success: false, message: "All fields required" });
+    }
+
+    const updateData = { name, email, course };
+
+    const mentor = await Mentor.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    res.json({ success: true, mentor });
+  } catch (error) {
+    console.error("Update mentor error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const toggleMentorStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mentor = await Mentor.findById(id);
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    mentor.status = mentor.status === "Active" ? "Inactive" : "Active";
+    await mentor.save();
+
+    res.status(200).json({ success: true, mentor });
+  } catch (error) {
+    console.error("Toggle mentor status error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 
 

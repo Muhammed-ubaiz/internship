@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
+import { MdDelete } from "react-icons/md";
 
 function Course() {
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -16,6 +17,8 @@ function Course() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [batches, setBatches] = useState([]);
   const [batchName, setBatchName] = useState("");
+
+  const [batchSearch, setBatchSearch] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -191,6 +194,10 @@ function Course() {
     return matchesSearch && matchesStatus;
   });
 
+  const filteredBatches = batches.filter((b) =>
+    b.name.toLowerCase().includes(batchSearch.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
       <Sidebar />
@@ -211,7 +218,7 @@ function Course() {
 
         {/* TABLE */}
         <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0 ">
-          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5 z-20">
+          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5 ">
             {/* Search */}
             <div className="group relative w-80">
               {/* Container */}
@@ -358,7 +365,16 @@ function Course() {
             </thead>
 
             <tbody>
-              {filteredCourses.map((course, index) => (
+
+              {filteredCourses.length === 0 ? (
+                <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                  <td colSpan="6" className="text-center p-3 rounded-2xl">
+                    No courses found
+                  </td>
+                </tr>
+              ) : (
+
+              filteredCourses.map((course, index) => (
                 <tr
                   key={course._id}
                   className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
@@ -410,7 +426,7 @@ function Course() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
@@ -447,9 +463,9 @@ function Course() {
           </div>
         )}
 
-        {showBatchModal && (
+          {showBatchModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-96 relative">
+            <div className="bg-white p-6 rounded-lg w-96 relative max-h-[80vh] overflow-y-auto">
               <button
                 onClick={() => setShowBatchModal(false)}
                 className="absolute top-3 right-3"
@@ -461,21 +477,93 @@ function Course() {
                 Batches for {selectedCourse?.name}
               </h2>
 
-              {batches.length === 0 ? (
-                <p className="text-gray-500">No batches found</p>
+              <div className="group relative w-90% mb-5">
+                       <div
+                className="
+      flex items-center bg-white rounded-full
+      shadow-md
+      transition-all duration-300 ease-out
+      hover:shadow-xl hover:-translate-y-[1px]
+      focus-within:shadow-2xl focus-within:-translate-y-[2px]
+      focus-within:ring-2 focus-within:ring-[#141E46]/40
+      active:scale-[0.98]
+    "
+              >
+              <input
+                type="text"
+                placeholder="Search batch..."
+                value={batchSearch}
+                onChange={(e) => setBatchSearch(e.target.value)}
+                className="
+        flex-1 px-5 py-3 text-sm
+        text-gray-700 placeholder-gray-400
+        bg-transparent
+        outline-none
+      "
+              />
+
+               <button
+                  className="
+        relative flex items-center justify-center
+        w-8 h-8 m-1
+        rounded-full
+        bg-[#141E46]
+        transition-all duration-300 ease-out
+        group-hover:scale-105
+        hover:scale-110
+        active:scale-95
+      "
+                >
+                  {/* Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="
+          h-4 w-4 text-white
+          transition-transform duration-300
+          group-hover:rotate-12
+        "
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                    />
+                  </svg>
+
+                  {/* Ripple Effect */}
+                  <span
+                    className="
+        absolute inset-0 rounded-full
+        bg-white/20
+        scale-0
+        active:scale-100
+        transition-transform duration-300
+      "
+                  />
+                </button>
+
+              </div>
+              </div>
+
+              {filteredBatches.length === 0 ? (
+                <p className="text-gray-500 mb-4">No batches found</p>
               ) : (
-                <ul className="space-y-2 mb-4">
-                  {batches.map((b) => (
+                <ul className="space-y-2 mb-4 ">
+                  {filteredBatches.map((b) => (
                     <li
                       key={b._id}
-                      className="flex justify-between bg-gray-200 p-2 rounded"
+                      className="flex justify-between bg-gray-200 p-2 rounded  transform transition-all duration-300 hover:scale-98"
                     >
                       <span>{b.name}</span>
                       <button
                         onClick={() => handleDeleteBatch(b._id)}
-                        className="text-red-600"
+                        className=" hover:text-red-500 hover: transform transition-all duration-300 hover:scale-150"
                       >
-                        🗑️
+                      <MdDelete />
                       </button>
                     </li>
                   ))}
