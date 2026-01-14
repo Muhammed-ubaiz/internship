@@ -3,7 +3,7 @@ import express from "express";
 
 
 
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors } from "../Controller/AdminController.js";
+import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor } from "../Controller/AdminController.js";
 
  
 
@@ -45,6 +45,9 @@ adminRoutes.post("/location", saveLocation);;
 
 adminRoutes.post("/addMentor", addMentor);
 adminRoutes.get("/getMentors", getMentors);
+adminRoutes.put("/updateMentor/:id", verifyToken, updateMentor);
+
+adminRoutes.put("/mentor/status/:id", toggleMentorStatus);
 
 
 
