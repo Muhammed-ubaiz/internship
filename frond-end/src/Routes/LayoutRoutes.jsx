@@ -19,6 +19,12 @@ import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
 import Mentorlogin from "../pages/mentorpage/Mentorlogin";
 import Mentorcreate from "../pages/adminpage/Mentorcreate";
+import MentorDashboard from "../pages/mentorpage/MentorDashboard";
+import MyStudents from "../pages/mentorpage/MyStudents";
+import LeaveHistory1 from "../pages/mentorpage/LeaveHistory1";
+import DailyAttendance1 from "../pages/mentorpage/DailyAttendance1";
+import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
+
 
 function LayoutRoutes() {
   return (
@@ -52,25 +58,16 @@ function LayoutRoutes() {
             }
           />
 
-          <Route path="/studentsdashboard" element={
-
-            
-            <Studentsdashboard />
-          
-          } />
+          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
 
           <Route path="/attendance" element={<Attendance />} />
 
-
-          <Route path="/attendance" element={<Attendance />}
-
-          />
+          <Route path="/attendance" element={<Attendance />} />
 
           <Route path="/dailyAttendance" element={<DailyAttendance />} />
           <Route path="/monthlySummary" element={<MonthlySummary />} />
           <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
           <Route path="/leaveHistory" element={<LeaveHistory />} />
-
 
           <Route
             path="/studentMonthlySummary"
@@ -81,24 +78,33 @@ function LayoutRoutes() {
             element={<StudentDailyAttendance />}
           />
 
-          <Route path="/studentMonthlySummary" element={<StudentMonthlySummary />} />
-
-
-
-
-
-
-
+          <Route
+            path="/studentMonthlySummary"
+            element={<StudentMonthlySummary />}
+          />
 
           <Route
             path="/StudentLeaveHistory"
             element={<StudentLeaveHistory />}
           />
-          <Route path="/LeaveApply" element={<LeaveApply/>} />
+          <Route path="/LeaveApply" element={<LeaveApply />} />
 
-           {/* mentor */}
-          <Route path="/mentorlogin" element={<Mentorlogin/>}/>
-          <Route path="/mentorcreate" element={<Mentorcreate/>}/>
+          {/* mentor */}
+          <Route path="/mentorlogin" element={<Mentorlogin />} />
+          <Route path="/mentorcreate" element={<Mentorcreate />} />
+          <Route path="/mentordashboard" element={<MentorDashboard />} />
+          <Route path="/mystudents" element={<MyStudents />} />
+          <Route path="/dailyattendance1" element={<DailyAttendance1 />} />
+          <Route path="/monthlysummary1" element={<MonthlySummary1/>} />
+          <Route path="/leavehistory1" element={<LeaveHistory1/>} />
+
+
+          
+
+       
+
+
+          
         </Routes>
       </BrowserRouter>
     </>
