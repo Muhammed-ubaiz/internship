@@ -422,7 +422,16 @@ function StudentCreate() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map((student, index) => (
+               
+              {filteredStudents.length === 0 ? (
+                <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                  <td colSpan="7" className="text-center p-3 rounded-2xl">
+                    No students found
+                  </td>
+                </tr>
+              ) : (
+
+              filteredStudents.map((student, index) => (
                 <tr
                   key={student._id}
                   className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
@@ -472,7 +481,7 @@ function StudentCreate() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

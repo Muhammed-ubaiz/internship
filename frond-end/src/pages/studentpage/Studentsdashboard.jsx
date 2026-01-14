@@ -355,7 +355,7 @@ const handlePunchOut = async () => {
             <DashboardCalendar />
           </div>
 
-          <div className="hidden lg:flex h-80 bg-white rounded-2xl shadow-2xl justify-center items-center">
+          <div className="hidden lg:flex h-80 bg-blue-50 rounded-2xl shadow-2xl justify-center items-center">
             <LiveClockUpdate />
           </div>
 
