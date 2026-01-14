@@ -1,134 +1,100 @@
 import React from "react";
 import Sidebar from "./sidebar";
 import Topbar from "./Topbar";
+import DashboardCalendar from "../Dashboardcalender";
+import LiveClockUpdate from "../LiveClockUpdate";
 
-/* ================= STAT CARD COMPONENT ================= */
-function StatCard({ title, value, percent, percentColor, bar }) {
-  return (
-    <div className="bg-white rounded-3xl shadow-xl p-6">
-      <p className="text-blue-600 text-sm">{title}</p>
-
-      <h2 className="text-4xl font-bold mt-2 text-[#0F172A]">
-        {value}
-      </h2>
-
-      <p className={`text-sm mt-1 ${percentColor}`}>
-        {percent}
-      </p>
-
-      <div className={`h-10 mt-6 rounded-lg ${bar}`} />
-    </div>
-  );
-}
-
-/* ================= DASHBOARD ================= */
 function MentorDashboard() {
   return (
-    <div className="flex min-h-screen bg-[#EEF6FB]">
-      
-      {/* SIDEBAR */}
-      <div className="w-[220px]">
-        <Sidebar />
-      </div>
+    <div className="min-h-screen bg-[#EEF6FB]">
 
-      {/* MAIN */}
-      <div className="flex-1 flex flex-col">
-        <Topbar />
+      {/* Sidebar */}
+      <Sidebar />
 
-        <div className="p-6 space-y-8">
-          
-          {/* ====== TOP CARDS ====== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              title="Total Students"
-              value="4"
-              percent="-25% compared to January"
-              percentColor="text-red-500"
-              bar="bg-green-200"
-            />
-            <StatCard
-              title="Total Courses"
-              value="6"
-              percent="+35% compared to January"
-              percentColor="text-green-500"
-              bar="bg-red-200"
-            />
-            <StatCard
-              title="Present Students"
-              value="180"
-              percent="-13% compared to January"
-              percentColor="text-red-500"
-              bar="bg-orange-200"
-            />
-            <StatCard
-              title="Absent Students"
-              value="25"
-              percent="+33% compared to January"
-              percentColor="text-green-500"
-              bar="bg-blue-200"
-            />
-          </div>
+      {/* Main Content */}
+      <div className="flex-1 p-3 md:p-6 md:ml-15">
+        <div className="ml-37 p-6">
+          <div className="max-w-7xl mx-auto">
 
-          {/* ====== BOTTOM SECTION ====== */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* CALENDAR */}
-            <div className="bg-white rounded-3xl shadow-xl p-6">
-              <h2 className="text-xl font-semibold mb-4">
-                January 2026
-              </h2>
-
-              <div className="grid grid-cols-7 text-center text-sm font-medium text-blue-600">
-                {["MO","TU","WE","TH","FR","SA","SU"].map(d => (
-                  <div key={d}>{d}</div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 gap-3 mt-4 text-center">
-                {[...Array(31)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-10 flex items-center justify-center rounded-full ${
-                      i === 13
-                        ? "bg-[#1E3A8A] text-white"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {i + 1}
-                  </div>
-                ))}
-              </div>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <Topbar />
+              <h1 className="text-2xl font-semibold text-[#141E46]"></h1>
             </div>
 
-            {/* CLOCK */}
-            <div className="bg-white rounded-3xl shadow-xl flex items-center justify-center">
-              <div className="text-[90px] font-bold text-[#1E3A8A]">
-                10:27
-                <span className="text-2xl align-top ml-2">AM</span>
-              </div>
-            </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-15">
 
-            {/* HOURS */}
-            <div className="flex flex-col gap-6">
-              <div className="bg-white rounded-3xl shadow-xl p-6">
-                <p className="text-blue-600">
-                  Total Students Working Hours
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Total Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">4</h2>
+                <p className="text-xs mt-1 text-red-500">
+                  -25% compared to January
                 </p>
-                <h3 className="text-xl font-semibold mt-2">
-                  00 Hr 00 Min 00 Sec
-                </h3>
+                <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
               </div>
 
-              <div className="bg-white rounded-3xl shadow-xl p-6">
-                <p className="text-blue-600">
-                  Total Students Break Hours
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Total Courses</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">6</h2>
+                <p className="text-xs mt-1 text-green-500">
+                  +35% compared to January
                 </p>
-                <h3 className="text-xl font-semibold mt-2">
-                  00 Hr 00 Min 55 Sec
-                </h3>
+                <div className="h-10 rounded mt-4 bg-[#FDE2E2]" />
               </div>
+
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Present Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
+                <p className="text-xs mt-1 text-red-500">
+                  -13% compared to January
+                </p>
+                <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Absent Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
+                <p className="text-xs mt-1 text-green-500">
+                  +33% compared to January
+                </p>
+                <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
+              </div>
+
             </div>
 
+            {/* Bottom Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+              <div className="transform transition-all duration-500 hover:scale-105">
+                <DashboardCalendar />
+              </div>
+
+              <div className="h-80 bg-blue-50 rounded-2xl shadow-2xl flex justify-center items-center transform transition-all duration-500 hover:scale-105">
+                <LiveClockUpdate />
+              </div>
+
+              <div className="space-y-4 flex flex-col justify-between">
+                <div className="h-35 bg-white rounded-2xl shadow-2xl p-4 transform transition-all duration-500 hover:scale-105">
+                  <p className="text-sm text-[#1679AB]">
+                    Total Students Working Hours
+                  </p>
+                  <p className="text-lg font-semibold text-[#141E46]">
+                    00 Hr 00 Min 00 Sec
+                  </p>
+                </div>
+
+                <div className="h-35 bg-white rounded-2xl shadow-2xl p-4 transform transition-all duration-500 hover:scale-105">
+                  <p className="text-sm text-[#1679AB]">
+                    Total Students Break Hours
+                  </p>
+                  <p className="text-lg font-semibold text-[#141E46]">
+                    00 Hr 00 Min 55 Sec
+                  </p>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>

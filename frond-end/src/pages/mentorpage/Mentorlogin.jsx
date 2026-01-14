@@ -27,7 +27,7 @@ const login = async (e) => {
       return;
     }
 
-    navigate("");
+    navigate("/mentordashboard");
 
   } catch (error) {
     console.error("LOGIN ERROR:", error);
