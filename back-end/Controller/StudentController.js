@@ -36,7 +36,7 @@ export const checkstudent = async (req, res) => {
     const token = jwt.sign(
       { id: student._id, email: student.email, role: "student" }, // payload
       JWT_SECRET,
-      { expiresIn: "5m" } 
+      { expiresIn: "15m" } 
     );
 
     // Send response
@@ -70,11 +70,14 @@ export const punchIn = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ❌ Block only if ACTIVE session exists
+    // Check if there's an ACTIVE session (not punched out yet)
     const activeSession = await Attendance.findOne({
       studentemail,
       date: today,
-      punchOutTime: { $exists: false },
+      $or: [
+        { punchOutTime: { $exists: false } },
+        { punchOutTime: null }
+      ]
     });
 
     if (activeSession) {
@@ -83,6 +86,7 @@ export const punchIn = async (req, res) => {
       });
     }
 
+    // Create new attendance record
     const attendance = await Attendance.create({
       studentemail,
       punchInTime: new Date(),
@@ -100,15 +104,15 @@ export const punchIn = async (req, res) => {
 
 
 // Punch Out
+// Update your punchOut function
 export const punchOut = async (req, res) => {
   try {
     const studentemail = req.user.id;
-    const { latitude, longitude, workingHours } = req.body;
+    const { latitude, longitude } = req.body; // Removed workingHours
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find today's attendance that has not punched out yet
     const attendance = await Attendance.findOne({
       studentemail,
       date: today,
@@ -121,22 +125,37 @@ export const punchOut = async (req, res) => {
       });
     }
 
-    attendance.punchOutTime = new Date();
-    attendance.latitude = latitude;
-    attendance.longitude = longitude;
-    attendance.workingHours = workingHours;
+    // Create punch out time on server
+    const punchOutTime = new Date();
+    
+    // Calculate working hours in seconds
+    const workingHoursInSeconds = Math.floor(
+      (punchOutTime - attendance.punchInTime) / 1000
+    );
+
+    attendance.punchOutTime = punchOutTime;
+    attendance.punchOutLatitude = latitude;
+    attendance.punchOutLongitude = longitude;
+    attendance.workingHours = workingHoursInSeconds;
 
     await attendance.save();
 
     res.status(200).json({
       success: true,
       message: "✅ Punch out successful",
-      punchOutTime: attendance.punchOutTime,
+      attendance: {
+        punchInTime: attendance.punchInTime,
+        punchOutTime: attendance.punchOutTime,
+        workingHours: attendance.workingHours,
+      }
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
+
+
+
 
 export const getTodayAttendance = async (req, res) => {
   try {
@@ -145,10 +164,11 @@ export const getTodayAttendance = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // ✅ CRITICAL FIX: Sort by punchInTime descending to get LATEST record
     const attendance = await Attendance.findOne({
       studentemail,
       date: today,
-    });
+    }).sort({ punchInTime: -1 }); // Get the most recent punch-in
 
     if (!attendance) {
       return res.status(200).json({
@@ -159,12 +179,19 @@ export const getTodayAttendance = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      attendance,
+      attendance: {
+        punchInTime: attendance.punchInTime,
+        punchOutTime: attendance.punchOutTime || null,
+        workingHours: attendance.workingHours || 0,
+        date: attendance.date,
+        latitude: attendance.latitude,
+        longitude: attendance.longitude,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
 
 
 export const forgotPassword = async (req, res) => {

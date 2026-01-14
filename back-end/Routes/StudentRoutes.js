@@ -19,4 +19,6 @@ studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 studentroutes.post('/location', verifyToken, saveLocation);
 studentroutes.get('/location/history', verifyToken, getLocationHistory);
 
+
+
 export default studentroutes;
