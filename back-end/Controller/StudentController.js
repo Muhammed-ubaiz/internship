@@ -36,7 +36,7 @@ export const checkstudent = async (req, res) => {
     const token = jwt.sign(
       { id: student._id, email: student.email, role: "student" }, // payload
       JWT_SECRET,
-      { expiresIn: "9m" } 
+      { expiresIn: "5m" } 
     );
 
     // Send response
@@ -64,25 +64,27 @@ export const checkstudent = async (req, res) => {
 
 export const punchIn = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentemail = req.user.id;
     const { latitude, longitude, distance } = req.body;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const alreadyPunched = await Attendance.findOne({
-      studentId,
+    // ❌ Block only if ACTIVE session exists
+    const activeSession = await Attendance.findOne({
+      studentemail,
       date: today,
+      punchOutTime: { $exists: false },
     });
 
-    if (alreadyPunched) {
+    if (activeSession) {
       return res.status(400).json({
-        message: "Already punched in today",
+        message: "Already punched in. Please punch out first.",
       });
     }
 
     const attendance = await Attendance.create({
-      studentId,
+      studentemail,
       punchInTime: new Date(),
       latitude,
       longitude,
@@ -90,37 +92,32 @@ export const punchIn = async (req, res) => {
       date: today,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Punch in successful",
-      attendance,
-    });
+    res.status(200).json({ attendance });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 
+// Punch Out
 export const punchOut = async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentemail = req.user.id;
     const { latitude, longitude, workingHours } = req.body;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Find today's attendance that has not punched out yet
     const attendance = await Attendance.findOne({
-      studentId,
+      studentemail,
       date: today,
-      $or: [
-        { punchOutTime: null },
-        { punchOutTime: { $exists: false } },
-      ],
+      $or: [{ punchOutTime: null }, { punchOutTime: { $exists: false } }],
     });
 
     if (!attendance) {
       return res.status(400).json({
-        message: "Punch in not found or already punched out",
+        message: "❌ Punch in not found or already punched out",
       });
     }
 
@@ -133,8 +130,36 @@ export const punchOut = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Punch out successful",
+      message: "✅ Punch out successful",
       punchOutTime: attendance.punchOutTime,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export const getTodayAttendance = async (req, res) => {
+  try {
+    const studentemail = req.user.id;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendance.findOne({
+      studentemail,
+      date: today,
+    });
+
+    if (!attendance) {
+      return res.status(200).json({
+        success: true,
+        attendance: null,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      attendance,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

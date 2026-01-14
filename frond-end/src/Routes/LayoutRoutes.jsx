@@ -58,7 +58,17 @@ function LayoutRoutes() {
             }
           />
 
+
           <Route path="/studentsdashboard" element={<Studentsdashboard />} />
+
+          <Route path="/studentsdashboard" element={
+
+            <ProtectedRoute>
+              <Studentsdashboard />
+            </ProtectedRoute>
+            
+          
+          } />
 
           <Route path="/attendance" element={<Attendance />} />
 

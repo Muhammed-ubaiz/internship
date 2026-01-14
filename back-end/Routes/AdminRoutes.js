@@ -3,7 +3,7 @@ import express from "express";
 
 
 
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor } from "../Controller/AdminController.js";
+import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors } from "../Controller/AdminController.js";
 
  
 
@@ -28,7 +28,7 @@ adminRoutes.post("/updateCourse/:_id",verifyToken, updateCourse);
 
 adminRoutes.get("/getBatches/:courseName",verifyToken ,getBatches);
 adminRoutes.post("/addBatch/:courseName",verifyToken, addBatch);
-adminRoutes.delete("/deleteBatch/:batchId", deleteBatch);
+adminRoutes.delete("/deleteBatch/:batchId",verifyToken, deleteBatch);
 
 adminRoutes.post("/addStudent",verifyToken, addStudent);
 adminRoutes.get("/getStudents",verifyToken, getStudents);
@@ -44,6 +44,8 @@ adminRoutes.post("/verify-otp", verifyOtp);
 adminRoutes.post("/location", saveLocation);;
 
 adminRoutes.post("/addMentor", addMentor);
+adminRoutes.get("/getMentors", getMentors);
+
 
 
 

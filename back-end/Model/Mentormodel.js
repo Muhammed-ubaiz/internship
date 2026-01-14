@@ -21,10 +21,6 @@ const mentorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  batch: {
-    type: String,
-    required: true,
-  },
   status: {
     type: String,
     enum: ["Active", "Inactive"],

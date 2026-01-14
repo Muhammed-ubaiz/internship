@@ -52,8 +52,8 @@ const DashboardCalendar = () => {
           {monthNames[month]} {year}
         </h3>
         <div className="flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-blue-900"></div>
-          <div className="w-2 h-2 rounded-full bg-blue-200"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-900 animate-bounce"></div>
+          <div className="w-2 h-2 rounded-full bg-blue-200 animate-bounce"></div>
         </div>
       </div>
 

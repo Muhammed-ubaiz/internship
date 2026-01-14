@@ -415,6 +415,16 @@ export const addMentor = async (req, res) => {
   }
 };
 
+export const getMentors = async (req, res) => {
+  try {
+    const mentors = await Mentor.find().sort({ createdAt: -1 });
+    res.json({ success: true, mentors });
+  } catch (error) {
+    console.error("Get mentors error:", error);
+    res.status(500).json({ success: false });
+  }
+};
+
 
 
 

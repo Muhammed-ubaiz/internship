@@ -59,7 +59,7 @@ function Sidebar() {
           </div>
         </div>
 
-        <div className={menuItem} onClick={() => navigate("/course")}>
+        <div className={menuItem} onClick={() => navigate("/mentorcreate")}>
           <div className="flex items-center gap-3">
             <FaUserClock />
             <span>Mentors</span>

@@ -1,10 +1,11 @@
 import express from "express";
-import { 
-  checkstudent, 
-  getLocationHistory, 
-  punchIn, 
-  punchOut, 
-  saveLocation 
+import {
+  checkstudent,
+  getLocationHistory,
+  getTodayAttendance,
+  punchIn,
+  punchOut,
+  saveLocation
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -13,6 +14,7 @@ const studentroutes = express.Router();
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
 studentroutes.post("/punch-out", verifyToken, punchOut);
+studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
 studentroutes.post('/location', verifyToken, saveLocation);
 studentroutes.get('/location/history', verifyToken, getLocationHistory);
