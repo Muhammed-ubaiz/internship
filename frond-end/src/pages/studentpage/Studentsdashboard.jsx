@@ -13,89 +13,188 @@ function Studentsdashboard() {
   const [workingHours, setWorkingHours] = useState("00 Hr 00 Mins 00 Secs");
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [liveWorkingTime, setLiveWorkingTime] = useState("00 Hr 00 Mins 00 Secs");
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [liveBreakingTime, setLiveBreakTime] = useState("00 Hr 00 Mins 00 Secs");
+  const [breakingHours, setBreakingHours] = useState("00 Hr 00 Mins 00 Secs")
+  const [breakSeconds, setBreakSeconds] = useState(0); // total break time in seconds
 
-  // Load today's attendance on component mount
-  useEffect(() => {
-    const loadTodayAttendance = async () => {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
+  // ✅ CHANGE 1: Fixed loadTodayAttendance function
+ useEffect(() => {
+  const loadTodayAttendance = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-      try {
-        const res = await axios.get("http://localhost:3001/student/today-attendance", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            role: role,
-          },
-        });
+    try {
+      const res = await axios.get("http://localhost:3001/student/today-attendance", {
+        headers: { Authorization: `Bearer ${token}`, role },
+      });
 
-        if (res.data.attendance) {
-          const attendance = res.data.attendance;
-          setPunchInTime(attendance.punchInTime);
+      if (res.data.attendance) {
+        const attendance = res.data.attendance;
+
+        if (attendance.punchInTime) setPunchInTime(attendance.punchInTime);
+        setIsOnBreak(!!attendance.breakStartTime);
+
+        // Restore break time in seconds
+        setBreakSeconds(attendance.totalBreakSeconds || 0);
+
+        if (attendance.punchOutTime) {
           setPunchOutTime(attendance.punchOutTime);
-          setIsPunchedIn(!attendance.punchOutTime);
+          setIsPunchedIn(false);
 
-          if (attendance.punchOutTime) {
-            // Calculate total working hours
-            const workTime = calculateWorkingHours(attendance.punchInTime, attendance.punchOutTime);
-            setWorkingHours(workTime.formatted);
-          }
+          // Calculate working hours
+          const workTime = calculateWorkingHours(attendance.punchInTime, attendance.punchOutTime);
+          setWorkingHours(workTime.formatted);
+          setLiveWorkingTime(workTime.formatted);
+
+          // Save final break time
+          setBreakingHours(formatSeconds(attendance.totalBreakSeconds || 0));
+        } else {
+          setPunchOutTime(null);
+          setIsPunchedIn(!!attendance.punchInTime && !attendance.breakStartTime);
         }
-      } catch (error) {
-        console.error("Error loading today's attendance:", error);
+      } else {
+        // No attendance today
+        setPunchInTime(null);
+        setPunchOutTime(null);
+        setIsPunchedIn(false);
+        setIsOnBreak(false);
+        setBreakSeconds(0);
+        setWorkingHours("00 Hr 00 Mins 00 Secs");
+        setLiveWorkingTime("00 Hr 00 Mins 00 Secs");
+        setBreakingHours("00 Hr 00 Mins 00 Secs");
       }
-    };
+    } catch (err) {
+      console.error("Error loading attendance:", err);
+    }
+  };
 
-    loadTodayAttendance();
-  }, []);
+  loadTodayAttendance();
+}, []);
 
-  // Institution coordinates from Google Maps link
-  // Aviv Digital Academy - Kozhikode, Kerala
-  const INSTITUTION_LAT = 11.280690661846767 ; 
-  const INSTITUTION_LNG = 75.77060212210458 ;
-  const MAX_DISTANCE = 50; 
+  // Institution coordinates
+  const INSTITUTION_LAT = 11.280690661846767;
+  const INSTITUTION_LNG = 75.77060212210458;
+  const MAX_DISTANCE = 50;
 
   // Live timer for working hours
   useEffect(() => {
-    if (!punchInTime || punchOutTime) return;
+    if (!punchInTime || punchOutTime || isOnBreak) return;
 
     const interval = setInterval(() => {
       const now = new Date();
       const start = new Date(punchInTime);
-      const diff = Math.floor((now - start) / 1000); // difference in seconds
+      const diff = Math.floor((now - start) / 1000);
 
       const hours = Math.floor(diff / 3600);
       const minutes = Math.floor((diff % 3600) / 60);
       const seconds = diff % 60;
 
       setLiveWorkingTime(
-        `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`
+        `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(
+          2,
+          "0"
+        )} Mins ${String(seconds).padStart(2, "0")} Secs`
       );
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [punchInTime, punchOutTime]);
+  }, [punchInTime, punchOutTime, isOnBreak]);
 
-  // Calculate distance between two coordinates using Haversine formula
+  // 🔔 Live Break Timer
+  useEffect(() => {
+    if (!isOnBreak) return;
+
+    const interval = setInterval(() => {
+      setBreakSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOnBreak]);
+
+useEffect(() => {
+  if (!isOnBreak || punchOutTime) return;
+
+  const interval = setInterval(() => {
+    setBreakSeconds((prev) => prev + 1);
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [isOnBreak, punchOutTime]);
+
+// Update liveBreakingTime from breakSeconds
+useEffect(() => {
+  setLiveBreakTime(formatSeconds(breakSeconds));
+}, [breakSeconds]);
+
+// Helper: format seconds into Hr/Min/Sec
+const formatSeconds = (seconds) => {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${String(hrs).padStart(2,"0")} Hr ${String(mins).padStart(2,"0")} Mins ${String(secs).padStart(2,"0")} Secs`;
+};
+
+// On Punch Out
+const handlePunchOut = async () => {
+  if (!isPunchedIn) return alert("You must punch in first!");
+
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  try {
+    setLoading(true);
+    setLocationStatus("Processing punch out...");
+
+    const loc = await getCurrentLocation();
+
+    const res = await axios.post(
+      "http://localhost:3001/student/punch-out",
+      { latitude: loc.latitude, longitude: loc.longitude },
+      { headers: { Authorization: `Bearer ${token}`, role } }
+    );
+
+    setPunchOutTime(res.data.attendance.punchOutTime);
+    setIsPunchedIn(false);
+    setIsOnBreak(false); // stop break timer
+
+    // Calculate total working hours
+    const workTime = calculateWorkingHours(punchInTime, res.data.attendance.punchOutTime);
+    setWorkingHours(workTime.formatted);
+
+    // Save final break time
+    setBreakingHours(formatSeconds(breakSeconds));
+
+    setLocationStatus(`✅ Punch out successful! Total working time: ${workTime.formatted}`);
+    alert(`Punch Out Successful! ✅\nTotal Working Hours: ${workTime.formatted}`);
+  } catch (err) {
+    alert(err?.response?.data?.message || err.message || "Punch Out Failed");
+    setLocationStatus("❌ Punch out error");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Distance calculation
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
     const Δφ = ((lat2 - lat1) * Math.PI) / 180;
     const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
     const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c;
   };
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject("Geolocation not supported");
-      }
+      if (!navigator.geolocation) reject("Geolocation not supported");
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolve({
@@ -111,14 +210,17 @@ function Studentsdashboard() {
   const calculateWorkingHours = (startTime, endTime) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const diff = Math.floor((end - start) / 1000); // difference in seconds
+    const diff = Math.floor((end - start) / 1000);
 
     const hours = Math.floor(diff / 3600);
     const minutes = Math.floor((diff % 3600) / 60);
     const seconds = diff % 60;
 
     return {
-      formatted: `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`,
+      formatted: `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(
+        2,
+        "0"
+      )} Mins ${String(seconds).padStart(2, "0")} Secs`,
       totalSeconds: diff,
       hours,
       minutes,
@@ -136,7 +238,6 @@ function Studentsdashboard() {
 
       const loc = await getCurrentLocation();
 
-      // Calculate distance from institution
       const distance = calculateDistance(
         loc.latitude,
         loc.longitude,
@@ -144,38 +245,28 @@ function Studentsdashboard() {
         INSTITUTION_LNG
       );
 
-      console.log("Current Location:", loc);
-      console.log("Institution Location:", { lat: INSTITUTION_LAT, lng: INSTITUTION_LNG });
-      console.log("Distance:", distance, "meters");
-
       setLocationStatus(`Distance from institution: ${Math.round(distance)}m`);
 
-      // Check if within 50 meters
       if (distance > MAX_DISTANCE) {
-        const distanceInKm = (distance / 1000).toFixed(2);
         alert(
-          `❌ Punch In Denied\n\nYou are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\nYou must be within ${MAX_DISTANCE} meters to punch in.\n\nPlease come to the institution premises.`
+          `❌ Punch In Denied\nYou are ${Math.round(
+            distance
+          )} meters away from Aviv Digital Academy.`
         );
         setLocationStatus(`❌ Too far from institution (${Math.round(distance)}m)`);
         setLoading(false);
         return;
       }
 
-      setLocationStatus(`✅ Within range (${Math.round(distance)}m)`);
-
-      // Proceed with punch in
       const res = await axios.post(
         "http://localhost:3001/student/punch-in",
         {
           latitude: loc.latitude,
           longitude: loc.longitude,
-          distance: distance,
+          distance,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            role: role,
-          },
+          headers: { Authorization: `Bearer ${token}`, role },
         }
       );
 
@@ -183,8 +274,8 @@ function Studentsdashboard() {
       setIsPunchedIn(true);
       setPunchOutTime(null);
       setWorkingHours("00 Hr 00 Mins 00 Secs");
+      setLocationStatus("✅ Punched in successfully!");
       alert("Punch In Successful! ✅");
-      setLocationStatus(`✅ Punched in successfully at ${Math.round(distance)}m from institution`);
     } catch (error) {
       alert(error?.response?.data?.message || error.message || "Punch In Failed");
       setLocationStatus("❌ Location error");
@@ -193,54 +284,6 @@ function Studentsdashboard() {
     }
   };
 
-  const handlePunchOut = async () => {
-    if (!isPunchedIn) {
-      alert("You must punch in first!");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    try {
-      setLoading(true);
-      setLocationStatus("Processing punch out...");
-
-      const loc = await getCurrentLocation();
-      const currentTime = new Date().toISOString();
-
-      // Calculate working hours
-      const workTime = calculateWorkingHours(punchInTime, currentTime);
-
-      // Send punch out request to backend
-      const res = await axios.post(
-        "http://localhost:3001/student/punch-out",
-        {
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-          workingHours: workTime.totalSeconds,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            role: role,
-          },
-        }
-      );
-
-      setPunchOutTime(currentTime);
-      setWorkingHours(workTime.formatted);
-      setIsPunchedIn(false);
-      setLocationStatus(`✅ Punch out successful! Total working time: ${workTime.formatted}`);
-      
-      alert(`Punch Out Successful! ✅\n\nTotal Working Hours: ${workTime.formatted}`);
-    } catch (error) {
-      alert(error?.response?.data?.message || error.message || "Punch Out Failed");
-      setLocationStatus("❌ Punch out error");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatTime = (time) => {
     if (!time) return "--:--";
@@ -250,6 +293,8 @@ function Studentsdashboard() {
       hour12: true,
     });
   };
+
+  
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
@@ -334,8 +379,9 @@ function Studentsdashboard() {
             <div className="bg-white rounded-2xl shadow-2xl p-4">
               <p className="text-sm text-[#1679AB]">Today Break Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">
-                00 Hr 00 Mins 00 Secs
-              </p>
+              {isOnBreak ? liveBreakingTime : breakingHours}
+            </p>
+
             </div>
 
             <div className="bg-white rounded-2xl shadow-2xl p-4">
