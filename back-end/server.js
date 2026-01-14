@@ -4,6 +4,7 @@ import cors from "cors";
 import connectDB from "./Database/Connetion.js";
 import adminRoutes from "./Routes/AdminRoutes.js";
 import studentroutes from "./Routes/StudentRoutes.js";
+import mentorroutes from "./Routes/MentorRoutes.js"
 
 
 dotenv.config();
@@ -22,6 +23,7 @@ connectDB();
 
 app.use("/admin", adminRoutes);
 app.use("/student",studentroutes)
+app.use("/mentor",mentorroutes)
 
 
 

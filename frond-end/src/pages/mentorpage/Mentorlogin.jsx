@@ -1,12 +1,40 @@
-import React from 'react'
+import  { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 function Mentorlogin() {
 const navigate = useNavigate()
 
-    const handlelogin =()=>{
-        navigate("/mentorcreate")
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+
+const login = async (e) => {
+  e.preventDefault();
+
+
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/mentor/mentorlogin",
+      { email, password },
+      
+    );
+
+
+
+    if (!res.data.success) {
+      alert(res.data.message || "Login failed");
+      return;
     }
+
+    navigate("");
+
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    alert(error.response?.data?.message || "Something went wrong");
+  }
+};
+
 
   return (
     <>
@@ -22,14 +50,15 @@ const navigate = useNavigate()
         </p>
 
         {/* Form */}
-        <form
+        <form onSubmit={login}
         // onSubmit={(e)=>{handleSubmit(e)}}
         className="space-y-5">
           {/* Email */}
           <div>
             <label className="block text-[#1679AB] mb-2">Email</label>
             <input
-            // onChange={(e)=>setemail(e.target.value)}
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
               type="email"
               placeholder="Enter your email"
               className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
@@ -40,7 +69,8 @@ const navigate = useNavigate()
           <div>
             <label className="block text-[#1679AB] mb-2">Password</label>
             <input
-            //  onChange={(e) => setpassword(e.target.value)}
+            value={password}
+             onChange={(e) => setPassword(e.target.value)}
               type="password"
               placeholder="Enter your password"
               className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
@@ -59,7 +89,7 @@ const navigate = useNavigate()
 
           {/* Button */}
           <button
-          onClick={handlelogin}
+          
             type="submit"
             className="w-full py-3 bg-[#141E46] hover:bg-[#2e3656] text-white font-semibold rounded-lg transition"
           >

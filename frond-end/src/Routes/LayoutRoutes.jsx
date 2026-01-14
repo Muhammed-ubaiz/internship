@@ -63,10 +63,8 @@ function LayoutRoutes() {
 
           <Route path="/studentsdashboard" element={
 
-            <ProtectedRoute>
-              <Studentsdashboard />
-            </ProtectedRoute>
-            
+           
+             <Studentsdashboard />
           
           } />
 
