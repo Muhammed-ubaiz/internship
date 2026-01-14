@@ -5,7 +5,7 @@ import {
   getTodayAttendance,
   punchIn,
   punchOut,
-  saveLocation
+  saveLocation,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -16,7 +16,7 @@ studentroutes.post("/punch-in", verifyToken, punchIn);
 studentroutes.post("/punch-out", verifyToken, punchOut);
 studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
-studentroutes.post('/location', verifyToken, saveLocation);
-studentroutes.get('/location/history', verifyToken, getLocationHistory);
+studentroutes.post("/location", verifyToken, saveLocation);
+studentroutes.get("/location/history", verifyToken, getLocationHistory);
 
 export default studentroutes;
