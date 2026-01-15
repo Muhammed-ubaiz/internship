@@ -2,53 +2,47 @@ import mongoose from "mongoose";
 
 const attendanceSchema = new mongoose.Schema(
   {
-    // Student reference
     studentemail: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
       required: true,
-    },
+    },   
 
-    // Punch timings
     punchInTime: {
       type: Date,
       default: null,
     },
 
-    punchOutTime: {
+    punchOutTime:{
       type: Date,
       default: null,
     },
-
-    // 🔔 Break tracking
+  
+    // 🟡 Break handling
     breakStartTime: {
       type: Date,
       default: null,
     },
 
-   
 
     totalBreakSeconds: {
       type: Number,
-      default: 0, // total break time (seconds)
+      default: 0,
     },
 
-    // Location tracking
-    latitude: Number,
-    longitude: Number,
-
-    punchOutLatitude: Number,
-    punchOutLongitude: Number,
-
-    distance: Number,
-
-    // Working hours (seconds) → punchOut time  calculate 
+    // 🟢 Working time (seconds)
     workingHours: {
       type: Number,
       default: 0,
     },
 
-    // Date (today only one record)
+    latitude: Number,
+    longitude: Number,
+    punchOutLatitude: Number,
+    punchOutLongitude: Number,
+    distance: Number,
+
+
     date: {
       type: Date,
       default: () => {
@@ -58,9 +52,7 @@ const attendanceSchema = new mongoose.Schema(
       },
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("Attendance", attendanceSchema);

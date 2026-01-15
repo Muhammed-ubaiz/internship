@@ -16,6 +16,7 @@ studentroutes.post("/punch-in", verifyToken, punchIn);
 studentroutes.post("/punch-out", verifyToken, punchOut);
 studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
+
 studentroutes.post("/location", verifyToken, saveLocation);
 studentroutes.get("/location/history", verifyToken, getLocationHistory);
 
