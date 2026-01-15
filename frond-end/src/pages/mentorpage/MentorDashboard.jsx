@@ -1,10 +1,48 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import Topbar from "./Topbar";
 import DashboardCalendar from "../Dashboardcalender";
 import LiveClockUpdate from "../LiveClockUpdate";
+import axios from "axios";
 
 function MentorDashboard() {
+  const [students, setStudents] = useState([]);
+
+  // ---------------- FETCH STUDENTS ----------------
+  const fetchStudents = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      const res = await axios.get(
+        "http://localhost:3001/admin/getStudents",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      setStudents(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // ---------------- COUNTS ----------------
+  const totalStudents = students.length;
+  const activeStudents = students.filter(
+    (s) => s.status === "Active"
+  ).length;
+  const inactiveStudents = students.filter(
+    (s) => s.status === "Inactive"
+  ).length;
+
   return (
     <div className="min-h-screen bg-[#EEF6FB]">
 
@@ -25,15 +63,19 @@ function MentorDashboard() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-15">
 
+              {/* TOTAL STUDENTS */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
                 <p className="text-sm text-[#1679AB]">Total Students</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">4</h2>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                  {totalStudents}
+                </h2>
                 <p className="text-xs mt-1 text-red-500">
                   -25% compared to January
                 </p>
                 <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
               </div>
 
+              {/* TOTAL COURSES (UNCHANGED) */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
                 <p className="text-sm text-[#1679AB]">Total Courses</p>
                 <h2 className="text-3xl font-bold text-[#141E46] mt-2">6</h2>
@@ -43,18 +85,24 @@ function MentorDashboard() {
                 <div className="h-10 rounded mt-4 bg-[#FDE2E2]" />
               </div>
 
+              {/* PRESENT / ACTIVE STUDENTS */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
                 <p className="text-sm text-[#1679AB]">Present Students</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                  {activeStudents}
+                </h2>
                 <p className="text-xs mt-1 text-red-500">
                   -13% compared to January
                 </p>
                 <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
               </div>
 
+              {/* ABSENT / INACTIVE STUDENTS */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
                 <p className="text-sm text-[#1679AB]">Absent Students</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                  {inactiveStudents}
+                </h2>
                 <p className="text-xs mt-1 text-green-500">
                   +33% compared to January
                 </p>

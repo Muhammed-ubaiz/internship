@@ -1,95 +1,161 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DashboardCalendar from "../Dashboardcalender";
 import LiveClockUpdate from "../LiveClockUpdate";
 import Sidebar from "./sidebar";
 import Topbar from "./Topbar";
-
+import axios from "axios";
 
 function Admindashboard() {
+
+  const [activeStudentsCount, setActiveStudentsCount] = useState(0);
+  const [activeCoursesCount, setActiveCoursesCount] = useState(0);
+
+  // ---------------- FETCH ACTIVE STUDENTS ----------------
+  const fetchActiveStudentsCount = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get(
+        "http://localhost:3001/admin/getStudents",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      const activeStudents = res.data.filter(
+        (student) => student.status === "Active"
+      );
+
+      setActiveStudentsCount(activeStudents.length);
+    } catch (error) {
+      console.error("Failed to fetch students", error);
+    }
+  };
+
+  // ---------------- FETCH ACTIVE COURSES ----------------
+  const fetchActiveCoursesCount = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get(
+        "http://localhost:3001/admin/getCourse",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      const activeCourses = res.data.filter(
+        (course) => course.status === "active"
+      );
+
+      setActiveCoursesCount(activeCourses.length);
+    } catch (error) {
+      console.error("Failed to fetch courses", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveStudentsCount();
+    fetchActiveCoursesCount();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#EEF6FB] ">
+    <div className="min-h-screen bg-[#EEF6FB]">
+      <Sidebar />
 
-      {/* Sidebar */}
-      <Sidebar/>
-
-      {/* Main Content */}
       <div className="flex-1 p-3 md:p-6 md:ml-15">
-      <div className="ml-37 p-6 ">
-        <div className="max-w-7xl mx-auto">
+        <div className="ml-37 p-6">
+          <div className="max-w-7xl mx-auto">
 
-          {/* Header */}
-          <div className="flex justify-between items-center  ">
-            <Topbar/>
-            <h1 className="text-2xl font-semibold text-[#141E46]">
-              
-            </h1>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-15">
-            
-            <div className="bg-white rounded-2xl shadow-2xl p-5   transform transition-all duration-500 hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Total Students</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">205</h2>
-              <p className="text-xs mt-1 text-red-500">-25% compared to January</p>
-              <div className="h-10 rounded mt-4 bg-[#D1F7DC]"></div>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <Topbar />
             </div>
 
-            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Total Courses</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">5</h2>
-              <p className="text-xs mt-1 text-green-500">+35% compared to January</p>
-              <div className="h-10 rounded mt-4 bg-[#FDE2E2]"></div>
-            </div>
+            {/* ================= STATS CARDS ================= */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-15">
 
-            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Present Students</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
-              <p className="text-xs mt-1 text-red-500">-13% compared to January</p>
-              <div className="h-10 rounded mt-4 bg-[#FFE7D1]"></div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-2xl p-5    transform transition-all duration-500 hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Absent Students</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
-              <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
-              <div className="h-10 rounded mt-4 bg-[#D1E8FF]"></div>
-            </div>
-          </div>
-
-          {/* Bottom Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 ">
-
-            <div className="  transform transition-all duration-500 hover:scale-105">
-              <DashboardCalendar />
-            </div>
-
-            <div className="h-80 bg-blue-50 rounded-2xl shadow-2xl flex justify-center items-center   transform transition-all duration-500 hover:scale-105">
-              <LiveClockUpdate />
-            </div>
-
-            <div className="space-y-4 flex flex-col justify-between">
-              <div className="h-35 bg-white rounded-2xl shadow-2xl p-4   transform transition-all duration-500 hover:scale-105">
-                <p className="text-sm text-[#1679AB]">
-                  Total Students Working Hours
+              {/* ACTIVE STUDENTS */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Active Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                  {activeStudentsCount}
+                </h2>
+                <p className="text-xs mt-1 text-green-500">
+                  Currently active students
                 </p>
-                <p className="text-lg font-semibold text-[#141E46]">
-                  00 Hr 00 Min 00 Sec
-                </p>
+                <div className="h-10 rounded mt-4 bg-[#D1F7DC]"></div>
               </div>
 
-              <div className= "h-35 bg-white rounded-2xl shadow-2xl p-4    transform transition-all duration-500 hover:scale-105">
-                <p className="text-sm text-[#1679AB]">
-                  Total Students Break Hours
+              {/* ACTIVE COURSES */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Active Courses</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                  {activeCoursesCount}
+                </h2>
+                <p className="text-xs mt-1 text-green-500">
+                  Currently running courses
                 </p>
-                <p className="text-lg font-semibold text-[#141E46]">
-                  00 Hr 00 Min 55 Sec
-                </p>
+                <div className="h-10 rounded mt-4 bg-[#FDE2E2]"></div>
               </div>
+
+              {/* STATIC (unchanged) */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Present Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
+                <div className="h-10 rounded mt-4 bg-[#FFE7D1]"></div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
+                <p className="text-sm text-[#1679AB]">Absent Students</p>
+                <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
+                <div className="h-10 rounded mt-4 bg-[#D1E8FF]"></div>
+              </div>
+
+            </div>
+
+            {/* ================= BOTTOM SECTION ================= */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+              <div className="transform transition-all duration-500 hover:scale-105">
+                <DashboardCalendar />
+              </div>
+
+              <div className="h-80 bg-blue-50 rounded-2xl shadow-2xl flex justify-center items-center transform transition-all duration-500 hover:scale-105">
+                <LiveClockUpdate />
+              </div>
+
+              <div className="space-y-4 flex flex-col justify-between">
+                <div className="h-35 bg-white rounded-2xl shadow-2xl p-4">
+                  <p className="text-sm text-[#1679AB]">
+                    Total Students Working Hours
+                  </p>
+                  <p className="text-lg font-semibold text-[#141E46]">
+                    00 Hr 00 Min 00 Sec
+                  </p>
+                </div>
+
+                <div className="h-35 bg-white rounded-2xl shadow-2xl p-4">
+                  <p className="text-sm text-[#1679AB]">
+                    Total Students Break Hours
+                  </p>
+                  <p className="text-lg font-semibold text-[#141E46]">
+                    00 Hr 00 Min 55 Sec
+                  </p>
+                </div>
+              </div>
+
             </div>
 
           </div>
-        </div>
         </div>
       </div>
     </div>
