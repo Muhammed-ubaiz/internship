@@ -14,7 +14,16 @@ function Studentsdashboard() {
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [liveWorkingTime, setLiveWorkingTime] = useState("00 Hr 00 Mins 00 Secs");
 
-  // ✅ CHANGE 1: Fixed loadTodayAttendance function
+  // Break timer states
+  const [breakTime, setBreakTime] = useState(0);
+  const [liveBreakTime, setLiveBreakTime] = useState("00 Hr 00 Mins 00 Secs");
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [breakStartTime, setBreakStartTime] = useState(null);
+
+  // Total accumulated working time
+  const [totalWorkingTime, setTotalWorkingTime] = useState(0);
+
+  // ✅ Load today's attendance - FIXED
   useEffect(() => {
     const loadTodayAttendance = async () => {
       const token = localStorage.getItem("token");
@@ -31,67 +40,101 @@ function Studentsdashboard() {
         if (res.data.attendance) {
           const attendance = res.data.attendance;
           
-          // Always set punch in time if it exists
+          // ✅ STEP 1: Load accumulated times FIRST
+          if (attendance.totalWorkingTime !== undefined) {
+            setTotalWorkingTime(attendance.totalWorkingTime);
+            // Display the accumulated time immediately
+            const formattedTotal = formatTimeFromSeconds(attendance.totalWorkingTime);
+            setWorkingHours(formattedTotal);
+            setLiveWorkingTime(formattedTotal);
+          }
+
+          if (attendance.totalBreakTime !== undefined) {
+            setBreakTime(attendance.totalBreakTime);
+            setLiveBreakTime(formatTimeFromSeconds(attendance.totalBreakTime));
+          }
+          
+          // ✅ STEP 2: Set punch times
           if (attendance.punchInTime) {
             setPunchInTime(attendance.punchInTime);
           }
           
-          // Check if punch out exists
+          // ✅ STEP 3: Check status
           if (attendance.punchOutTime) {
-            // Already punched out
+            // Already punched out - on break
             setPunchOutTime(attendance.punchOutTime);
             setIsPunchedIn(false);
             
-            // Calculate total working hours
-            const workTime = calculateWorkingHours(
-              attendance.punchInTime, 
-              attendance.punchOutTime
-            );
-            setWorkingHours(workTime.formatted);
-            setLiveWorkingTime(workTime.formatted);
+            // Start break timer
+            setIsOnBreak(true);
+            setBreakStartTime(attendance.breakStartTime || attendance.punchOutTime);
           } else {
-            // Still punched in (no punch out yet)
+            // Still punched in - working
             setIsPunchedIn(true);
             setPunchOutTime(null);
+            setIsOnBreak(false);
           }
         } else {
-          // No attendance record for today - reset everything
-          setPunchInTime(null);
-          setPunchOutTime(null);
-          setIsPunchedIn(false);
-          setWorkingHours("00 Hr 00 Mins 00 Secs");
-          setLiveWorkingTime("00 Hr 00 Mins 00 Secs");
+          // No attendance record - reset
+          resetDashboard();
         }
       } catch (error) {
-        console.error("Error loading today's attendance:", error);
-        // Reset state on error
-        setPunchInTime(null);
-        setPunchOutTime(null);
-        setIsPunchedIn(false);
+        console.error("Error loading attendance:", error);
+        resetDashboard();
       }
     };
 
     loadTodayAttendance();
   }, []);
 
-  // Institution coordinates from Google Maps link
-  // Aviv Digital Academy - Kozhikode, Kerala
-  const INSTITUTION_LAT = 11.280690661846767 ; 
-  const INSTITUTION_LNG = 75.77060212210458 ;
-  const MAX_DISTANCE = 50; 
+  const resetDashboard = () => {
+    setPunchInTime(null);
+    setPunchOutTime(null);
+    setIsPunchedIn(false);
+    setWorkingHours("00 Hr 00 Mins 00 Secs");
+    setLiveWorkingTime("00 Hr 00 Mins 00 Secs");
+    setBreakTime(0);
+    setLiveBreakTime("00 Hr 00 Mins 00 Secs");
+    setIsOnBreak(false);
+    setBreakStartTime(null);
+    setTotalWorkingTime(0);
+  };
 
-  // Live timer for working hours
+  const INSTITUTION_LAT = 11.280690661846767;
+  const INSTITUTION_LNG = 75.77060212210458;
+  const MAX_DISTANCE = 50;
+
+  // Live break timer
+  useEffect(() => {
+    if (!isOnBreak || !breakStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const breakStart = new Date(breakStartTime);
+      const currentBreakSeconds = Math.floor((now - breakStart) / 1000);
+      
+      const totalBreakSeconds = breakTime + currentBreakSeconds;
+      setLiveBreakTime(formatTimeFromSeconds(totalBreakSeconds));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOnBreak, breakStartTime, breakTime]);
+
+  // Live working timer
   useEffect(() => {
     if (!punchInTime || punchOutTime) return;
 
     const interval = setInterval(() => {
       const now = new Date();
       const start = new Date(punchInTime);
-      const diff = Math.floor((now - start) / 1000); // difference in seconds
+      const currentSessionSeconds = Math.floor((now - start) / 1000);
+      
+      // Add current session to total accumulated
+      const totalSeconds = totalWorkingTime + currentSessionSeconds;
 
-      const hours = Math.floor(diff / 3600);
-      const minutes = Math.floor((diff % 3600) / 60);
-      const seconds = diff % 60;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
 
       setLiveWorkingTime(
         `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`
@@ -99,11 +142,10 @@ function Studentsdashboard() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [punchInTime, punchOutTime]);
+  }, [punchInTime, punchOutTime, totalWorkingTime]);
 
-  // Calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
     const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -114,7 +156,7 @@ function Studentsdashboard() {
       Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    return R * c;
   };
 
   const getCurrentLocation = () => {
@@ -137,7 +179,7 @@ function Studentsdashboard() {
   const calculateWorkingHours = (startTime, endTime) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const diff = Math.floor((end - start) / 1000); // difference in seconds
+    const diff = Math.floor((end - start) / 1000);
 
     const hours = Math.floor(diff / 3600);
     const minutes = Math.floor((diff % 3600) / 60);
@@ -152,6 +194,14 @@ function Studentsdashboard() {
     };
   };
 
+  const formatTimeFromSeconds = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`;
+  };
+
   const handlePunchIn = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -162,7 +212,6 @@ function Studentsdashboard() {
 
       const loc = await getCurrentLocation();
 
-      // Calculate distance from institution
       const distance = calculateDistance(
         loc.latitude,
         loc.longitude,
@@ -170,32 +219,35 @@ function Studentsdashboard() {
         INSTITUTION_LNG
       );
 
-      console.log("Current Location:", loc);
-      console.log("Institution Location:", { lat: INSTITUTION_LAT, lng: INSTITUTION_LNG });
       console.log("Distance:", distance, "meters");
+      setLocationStatus(`Distance: ${Math.round(distance)}m`);
 
-      setLocationStatus(`Distance from institution: ${Math.round(distance)}m`);
-
-      // Check if within 50 meters
       if (distance > MAX_DISTANCE) {
         const distanceInKm = (distance / 1000).toFixed(2);
         alert(
-          `❌ Punch In Denied\n\nYou are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\nYou must be within ${MAX_DISTANCE} meters to punch in.\n\nPlease come to the institution premises.`
+          `❌ Punch In Denied\n\nYou are ${Math.round(distance)}m (${distanceInKm}km) away.\n\nMust be within ${MAX_DISTANCE}m.`
         );
-        setLocationStatus(`❌ Too far from institution (${Math.round(distance)}m)`);
+        setLocationStatus(`❌ Too far (${Math.round(distance)}m)`);
         setLoading(false);
         return;
       }
 
-      setLocationStatus(`✅ Within range (${Math.round(distance)}m)`);
+      // Calculate final break time
+      let finalBreakTime = breakTime;
+      if (isOnBreak && breakStartTime) {
+        const now = new Date();
+        const breakStart = new Date(breakStartTime);
+        const currentBreakSeconds = Math.floor((now - breakStart) / 1000);
+        finalBreakTime = breakTime + currentBreakSeconds;
+      }
 
-      // Proceed with punch in
       const res = await axios.post(
         "http://localhost:3001/student/punch-in",
         {
           latitude: loc.latitude,
           longitude: loc.longitude,
           distance: distance,
+          totalBreakTime: finalBreakTime,
         },
         {
           headers: {
@@ -208,18 +260,23 @@ function Studentsdashboard() {
       setPunchInTime(res.data.attendance.punchInTime);
       setIsPunchedIn(true);
       setPunchOutTime(null);
-      setWorkingHours("00 Hr 00 Mins 00 Secs");
+      
+      // Stop break timer
+      setIsOnBreak(false);
+      setBreakStartTime(null);
+      setBreakTime(finalBreakTime);
+      setLiveBreakTime(formatTimeFromSeconds(finalBreakTime));
+      
       alert("Punch In Successful! ✅");
-      setLocationStatus(`✅ Punched in successfully at ${Math.round(distance)}m from institution`);
+      setLocationStatus(`✅ Punched in at ${Math.round(distance)}m`);
     } catch (error) {
-      alert(error?.response?.data?.message || error.message || "Punch In Failed");
-      setLocationStatus("❌ Location error");
+      alert(error?.response?.data?.message || "Punch In Failed");
+      setLocationStatus("❌ Error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ CHANGE 2: Fixed handlePunchOut function
   const handlePunchOut = async () => {
     if (!isPunchedIn) {
       alert("You must punch in first!");
@@ -235,13 +292,11 @@ function Studentsdashboard() {
 
       const loc = await getCurrentLocation();
 
-      // Send punch out request to backend (backend will create the time)
       const res = await axios.post(
         "http://localhost:3001/student/punch-out",
         {
           latitude: loc.latitude,
           longitude: loc.longitude,
-          // Removed workingHours - backend will calculate it
         },
         {
           headers: {
@@ -251,23 +306,27 @@ function Studentsdashboard() {
         }
       );
 
-      // Get the punch out time from backend response
       setPunchOutTime(res.data.attendance.punchOutTime);
       setIsPunchedIn(false);
       
-      // Calculate working hours for display
-      const workTime = calculateWorkingHours(
-        punchInTime, 
-        res.data.attendance.punchOutTime
-      );
-      setWorkingHours(workTime.formatted);
+      // ✅ Backend returns total accumulated time
+      const newTotalWorkingTime = res.data.attendance.totalWorkingTime;
+      setTotalWorkingTime(newTotalWorkingTime);
       
-      setLocationStatus(`✅ Punch out successful! Total working time: ${workTime.formatted}`);
-      alert(`Punch Out Successful! ✅\n\nTotal Working Hours: ${workTime.formatted}`);
+      const formattedTotal = formatTimeFromSeconds(newTotalWorkingTime);
+      setWorkingHours(formattedTotal);
+      setLiveWorkingTime(formattedTotal);
+      
+      // Start break timer
+      setIsOnBreak(true);
+      setBreakStartTime(res.data.attendance.breakStartTime || res.data.attendance.punchOutTime);
+      
+      setLocationStatus(`✅ Total: ${formattedTotal}`);
+      alert(`Punch Out Successful! ✅\n\nTotal Working Hours: ${formattedTotal}`);
       
     } catch (error) {
-      alert(error?.response?.data?.message || error.message || "Punch Out Failed");
-      setLocationStatus("❌ Punch out error");
+      alert(error?.response?.data?.message || "Punch Out Failed");
+      setLocationStatus("❌ Error");
     } finally {
       setLoading(false);
     }
@@ -291,7 +350,6 @@ function Studentsdashboard() {
           <StudentTopbar />
         </div>
 
-        {/* Location Status Banner */}
         {locationStatus && (
           <div
             className={`mb-4 p-3 rounded-lg text-center font-semibold ${
@@ -310,28 +368,28 @@ function Studentsdashboard() {
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">On Time Percentage</p>
             <h2 className="text-3xl font-bold text-[#141E46] mt-2">65%</h2>
-            <p className="text-xs mt-1 text-red-500">-25% compared to January</p>
             <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Late Percentage</p>
             <h2 className="text-3xl font-bold text-[#141E46] mt-2">35%</h2>
-            <p className="text-xs mt-1 text-green-500">+35% compared to January</p>
             <div className="h-10 rounded mt-4 bg-[#FDE2E2]" />
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Total Break Hours</p>
-            <h2 className="text-3xl font-bold text-[#141E46] mt-2">00h 00m 00s</h2>
-            <p className="text-xs mt-1 text-red-500">-13% compared to January</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+              {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
+            </h2>
             <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl p-5">
             <p className="text-sm text-[#1679AB]">Total Working Hours</p>
-            <h2 className="text-3xl font-bold text-[#141E46] mt-2">{isPunchedIn ? liveWorkingTime : workingHours}</h2>
-            <p className="text-xs mt-1 text-green-500">+33% compared to January</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+              {isPunchedIn ? liveWorkingTime : workingHours}
+            </h2>
             <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
           </div>
         </div>
@@ -365,7 +423,7 @@ function Studentsdashboard() {
             <div className="bg-white rounded-2xl shadow-2xl p-4">
               <p className="text-sm text-[#1679AB]">Today Break Hours</p>
               <p className="text-lg font-semibold text-[#141E46]">
-                00 Hr 00 Mins 00 Secs
+                {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
               </p>
             </div>
 
