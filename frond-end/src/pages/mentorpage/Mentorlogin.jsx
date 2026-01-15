@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+
 import { FaLock } from 'react-icons/fa'
+
+import { jwtDecode } from 'jwt-decode'
+
 
 function Mentorlogin() {
   const navigate = useNavigate()
@@ -30,6 +34,7 @@ function Mentorlogin() {
         { email, password },
       )
 
+
       if (!res.data.success) {
         alert(res.data.message || "Login failed")
         return
@@ -39,6 +44,11 @@ function Mentorlogin() {
     } catch (error) {
       console.error("LOGIN ERROR:", error)
       alert(error.response?.data?.message || "Something went wrong")
+
+    if (!res.data.success) {
+      alert(res.data.message || "Login failed");
+      return;
+
     }
   }
 
@@ -70,6 +80,23 @@ const verifyOtpHandler = async () => {
     alert(error.response?.data?.message || "Invalid OTP");
   }
 };
+
+
+    const { token, role } = res.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/mentorlogin";
+      }, timeout);
+
+    navigate("/mentordashboard");
 
 
 const resetPasswordHandler = async () => {

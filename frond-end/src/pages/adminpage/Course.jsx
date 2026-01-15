@@ -27,7 +27,7 @@ function Course() {
   const [editDuration, setEditDuration] = useState("");
 
   const fetchCourse = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");  
     const role = localStorage.getItem("role");
     try {
       const res = await axios.get("http://localhost:3001/admin/getCourse", {
@@ -36,6 +36,7 @@ function Course() {
           Role: role,
         },
       });
+      
       setCourses(res.data);
     } catch (error) {
       console.error(error);
@@ -355,6 +356,7 @@ function Course() {
 
           <table className="w-full text-sm border-separate border-spacing-y-3">
             <thead className=" h-15 sticky top-18 bg-white">
+
               <tr className="text-[#1679AB]">
                 <th>#</th>
                 <th>Course Name</th>

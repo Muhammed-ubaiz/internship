@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useEffect,useState } from "react";
 import Sidebar from "./sidebar";
 
-function MyStudents() {
-  // --------------------- DATA ---------------------
-  const batches = ["MERN A", "MERN B", "Python A", "Java Fullstack"];
+import axios from "axios"
 
-  const [students] = useState([
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", batch: "MERN A", status: "Active" },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", batch: "Python A", status: "Inactive" },
-    { id: 3, name: "Charlie Brown", email: "charlie@example.com", batch: "Java Fullstack", status: "Active" },
-    { id: 4, name: "David Lee", email: "david@example.com", batch: "MERN B", status: "Active" },
-    { id: 5, name: "Eva Green", email: "eva@example.com", batch: "Python A", status: "Inactive" },
-  ]);
+
+function MyStudents() {
+
+  const [students, setStudents] = useState([]);
+
+  const batches = ["All", ...new Set(students.map(s => s.batch))];
+
+
+ ;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -34,6 +34,29 @@ function MyStudents() {
 
     return matchesSearch && matchesStatus && matchesBatch;
   });
+
+
+
+  useEffect(() => {
+ 
+    const fetchStudents = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+  
+      try {
+        const res = await axios.get("http://localhost:3001/admin/getStudents", {
+          headers: { Authorization: `Bearer ${token}`, Role: role },
+        });
+        setStudents(res.data);
+      } catch (error) {
+        console.error("Failed to fetch students", error);
+      }
+    };
+
+  
+    fetchStudents();
+  }, []);
+  
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
