@@ -26,9 +26,7 @@ const attendanceSchema = new mongoose.Schema(
       default: null,
     },
 
-    // ❌ breakEndTime direct aayi store cheyyenda avashyam illa
-    // totalBreakSeconds use cheyyumbo mathi
-    // breakEndTime remove cheythu
+   
 
     totalBreakSeconds: {
       type: Number,
@@ -44,7 +42,7 @@ const attendanceSchema = new mongoose.Schema(
 
     distance: Number,
 
-    // Working hours (seconds) → punchOut time il calculate cheyyum
+    // Working hours (seconds) → punchOut time  calculate 
     workingHours: {
       type: Number,
       default: 0,
