@@ -1,6 +1,7 @@
 import  { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
 
 function Mentorlogin() {
 const navigate = useNavigate()
@@ -20,12 +21,24 @@ const login = async (e) => {
       
     );
 
-
-
     if (!res.data.success) {
       alert(res.data.message || "Login failed");
       return;
     }
+
+    const { token, role } = res.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+
+      setTimeout(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/mentorlogin";
+      }, timeout);
 
     navigate("/mentordashboard");
 

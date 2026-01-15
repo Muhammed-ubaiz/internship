@@ -24,6 +24,7 @@ const attendanceSchema = new mongoose.Schema(
       default: null,
     },
 
+
     totalBreakSeconds: {
       type: Number,
       default: 0,
@@ -40,6 +41,7 @@ const attendanceSchema = new mongoose.Schema(
     punchOutLatitude: Number,
     punchOutLongitude: Number,
     distance: Number,
+
 
     date: {
       type: Date,

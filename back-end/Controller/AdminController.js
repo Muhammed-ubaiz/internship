@@ -41,8 +41,6 @@ const Login = (req, res) => {
 
 
 
-
-
 export const addCourse = async (req, res) => {
   try {
     const { name, duration } = req.body;
