@@ -49,49 +49,69 @@ function StudentLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="bg-[#EEF6FB] p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
-
-        <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-6">
+      <div className="bg-[#EEF6FB] p-8 rounded-3xl shadow-2xl w-[90%] max-w-md border border-white/50">
+        <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-2">
           STUDENT LOGIN
         </h2>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <p className="text-center text-gray-400 mb-8">Login to your account</p>
 
+        <form onSubmit={handleLogin} className="space-y-7">
           {/* EMAIL */}
-          <div>
-            <label className="block text-[#1679AB] mb-2">Email</label>
+          <div className="relative">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               required
-              className="w-full px-4 py-3 rounded-lg text-black border"
+              className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"
             />
+
+            <label
+              className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
+                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
+                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold"
+            >
+              Email
+            </label>
           </div>
 
           {/* PASSWORD */}
-          <div>
-            <label className="block text-[#1679AB] mb-2">Password</label>
+          <div className="relative">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              className="w-full px-4 py-3 rounded-lg text-black border"
+              className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"
             />
+
+            <label
+              className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
+                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
+                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold"
+            >
+              Password
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between text-sm text-gray-400">
+            <label className="flex items-center gap-2"></label>
+            <a href="#" className="hover:text-[#1679AB]">
+              Forgot password?
+            </a>
           </div>
 
           {/* LOGIN BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-[#141E46] text-white rounded-lg disabled:opacity-50"
+            className="w-full py-4 bg-[#141E46] hover:bg-[#2e3656] text-white font-bold rounded-2xl transition-all shadow-lg"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Logging in..." : "LOGIN"}
           </button>
-
         </form>
       </div>
     </div>

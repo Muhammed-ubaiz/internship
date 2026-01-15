@@ -55,7 +55,7 @@ const handleSubmit = async (e) => {
   return (
     <>
       <div className="min-h-screen flex items-center justify-center bg-white ">
-      <div className="bg-[#EEF6FB] p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
+      <div className="bg-[#EEF6FB] p-8 rounded-3xl shadow-2xl w-[90%] max-w-md border border-white/50">
         
         {/* Title */}
         <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-6">
@@ -68,27 +68,36 @@ const handleSubmit = async (e) => {
         {/* Form */}
         <form
         onSubmit={(e)=>{handleSubmit(e)}}
-        className="space-y-5">
+        className="space-y-7">
           {/* Email */}
-          <div>
-            <label className="block text-[#1679AB] mb-2">Email</label>
+          <div  className="relative">
+            
             <input
             onChange={(e)=>setemail(e.target.value)}
               type="email"
-              placeholder="Enter your email"
-              className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
-            />
+              placeholder=""
+className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"            />
+
+            <label className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
+                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
+                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold">Email</label>
+
           </div>
 
           {/* Password */}
-          <div>
-            <label className="block text-[#1679AB] mb-2">Password</label>
+          <div className="relative">
+            
             <input
              onChange={(e) => setpassword(e.target.value)}
               type="password"
               placeholder="Enter your password"
-              className="w-full px-4 py-3 rounded-lg  text-black border border-gray-700 focus:outline-none focus:border-[#141E46]"
+                className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"
             />
+
+            <label className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
+                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
+                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold">Password</label>
+
           </div>
 
           {/* Remember & Forgot */}
@@ -104,19 +113,13 @@ const handleSubmit = async (e) => {
           {/* Button */}
           <button
             type="submit"
-            className="w-full py-3 bg-[#141E46] hover:bg-[#2e3656] text-white font-semibold rounded-lg transition"
+              className="w-full py-4 bg-[#141E46] hover:bg-[#2e3656] text-white font-bold rounded-2xl transition-all shadow-lg"
           >
-            Login
+            LOGIN
           </button>
         </form>
 
-        {/* Signup */}
-        <p className="text-center text-gray-400 mt-6">
-          Don’t have an account?{" "}
-          <span className="text-[#1679AB] hover:underline cursor-pointer">
-            Sign up
-          </span>
-        </p>
+      
       </div>
     </div>
     </>
