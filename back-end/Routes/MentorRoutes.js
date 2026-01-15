@@ -7,7 +7,7 @@ import {
   resetPassword,
   getstudent,
 } from "../Controller/MentorContriller.js";
-import express from "express"
+
 
 import { verifyToken } from "../AuthMiddleware.js";
 

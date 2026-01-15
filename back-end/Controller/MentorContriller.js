@@ -20,12 +20,18 @@ export const mentorlogin = async (req, res) => {
     }
 
 
+    const token = jwt.sign(
+      { id: mentor._id, role: "mentor" },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
 
 
     return res.status(200).json({
       success: true,
       message: "Login successfully",
       mentor: { name: mentor.name, email: mentor.email },
+      token
     });
   } catch (error) {
     console.error(error);
@@ -42,11 +48,7 @@ export const sendOtp = async (req, res) => {
     if (!mentor) {
       return res.status(404).json({ success: false, message: "Mentor not found" });
     }
-    const token = jwt.sign(
-      { id: mentor._id, role: "mentor" },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    
 
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -121,25 +123,10 @@ export const resetPassword = async (req, res) => {
     console.error("RESET PASSWORD ERROR:", error);
     return res.status(500).json({ success: false, message: "Server error" });
 
-        return res.status(200).json({
-            success:true,
-            message:"Login successfully",
-            mentor:{
-            name: mentor.name,
-            email: mentor.email,
-            },
-            token
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-          success: false,
-          message: "Server error"
-        });
-    }
+        
 }
 
-
+}
 
 export const getstudent = async (req, res) => {
   try {
@@ -164,3 +151,4 @@ export const getstudent = async (req, res) => {
 
   }
 };
+
