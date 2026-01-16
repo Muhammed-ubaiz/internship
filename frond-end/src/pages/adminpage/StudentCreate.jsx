@@ -181,6 +181,8 @@ function StudentCreate() {
 
   // --------------------- OTP ---------------------
   const sendOtp = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
     if (!email) return setMessage("Enter email");
 
     setLoading(true);
@@ -189,7 +191,11 @@ function StudentCreate() {
     try {
       const res = await axios.post("http://localhost:3001/admin/send-otp", {
         email,
-      });
+      },
+      {
+        headers: { Authorization: `Bearer ${token}`, Role: role },
+      }
+    );
       if (res.data.success) {
         setShowOtpModal(true);
         setMessage("OTP sent! Check your email");
@@ -205,6 +211,9 @@ function StudentCreate() {
   };
 
   const verifyOtp = async () => {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
     if (!otp) return setMessage("Enter OTP");
 
     setLoading(true);
@@ -214,6 +223,8 @@ function StudentCreate() {
       const res = await axios.post("http://localhost:3001/admin/verify-otp", {
         email,
         otp,
+      },{
+        headers: { Authorization: `Bearer ${token}`, Role: role },
       });
       if (res.data.success) {
         setIsVerified(true);
