@@ -36,7 +36,7 @@ export const checkstudent = async (req, res) => {
     const token = jwt.sign(
       { id: student._id, email: student.email, role: "student" }, // payload
       JWT_SECRET,
-      { expiresIn: "15m" } 
+      { expiresIn: "1d" } 
     );
 
     // Send response

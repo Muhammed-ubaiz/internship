@@ -102,7 +102,7 @@ function Studentsdashboard() {
 
   const INSTITUTION_LAT = 11.280690661846767;
   const INSTITUTION_LNG = 75.77060212210458;
-  const MAX_DISTANCE = 50;
+  const MAX_DISTANCE = 100;
 
   // Live break timer
   useEffect(() => {
@@ -120,7 +120,7 @@ function Studentsdashboard() {
     return () => clearInterval(interval);
   }, [isOnBreak, breakStartTime, breakTime]);
 
-  // Live working timer
+ 
   useEffect(() => {
     if (!punchInTime || punchOutTime) return;
 
@@ -129,7 +129,7 @@ function Studentsdashboard() {
       const start = new Date(punchInTime);
       const currentSessionSeconds = Math.floor((now - start) / 1000);
       
-      // Add current session to total accumulated
+    
       const totalSeconds = totalWorkingTime + currentSessionSeconds;
 
       const hours = Math.floor(totalSeconds / 3600);
@@ -342,6 +342,7 @@ function Studentsdashboard() {
   };
 
   return (
+    
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
       <SideBarStudent />
 
@@ -467,6 +468,7 @@ function Studentsdashboard() {
         </div>
       </div>
     </div>
+    
   );
 }
 

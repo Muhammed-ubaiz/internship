@@ -13,12 +13,12 @@ import { verifyToken } from "../AuthMiddleware.js";
 
 const mentorroutes = express.Router();
 
-mentorroutes.post("/mentorlogin", mentorlogin);
-mentorroutes.post("/forgot-password", sendOtp);
-mentorroutes.post("/verify-otp", verifyOtp);
-mentorroutes.post("/reset-password", resetPassword);
+mentorroutes.post("/mentorlogin",mentorlogin);
+mentorroutes.post("/forgot-password",verifyToken, sendOtp);
+mentorroutes.post("/verify-otp",verifyToken, verifyOtp);
+mentorroutes.post("/reset-password",verifyToken, resetPassword);
 
-mentorroutes.post("/mentorlogin",mentorlogin)
+
 
 mentorroutes.get("/getStudents",verifyToken,getstudent)
 

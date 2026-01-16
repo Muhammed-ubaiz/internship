@@ -23,7 +23,7 @@ export const mentorlogin = async (req, res) => {
     const token = jwt.sign(
       { id: mentor._id, role: "mentor" },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "10m" }
     );
 
 

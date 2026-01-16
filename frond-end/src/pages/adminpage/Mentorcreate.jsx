@@ -27,9 +27,15 @@ const [loading, setLoading] = useState(false);
 
   // ================= FETCH MENTORS =================
   const fetchMentors = async () => {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
     try {
       const res = await axios.get("http://localhost:3001/admin/getMentors", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
       });
 
       if (res.data.success) setMentors(res.data.mentors);
@@ -39,9 +45,15 @@ const [loading, setLoading] = useState(false);
   };
 
   const fetchCourses = async () => {
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
   try {
     const res = await axios.get("http://localhost:3001/admin/getCourse", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Role: role,
+      },
     });
     setCourses(res.data);
   } catch (error) {
@@ -59,12 +71,19 @@ const [loading, setLoading] = useState(false);
     e.preventDefault();
     if (!course) return alert("Please select course");
 
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
     try {
+
       const res = await axios.post(
         "http://localhost:3001/admin/addMentor",
         { name, email, password, course },
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
         }
       );
 
@@ -90,12 +109,19 @@ const [loading, setLoading] = useState(false);
 
  const handleUpdateMentor = async (e) => {
   e.preventDefault();
+
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
   try {
     const res = await axios.put(
       `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
       { name, email, course },
       {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
       }
     );
 
@@ -112,12 +138,18 @@ const [loading, setLoading] = useState(false);
 
   // ================= TOGGLE STATUS =================
   const handleToggleStatus = async (id) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
     try {
       const res = await axios.put(
         `http://localhost:3001/admin/mentor/status/${id}`,
         {},
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
         }
       );
       if (res.data.success) fetchMentors();
@@ -155,6 +187,10 @@ const [loading, setLoading] = useState(false);
   });
 
   const sendOtp = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+
   if (!email) return setMessage("Enter email");
 
   setLoading(true);
@@ -163,7 +199,13 @@ const [loading, setLoading] = useState(false);
   try {
     const res = await axios.post(
       "http://localhost:3001/admin/send-otp",
-      { email }
+      { email },
+      {
+        headers:{
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      }
     );
 
     if (res.data.success) {
@@ -186,10 +228,19 @@ const verifyOtp = async () => {
   setLoading(true);
   setMessage("Verifying OTP...");
 
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
   try {
     const res = await axios.post(
       "http://localhost:3001/admin/verify-otp",
-      { email, otp }
+      { email, otp },
+      {
+        headers:{
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      }
     );
 
     if (res.data.success) {
