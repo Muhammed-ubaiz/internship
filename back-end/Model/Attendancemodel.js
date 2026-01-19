@@ -13,25 +13,24 @@ const attendanceSchema = new mongoose.Schema(
       default: null,
     },
 
-    punchOutTime:{
+    punchOutTime: {
       type: Date,
       default: null,
     },
   
-    // 🟡 Break handling
+    // ✅ Break handling - FIXED field names
     breakStartTime: {
       type: Date,
       default: null,
     },
 
-
-    totalBreakSeconds: {
+    totalBreakTime: {  // ✅ Changed from totalBreakSeconds
       type: Number,
       default: 0,
     },
 
-    // 🟢 Working time (seconds)
-    workingHours: {
+    // ✅ Working time (seconds) - FIXED field name
+    totalWorkingTime: {  // ✅ Changed from workingHours
       type: Number,
       default: 0,
     },
@@ -41,7 +40,6 @@ const attendanceSchema = new mongoose.Schema(
     punchOutLatitude: Number,
     punchOutLongitude: Number,
     distance: Number,
-
 
     date: {
       type: Date,
