@@ -4,7 +4,6 @@ import {
   FaHome,
   FaCalendarCheck,
   FaUmbrellaBeach,
-  FaBook,
   FaPowerOff,
   FaChevronDown,
   FaUsers,

@@ -13,7 +13,6 @@ export const checkstudent = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find student by email
     const student = await Student.findOne({ email });
 
     if (!student) {
@@ -23,8 +22,9 @@ export const checkstudent = async (req, res) => {
       });
     }
 
-    // Check password
-    const isPasswordValid = bcrypt.compare(password, student.password);
+    
+    const isPasswordValid = await bcrypt.compare(password, student.password);
+
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -32,14 +32,12 @@ export const checkstudent = async (req, res) => {
       });
     }
 
-    
     const token = jwt.sign(
-      { id: student._id, email: student.email, role: "student" }, // payload
+      { id: student._id, email: student.email, role: "student" },
       JWT_SECRET,
-      { expiresIn: "1d" } 
+      { expiresIn: "1d" }
     );
 
-    // Send response
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -47,19 +45,20 @@ export const checkstudent = async (req, res) => {
         id: student._id,
         name: student.name,
         email: student.email,
-        role:"student",
+        role: "student",
       },
       token
     });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Server error"
     });
   }
 };
+
 
 
 export const getTodayAttendance = async (req, res) => {
