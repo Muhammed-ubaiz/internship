@@ -24,6 +24,7 @@ import MyStudents from "../pages/mentorpage/MyStudents";
 import LeaveHistory1 from "../pages/mentorpage/LeaveHistory1";
 import DailyAttendance1 from "../pages/mentorpage/DailyAttendance1";
 import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
+import Punchinrequest from "../pages/mentorpage/Punchinrequest";
 
 
 function LayoutRoutes() {
@@ -107,11 +108,7 @@ function LayoutRoutes() {
           <Route path="/leavehistory1" element={<LeaveHistory1/>} />
 
 
-          
-
-       
-
-
+          <Route path="/punchinrequest" element={<Punchinrequest/>}/>
           
         </Routes>
       </BrowserRouter>

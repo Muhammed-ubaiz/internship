@@ -76,6 +76,11 @@ function Sidebar() {
 
         {attendanceOpen && (
           <div>
+           
+            <div className={subItem}
+          onClick={()=> navigate("/punchinrequest")}>
+           Punch in request
+            </div>
             <div
               className={subItem}
               onClick={() => navigate("/dailyattendance1")}

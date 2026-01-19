@@ -23,7 +23,7 @@ export const mentorlogin = async (req, res) => {
     const token = jwt.sign(
       { id: mentor._id, role: "mentor" },
       process.env.JWT_SECRET,
-      { expiresIn: "10m" }
+      { expiresIn: "1d" }
     );
 
 
@@ -82,7 +82,7 @@ export const sendOtp = async (req, res) => {
   }
 };
 
-
+  
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
