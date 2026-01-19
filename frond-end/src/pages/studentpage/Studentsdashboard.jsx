@@ -100,8 +100,8 @@ function Studentsdashboard() {
     setTotalWorkingTime(0);
   };
 
-  const INSTITUTION_LAT = 11.280690661846767;
-  const INSTITUTION_LNG = 75.77060212210458;
+  const INSTITUTION_LAT = 11.280610467307952;
+  const INSTITUTION_LNG =  75.77045696982046;
   const MAX_DISTANCE = 100;
 
   // Live break timer
