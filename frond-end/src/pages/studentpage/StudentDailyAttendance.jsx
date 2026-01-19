@@ -51,7 +51,7 @@ function StudentDailyAttendance() {
               <tr className="text-left text-[#0077b6] border-b">
                 <th className="px-4 py-3">Session</th>
                 <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Remarks</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
