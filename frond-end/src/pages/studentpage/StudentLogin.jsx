@@ -10,6 +10,15 @@ function StudentLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -25,10 +34,10 @@ function StudentLogin() {
         return;
       }
 
-      const { token, role } = res.data;
+      const { token, student } = res.data;
 
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", student.role);
 
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
@@ -47,74 +56,206 @@ function StudentLogin() {
     }
   };
 
+  const sendOtp = async () => {
+    try {
+      await axios.post("http://localhost:3001/student/forgot-password", {
+        email: forgotEmail,
+      });
+
+      alert("OTP sent to your email");
+      setShowEmailModal(false);
+      setShowOtpModal(true);
+    } catch (error) {
+      alert(error.response?.data?.message || "Error sending OTP");
+    }
+  };
+
+  const verifyOtpHandler = () => {
+    if (!otp) {
+      alert("Enter OTP");
+      return;
+    }
+    setShowOtpModal(false);
+    setShowResetModal(true);
+  };
+
+  const resetPasswordHandler = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      await axios.post("http://localhost:3001/student/reset-password", {
+        email: forgotEmail,
+        otp,
+        newPassword,
+      });
+
+      alert("Password reset successful");
+      setShowResetModal(false);
+    } catch (error) {
+      alert(error.response?.data?.message || "Error resetting password");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="bg-[#EEF6FB] p-8 rounded-3xl shadow-2xl w-[90%] max-w-md border border-white/50">
-        <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-2">
-          STUDENT LOGIN
-        </h2>
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="bg-[#EEF6FB] p-8 rounded-3xl shadow-2xl w-[90%] max-w-md">
+          <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-2">
+            STUDENT LOGIN
+          </h2>
 
-        <p className="text-center text-gray-400 mb-8">Login to your account</p>
+          <p className="text-center text-gray-400 mb-8">
+            Login to your account
+          </p>
 
-        <form onSubmit={handleLogin} className="space-y-7">
-          {/* EMAIL */}
-          <div className="relative">
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* EMAIL */}
+            <div className="relative">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                required
+                className="peer w-full px-5 py-4 rounded-2xl border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] placeholder-transparent"
+              />
+              <label className="absolute left-4 top-4 bg-[#EEF6FB] px-2 text-gray-400 transition-all peer-focus:-top-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:text-sm">
+                Email
+              </label>
+            </div>
+
+            <div className="relative">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+                className="peer w-full px-5 py-4 rounded-2xl border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] placeholder-transparent"
+              />
+              <label className="absolute left-4 top-4 bg-[#EEF6FB] px-2 text-gray-400 transition-all peer-focus:-top-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:text-sm">
+                Password
+              </label>
+            </div>
+
+            <div className="flex justify-end text-sm text-gray-400">
+              <button
+                type="button"
+                onClick={() => setShowEmailModal(true)}
+                className="hover:text-[#1679AB]"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-[#141E46] text-white font-bold rounded-2xl"
+            >
+              {loading ? "Logging in..." : "LOGIN"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96 relative">
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className="absolute top-3 right-3"
+            >
+              ✕
+            </button>
+            <h2 className="text-lg font-semibold text-center mb-4">
+              Forgot Password
+            </h2>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              required
-              className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
             />
-
-            <label
-              className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
-                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
-                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold"
+            <button
+              onClick={sendOtp}
+              className="w-full bg-[#141E46] text-white py-2 rounded"
             >
-              Email
-            </label>
+              Send OTP
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* PASSWORD */}
-          <div className="relative">
+      {showOtpModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96 relative">
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-3 right-3"
+            >
+              ✕
+            </button>
+            <h2 className="text-lg font-semibold text-center mb-4">
+              Enter OTP
+            </h2>
+            <input
+              type="text"
+              placeholder="Enter OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+            <button
+              onClick={verifyOtpHandler}
+              className="w-full bg-[#141E46] text-white py-2 rounded"
+            >
+              Verify OTP
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96 relative">
+            <button
+              onClick={() => setShowResetModal(false)}
+              className="absolute top-3 right-3"
+            >
+              ✕
+            </button>
+            <h2 className="text-lg font-semibold text-center mb-4">
+              Reset Password
+            </h2>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              className="peer w-full px-5 py-4 rounded-2xl text-black border-2 border-blue-200 bg-transparent focus:outline-none focus:border-[#1679AB] transition-all placeholder-transparent"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
             />
-
-            <label
-              className="absolute left-4 top-4 px-2 bg-[#EEF6FB] text-gray-400 transition-all pointer-events-none 
-                peer-focus:-top-3 peer-focus:left-3 peer-focus:text-sm peer-focus:text-[#1679AB] peer-focus:font-bold
-                peer-[:not(:placeholder-shown)]:-top-3 peer-[:not(:placeholder-shown)]:left-3 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-[#1679AB] peer-[:not(:placeholder-shown)]:font-bold"
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+            <button
+              onClick={resetPasswordHandler}
+              className="w-full bg-[#141E46] text-white py-2 rounded"
             >
-              Password
-            </label>
+              Confirm
+            </button>
           </div>
-
-          <div className="flex items-center justify-between text-sm text-gray-400">
-            <label className="flex items-center gap-2"></label>
-            <a href="#" className="hover:text-[#1679AB]">
-              Forgot password?
-            </a>
-          </div>
-
-          {/* LOGIN BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-[#141E46] hover:bg-[#2e3656] text-white font-bold rounded-2xl transition-all shadow-lg"
-          >
-            {loading ? "Logging in..." : "LOGIN"}
-          </button>
-        </form>
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
