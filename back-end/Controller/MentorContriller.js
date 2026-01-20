@@ -1,10 +1,13 @@
 import Mentor from "../Model/Mentormodel.js";
 import ForgetModel from "../Model/ForgetModel.js";
 import bcrypt from "bcryptjs";
-import Student from "../Model/Studentsmodel.js";
+import Student from '../Model/Studentsmodel.js';
 import jwt from "jsonwebtoken"
 import nodemailer from "nodemailer";
-import Course from "../Model/Coursemodel.js";
+import PunchingRequest from '../Model/PunchingRequestmodel.js';
+import Attendance from '../Model/Attendancemodel.js';
+
+
 
 /* ===== LOGIN (existing) ===== */
 export const mentorlogin = async (req, res) => {
@@ -20,13 +23,11 @@ export const mentorlogin = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
-
     const token = jwt.sign(
       { id: mentor._id, role: "mentor" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
-
 
     return res.status(200).json({
       success: true,
@@ -40,7 +41,6 @@ export const mentorlogin = async (req, res) => {
   }
 };
 
-
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -49,8 +49,6 @@ export const sendOtp = async (req, res) => {
     if (!mentor) {
       return res.status(404).json({ success: false, message: "Mentor not found" });
     }
-    
-
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
@@ -83,7 +81,6 @@ export const sendOtp = async (req, res) => {
   }
 };
 
-  
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -104,7 +101,6 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword, confirmPassword } = req.body;
@@ -123,38 +119,99 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error("RESET PASSWORD ERROR:", error);
     return res.status(500).json({ success: false, message: "Server error" });
-
-        
-}
-
-}
+  }
+};
 
 export const getstudent = async (req, res) => {
   try {
-   
     const mentorEmail = req.user.id; 
     console.log(mentorEmail);
-    
-
-   
-    const mentor = await Mentor.findOne({ _id: mentorEmail });
+  
+    const mentor = await Mentor.findOne({ _id: mentorEmail })
 
     if (!mentor) {
       return res.status(404).json({ message: "Mentor not found" });
     }
      const course=await Course.findOne({name:mentor.course})
-     
-    
-
     
     const students = await Student.find({course:course._id}, { password: 0 });
-    ;
+
 
     return res.status(200).json(students);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
+  }
+};
 
+// Get all pending punch requests
+export const getPunchRequests = async (req, res) => {
+  try {
+    const requests = await PunchingRequest.find({ status: 'PENDING' })
+      .populate('studentId', 'name email batch course')
+      .sort({ createdAt: -1 });
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching punch requests:', error);
+    res.status(500).json({ message: 'Failed to fetch requests' });
+  }
+};
+
+// ✅ FIXED: Accept punch request
+export const acceptPunchRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1️⃣ Find punch request
+    const punchRequest = await PunchingRequest.findById(id);
+    if (!punchRequest) {
+      return res.status(404).json({ message: "Punch request not found" });
+    }
+
+    // 2️⃣ Update request status (ENUM must match)
+    punchRequest.status = "APPROVED";
+    await punchRequest.save();
+
+    // 3️⃣ Today date (normalized)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 4️⃣ Find or create attendance
+    let attendance = await Attendance.findOne({
+      studentId: punchRequest.studentId,
+      date: today,
+    });
+
+    if (!attendance) {
+      attendance = new Attendance({
+        studentId: punchRequest.studentId,
+        date: today,
+        totalWorkingTime: 0,
+        totalBreakTime: 0,
+      });
+    }
+
+    await attendance.save(); // ✅ IMPORTANT
+
+    // 5️⃣ Update student punch-in
+    const student = await Student.findById(punchRequest.studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.isPunchedIn = true;
+    student.punchInTime = punchRequest.punchTime || new Date();
+    await student.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Punch request approved & student punched in",
+    });
+
+  } catch (err) {
+    console.error("❌ BACKEND ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 

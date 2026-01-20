@@ -4,6 +4,8 @@ import DashboardCalendar from "../Dashboardcalender";
 import SideBarStudent from "./SideBarStudent";
 import StudentTopbar from "./StudentTopbar";
 import axios from "axios";
+import { io } from "socket.io-client";
+
 
 // Enhanced Map Modal Component
 function MapModal({
@@ -433,7 +435,9 @@ function MapModal({
   );;
 }
 
+
 function Studentsdashboard() {
+  const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [punchInTime, setPunchInTime] = useState(null);
   const [punchOutTime, setPunchOutTime] = useState(null);
@@ -441,79 +445,177 @@ function Studentsdashboard() {
   const [workingHours, setWorkingHours] = useState("00 Hr 00 Mins 00 Secs");
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [liveWorkingTime, setLiveWorkingTime] = useState("00 Hr 00 Mins 00 Secs");
-
-  // Break timer states
   const [breakTime, setBreakTime] = useState(0);
   const [liveBreakTime, setLiveBreakTime] = useState("00 Hr 00 Mins 00 Secs");
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [breakStartTime, setBreakStartTime] = useState(null);
-
-  // Total accumulated working time
   const [totalWorkingTime, setTotalWorkingTime] = useState(0);
-
-  // Map modal states
   const [showMap, setShowMap] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [currentDistance, setCurrentDistance] = useState(0);
   const [pendingAction, setPendingAction] = useState(null);
+  const [pendingRequestId, setPendingRequestId] = useState(null);
 
   const INSTITUTION_LAT = 11.280610467307952;
   const INSTITUTION_LNG = 75.77045696982046;
   const MAX_DISTANCE = 50;
 
+  // ✅ Initialize socket connection with comprehensive error handling
   useEffect(() => {
-    const loadTodayAttendance = async () => {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('❌ No token found - cannot connect to socket');
+      return;
+    }
 
-      try {
-        const res = await axios.get("http://localhost:3001/student/today-attendance", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            role: role,
-          },
-        });
+    console.log('🔌 Attempting to connect to Socket.IO...');
+    console.log('📍 Server URL: http://localhost:3001');
+    
+    const newSocket = io('http://localhost:3001', {
+      auth: { token },
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000,
+    });
+    
+    newSocket.on('connect', () => {
+      console.log('✅ Socket connected successfully!');
+      console.log('🆔 Socket ID:', newSocket.id);
+      console.log('🔄 Transport:', newSocket.io.engine.transport.name);
+      setLocationStatus('');
+    });
 
-        if (res.data.attendance) {
-          const attendance = res.data.attendance;
-          
-          if (attendance.totalWorkingTime !== undefined) {
-            setTotalWorkingTime(attendance.totalWorkingTime);
-            const formattedTotal = formatTimeFromSeconds(attendance.totalWorkingTime);
-            setWorkingHours(formattedTotal);
-            setLiveWorkingTime(formattedTotal);
-          }
-
-          if (attendance.totalBreakTime !== undefined) {
-            setBreakTime(attendance.totalBreakTime);
-            setLiveBreakTime(formatTimeFromSeconds(attendance.totalBreakTime));
-          }
-          
-          if (attendance.punchInTime) {
-            setPunchInTime(attendance.punchInTime);
-          }
-          
-          if (attendance.punchOutTime) {
-            setPunchOutTime(attendance.punchOutTime);
-            setIsPunchedIn(false);
-            setIsOnBreak(true);
-            setBreakStartTime(attendance.breakStartTime || attendance.punchOutTime);
-          } else {
-            setIsPunchedIn(true);
-            setPunchOutTime(null);
-            setIsOnBreak(false);
-          }
-        } else {
-          resetDashboard();
-        }
-      } catch (error) {
-        console.error("Error loading attendance:", error);
-        resetDashboard();
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error.message);
+      console.error('📋 Full error:', error);
+      
+      if (error.message.includes('Authentication')) {
+        setLocationStatus('❌ Authentication failed');
+      } else if (error.message.includes('timeout')) {
+        setLocationStatus('❌ Connection timeout');
+      } else {
+        setLocationStatus('❌ Server connection failed');
       }
-    };
+    });
 
+    newSocket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
+      
+      if (reason === 'io server disconnect') {
+        console.log('🔄 Server disconnected - reconnecting...');
+        newSocket.connect();
+      }
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`🔄 Reconnection attempt ${attempt}/5...`);
+    });
+
+    newSocket.on('reconnect', (attempt) => {
+      console.log(`✅ Reconnected after ${attempt} attempts`);
+      setLocationStatus('');
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('❌ Reconnection failed');
+      setLocationStatus('❌ Lost connection');
+    });
+
+    newSocket.on('requestApproved', (data) => {
+      console.log('✅ Request approved:', data);
+      
+      if (data.requestId === pendingRequestId) {
+        const action = data.type === 'PUNCH_IN' ? 'Punch-in' : 'Punch-out';
+        alert(`✅ Your ${action} request has been approved!`);
+        setLocationStatus(`✅ ${action} approved`);
+        
+        if (data.type === 'PUNCH_IN') {
+          setIsPunchedIn(true);
+          setPunchInTime(new Date(data.punchTime));
+        } else if (data.type === 'PUNCH_OUT') {
+          setIsPunchedIn(false);
+          setPunchOutTime(new Date(data.punchTime));
+        }
+        
+        setPendingRequestId(null);
+        loadTodayAttendance();
+      }
+    });
+
+    newSocket.on('requestRejected', (data) => {
+      console.log('❌ Request rejected:', data);
+      
+      if (data.requestId === pendingRequestId) {
+        const action = data.type === 'PUNCH_IN' ? 'Punch-in' : 'Punch-out';
+        alert(`❌ Your ${action} request was rejected${data.reason ? ': ' + data.reason : ''}`);
+        setLocationStatus(`❌ ${action} rejected`);
+        setPendingRequestId(null);
+      }
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      console.log('🔌 Disconnecting socket...');
+      newSocket.disconnect();
+    };
+  }, [pendingRequestId]);
+
+  useEffect(() => {
     loadTodayAttendance();
   }, []);
+
+  const loadTodayAttendance = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get("http://localhost:3001/student/today-attendance", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          role: role,
+        },
+      });
+
+      if (res.data.attendance) {
+        const attendance = res.data.attendance;
+        
+        if (attendance.totalWorkingTime !== undefined) {
+          setTotalWorkingTime(attendance.totalWorkingTime);
+          const formattedTotal = formatTimeFromSeconds(attendance.totalWorkingTime);
+          setWorkingHours(formattedTotal);
+          setLiveWorkingTime(formattedTotal);
+        }
+
+        if (attendance.totalBreakTime !== undefined) {
+          setBreakTime(attendance.totalBreakTime);
+          setLiveBreakTime(formatTimeFromSeconds(attendance.totalBreakTime));
+        }
+        
+        if (attendance.punchInTime) {
+          setPunchInTime(attendance.punchInTime);
+          setIsPunchedIn(true);
+        } else {
+          setIsPunchedIn(false);
+        }
+        
+        if (attendance.punchOutTime) {
+          setPunchOutTime(attendance.punchOutTime);
+          setIsOnBreak(true);
+        } else {
+          setIsOnBreak(false);
+        }
+      } else {
+        resetDashboard();
+      }
+    } catch (error) {
+      console.error("Error loading attendance:", error);
+      resetDashboard();
+    }
+  };
 
   const resetDashboard = () => {
     setPunchInTime(null);
@@ -526,83 +628,6 @@ function Studentsdashboard() {
     setIsOnBreak(false);
     setBreakStartTime(null);
     setTotalWorkingTime(0);
-  };
-
-
-  useEffect(() => {
-    if (!isOnBreak || !breakStartTime) return;
-
-    const interval = setInterval(() => {
-      const now = new Date();
-      const breakStart = new Date(breakStartTime);
-      const currentBreakSeconds = Math.floor((now - breakStart) / 1000);
-      
-      const totalBreakSeconds = breakTime + currentBreakSeconds;
-      setLiveBreakTime(formatTimeFromSeconds(totalBreakSeconds));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isOnBreak, breakStartTime, breakTime]);
-
-  useEffect(() => {
-    if (!punchInTime || punchOutTime) return;
-
-    const interval = setInterval(() => {
-      const now = new Date();
-      const start = new Date(punchInTime);
-      const currentSessionSeconds = Math.floor((now - start) / 1000);
-      const totalSeconds = totalWorkingTime + currentSessionSeconds;
-
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      setLiveWorkingTime(
-        `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`
-      );
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [punchInTime, punchOutTime, totalWorkingTime]);
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  };
-
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject("Geolocation not supported");
-      }
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => reject(error.message)
-      );
-    });
-  };
-
-  const formatTimeFromSeconds = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`;
   };
 
   const handlePunchInClick = async () => {
@@ -662,7 +687,6 @@ function Studentsdashboard() {
 
   const confirmPunchIn = async () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
 
     try {
       setLoading(true);
@@ -674,45 +698,28 @@ function Studentsdashboard() {
         return;
       }
 
-      let finalBreakTime = breakTime;
-      if (isOnBreak && breakStartTime) {
-        const now = new Date();
-        const breakStart = new Date(breakStartTime);
-        const currentBreakSeconds = Math.floor((now - breakStart) / 1000);
-        finalBreakTime = breakTime + currentBreakSeconds;
-      }
-
       const res = await axios.post(
-        "http://localhost:3001/student/punch-in",
-        {
+        "http://localhost:3001/student/request-punch-in",
+       {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
           distance: currentDistance,
-          totalBreakTime: finalBreakTime,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            role: role,
           },
         }
       );
 
-      setPunchInTime(res.data.attendance.punchInTime);
-      setIsPunchedIn(true);
-      setPunchOutTime(null);
-      
-      setIsOnBreak(false);
-      setBreakStartTime(null);
-      setBreakTime(finalBreakTime);
-      setLiveBreakTime(formatTimeFromSeconds(finalBreakTime));
-      
+      setPendingRequestId(res.data.requestId);
       setShowMap(false);
-      alert("Punch In Successful! ✅");
-      setLocationStatus(`✅ Punched in at ${Math.round(currentDistance)}m`);
+      setLocationStatus(`⏳ Punch-in request sent (${Math.round(currentDistance)}m)`);
+      alert("✅ Punch-in request submitted! Waiting for mentor approval...");
     } catch (error) {
-      alert(error?.response?.data?.message || "Punch In Failed");
-      setLocationStatus("❌ Error");
+      console.error("Punch-in error:", error);
+      alert(error?.response?.data?.message || "Punch request failed");
+      setLocationStatus("❌ Request Error");
     } finally {
       setLoading(false);
     }
@@ -720,13 +727,12 @@ function Studentsdashboard() {
 
   const confirmPunchOut = async () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
 
     try {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:3001/student/punch-out",
+        "http://localhost:3001/student/request-punch-out",
         {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
@@ -734,34 +740,61 @@ function Studentsdashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            role: role,
           },
         }
       );
 
-      setPunchOutTime(res.data.attendance.punchOutTime);
-      setIsPunchedIn(false);
-      
-      const newTotalWorkingTime = res.data.attendance.totalWorkingTime;
-      setTotalWorkingTime(newTotalWorkingTime);
-      
-      const formattedTotal = formatTimeFromSeconds(newTotalWorkingTime);
-      setWorkingHours(formattedTotal);
-      setLiveWorkingTime(formattedTotal);
-      
-      setIsOnBreak(true);
-      setBreakStartTime(res.data.attendance.breakStartTime || res.data.attendance.punchOutTime);
-      
+      setPendingRequestId(res.data.requestId);
       setShowMap(false);
-      setLocationStatus(`✅ Total: ${formattedTotal}`);
-      alert(`Punch Out Successful! ✅\n\nTotal Working Hours: ${formattedTotal}`);
-      
+      setLocationStatus("⏳ Punch-out request sent");
+      alert("✅ Punch-out request submitted! Waiting for mentor approval...");
     } catch (error) {
-      alert(error?.response?.data?.message || "Punch Out Failed");
-      setLocationStatus("❌ Error");
+      console.error("Punch-out error:", error);
+      alert(error?.response?.data?.message || "Punch out request failed");
+      setLocationStatus("❌ Request Error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3;
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject("Geolocation not supported");
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => reject(error.message)
+      );
+    });
+  };
+
+  const formatTimeFromSeconds = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(hours).padStart(2, "0")} Hr ${String(minutes).padStart(2, "0")} Mins ${String(seconds).padStart(2, "0")} Secs`;
   };
 
   const formatTime = (time) => {
@@ -773,9 +806,10 @@ function Studentsdashboard() {
     });
   };
 
+
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
-      <SideBarStudent />
+      <SideBarStudent/>
 
       <MapModal
         isOpen={showMap}
@@ -799,6 +833,8 @@ function Studentsdashboard() {
                 ? "bg-green-100 text-green-700"
                 : locationStatus.includes("❌")
                 ? "bg-red-100 text-red-700"
+                : locationStatus.includes("⏳")
+                ? "bg-yellow-100 text-yellow-700"
                 : "bg-blue-100 text-blue-700"
             }`}
           >
@@ -879,14 +915,16 @@ function Studentsdashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <button
                 onClick={handlePunchInClick}
-                disabled={loading || isPunchedIn}
+                disabled={loading || isPunchedIn || pendingRequestId}
                 className={`${
-                  loading || isPunchedIn
+                  loading || isPunchedIn || pendingRequestId
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#0dd635] hover:bg-[#0dd664]"
                 } text-white py-3 rounded-lg font-semibold transition-colors`}
               >
-                {loading && !isPunchedIn
+                {pendingRequestId && pendingAction === 'punchIn'
+                  ? "Waiting Approval..."
+                  : loading && !isPunchedIn
                   ? "Getting Location..."
                   : isPunchedIn
                   ? "Already Punched In"
@@ -895,14 +933,18 @@ function Studentsdashboard() {
 
               <button
                 onClick={handlePunchOutClick}
-                disabled={loading || !isPunchedIn}
+                disabled={loading || !isPunchedIn || pendingRequestId}
                 className={`${
-                  loading || !isPunchedIn
+                  loading || !isPunchedIn || pendingRequestId
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#ed1717] hover:bg-[#d60d0de2]"
                 } text-white py-3 rounded-lg font-semibold transition-colors`}
               >
-                {loading && isPunchedIn ? "Getting Location..." : "Punch Out"}
+                {pendingRequestId && pendingAction === 'punchOut'
+                  ? "Waiting Approval..."
+                  : loading && isPunchedIn
+                  ? "Getting Location..."
+                  : "Punch Out"}
               </button>
             </div>
           </div>

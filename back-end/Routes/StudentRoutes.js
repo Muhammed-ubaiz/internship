@@ -6,6 +6,7 @@ import {
   getTodayAttendance,
   punchIn,
   punchOut,
+  requestPunchIn,
   resetPassword,
   saveLocation,
 } from "../Controller/StudentController.js";
@@ -15,6 +16,7 @@ const studentroutes = express.Router();
 
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
+studentroutes.post("/request-punch-in", verifyToken,requestPunchIn);
 studentroutes.post("/punch-out", verifyToken, punchOut);
 studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
@@ -24,6 +26,10 @@ studentroutes.get("/location/history", verifyToken, getLocationHistory);
 
 studentroutes.post("/forgot-password", forgotPassword);
 studentroutes.post("/reset-password", resetPassword);
+
+
+
+
 
 
 
