@@ -266,87 +266,6 @@ export const punchOut = async (req, res) => {
   }
 };
 
-export const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) return res.status(400).json({ message: "Email required" });
-
-    const student = await Student.findOne({ email: email.toLowerCase() });
-    if (!student) return res.status(404).json({ message: "Student not found" });
-
-    // Generate OTP or token (for simplicity using OTP)
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Remove old OTP
-    await ForgetModel.deleteMany({ email: student.email });
-
-    const otpStore = new ForgetModel({
-      email: student.email,
-      otp: otp,
-      otpExpiry: new Date(Date.now() + 10 * 60 * 1000), // 10 mins
-    });
-
-    await otpStore.save();
-
-    // Send OTP via email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.APP_EMAIL,
-        pass: process.env.APP_PASSWORD,
-      },
-      tls: { rejectUnauthorized: false },
-    });
-
-    await transporter.sendMail({
-      from: process.env.APP_EMAIL,
-      to: email,
-      subject: "Student Password Reset OTP",
-      html: `<p>Your OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`,
-    });
-
-    res.json({ success: true, message: "OTP sent to email" });
-  } catch (err) {
-    console.error("ForgotPassword Error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, otp, newPassword } = req.body;
-
-    if (!email || !otp || !newPassword)
-      return res.status(400).json({ message: "Email, OTP and new password required" });
-
-    const otpRecord = await ForgetModel.findOne({ email: email.toLowerCase() });
-    if (!otpRecord) return res.status(400).json({ message: "No OTP request found" });
-
-    if (otpRecord.otpExpiry < Date.now()) {
-      await ForgetModel.deleteOne({ email });
-      return res.status(400).json({ message: "OTP expired. Request a new one." });
-    }
-
-    if (otpRecord.otp !== otp)
-      return res.status(400).json({ message: "Invalid OTP" });
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await Student.findOneAndUpdate(
-      { email: email.toLowerCase() },
-      { password: hashedPassword }
-    );
-
-    await ForgetModel.deleteOne({ email });
-
-    res.json({ success: true, message: "Password reset successful" });
-  } catch (err) {
-    console.error("ResetPassword Error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 export const saveLocation = async (req, res) => {
   try {
     const { latitude, longitude, accuracy } = req.body;
@@ -445,6 +364,131 @@ export const getLocationHistory = async (req, res) => {
   }
 };
 
+
+
+export const sendStudentOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const student = await Student.findOne({ email });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    await ForgetModel.findOneAndUpdate(
+      { email },
+      { otp, otpExpiry },
+      { upsert: true, new: true }
+    );
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.APP_EMAIL,
+        pass: process.env.APP_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.APP_EMAIL,
+      to: email,
+      subject: "Student Password Reset OTP",
+      text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
+    });
+
+    return res.json({
+      success: true,
+      message: "OTP sent successfully",
+    });
+  } catch (error) {
+    console.error("SEND STUDENT OTP ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+export const verifyStudentOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const record = await ForgetModel.findOne({ email, otp });
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    if (record.otpExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    console.error("VERIFY STUDENT OTP ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+export const resetStudentPassword = async (req, res) => {
+  try {
+    const { email, newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await Student.findOneAndUpdate(
+      { email },
+      { password: hashedPassword }
+    );
+
+    await ForgetModel.deleteOne({ email });
+
+    return res.json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("RESET STUDENT PASSWORD ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 export const requestPunchIn = async (req, res) => {
   try {
     // Check your verifyToken middleware - it might set req.user.id or req.user._id
@@ -508,4 +552,5 @@ export const requestPunchIn = async (req, res) => {
     });
   }
 };
+
 

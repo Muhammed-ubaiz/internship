@@ -1,14 +1,19 @@
 import express from "express";
 import {
   checkstudent,
-  forgotPassword,
   getLocationHistory,
   getTodayAttendance,
   punchIn,
   punchOut,
+
+  resetStudentPassword,
+
   requestPunchIn,
   resetPassword,
+
   saveLocation,
+  sendStudentOtp,
+  verifyStudentOtp,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -24,8 +29,10 @@ studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 studentroutes.post("/location", verifyToken, saveLocation);
 studentroutes.get("/location/history", verifyToken, getLocationHistory);
 
-studentroutes.post("/forgot-password", forgotPassword);
-studentroutes.post("/reset-password", resetPassword);
+studentroutes.post("/send-otp",sendStudentOtp);
+studentroutes.post("/verify-otp", verifyStudentOtp);
+studentroutes.post("/reset-password", resetStudentPassword);
+
 
 
 
