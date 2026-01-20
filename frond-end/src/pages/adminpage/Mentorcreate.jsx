@@ -31,7 +31,7 @@ const [loading, setLoading] = useState(false);
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get("http://localhost:3001/admin/getMentors", {
+      const res = await axios.get("http://localhost:3001/admin/getMentors",{
         headers: {
           Authorization: `Bearer ${token}`,
           Role: role,

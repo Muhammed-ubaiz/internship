@@ -30,7 +30,7 @@ function Mentorlogin() {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
-          },
+          }
         }
       );
 
@@ -39,9 +39,9 @@ function Mentorlogin() {
         return;
       }
 
-      const { token, role } = res.data;
+      const { token } = res.data;
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", "mentor");
 
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
@@ -61,16 +61,10 @@ function Mentorlogin() {
 
   // ===== FORGOT PASSWORD =====
   const sendOtp = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+  
     try {
       await axios.post("http://localhost:3001/mentor/forgot-password", {
         email: forgotEmail,
-      },{
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
       });
       alert("OTP sent to your email!");
       setShowEmailModal(false);
@@ -81,19 +75,13 @@ function Mentorlogin() {
   };
 
   const verifyOtpHandler = async () => {
-     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+     
     try {
       await axios.post("http://localhost:3001/mentor/verify-otp", {
         email: forgotEmail,
         otp,
-      },
-      {
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
       }
+      
     );
       alert("OTP verified! Enter new password.");
       setShowOtpModal(false);
@@ -104,18 +92,12 @@ function Mentorlogin() {
   };
 
   const resetPasswordHandler = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    
     try {
       await axios.post("http://localhost:3001/mentor/reset-password", {
         email: forgotEmail,
         newPassword,
         confirmPassword,
-      },{
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
       }
     );
       alert("Password reset successfully!");

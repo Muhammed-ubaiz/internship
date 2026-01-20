@@ -5,14 +5,15 @@ function ProtectedRoute({ children,role }) {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role")
 
-  if (!token || role !== "admin") {
-    return <Navigate to="/adminlogin" />;
+  // not logged in
+  if (!token) {
+    return <Navigate to="/adminlogin" replace />;
   }
-   
+  // role mismatch
   if (role && userRole !== role) {
-    
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
+  
 
   return children;
 }
