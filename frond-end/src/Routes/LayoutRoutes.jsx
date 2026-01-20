@@ -26,13 +26,13 @@ import DailyAttendance1 from "../pages/mentorpage/DailyAttendance1";
 import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
 import Punchinrequest from "../pages/mentorpage/Punchinrequest";
 
-
 function LayoutRoutes() {
   return (
     <>
       <BrowserRouter>
         <Routes>
           <Route path="/adminlogin" element={<AdminLogin />} />
+          <Route path="/mentorlogin" element={<Mentorlogin />} />
           <Route path="/" element={<StudentLogin />} />
           <Route
             path="/admindashboard"
@@ -59,57 +59,175 @@ function LayoutRoutes() {
             }
           />
 
-
-          <Route path="/studentsdashboard" element={<Studentsdashboard />} />
-
-          <Route path="/studentsdashboard" element={
-
-              <Studentsdashboard />
-            
+          <Route
+            path="/mentorcreate"
+            element={
+              <ProtectedRoute role="admin">
+                <Mentorcreate />
+              </ProtectedRoute>
+            }
+          />
+        
+        <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute role="admin">
+                <Attendance />
+              </ProtectedRoute>
+            }
+          />
           
-          } />
+          <Route
+            path="/monthlySummary"
+            element={
+              <ProtectedRoute role="admin">
+                <MonthlySummary />
+              </ProtectedRoute>
+            }
+          />
+           
+           <Route
+            path="/adminLeaveRequest"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminLeaveRequest />
+              </ProtectedRoute>
+            }
+          />
+        
+        <Route
+            path="/leaveHistory"
+            element={
+              <ProtectedRoute role="admin">
+                <LeaveHistory />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/attendance" element={<Attendance />} />
+          <Route
+            path="/studentsdashboard"
+            element={
+         <ProtectedRoute role="student">
+         <Studentsdashboard />
+         </ProtectedRoute>
+                
+        
+            }
+          />
 
-          <Route path="/attendance" element={<Attendance />} />
+        
 
-          <Route path="/dailyAttendance" element={<DailyAttendance />} />
-          <Route path="/monthlySummary" element={<MonthlySummary />} />
-          <Route path="/adminLeaveRequest" element={<AdminLeaveRequest />} />
-          <Route path="/leaveHistory" element={<LeaveHistory />} />
+          <Route
+            path="/dailyAttendance"
+            element={
+              <ProtectedRoute role="student">
+                <DailyAttendance />
+              </ProtectedRoute>
+            }
+          />
+        
+          
+          
 
           <Route
             path="/studentMonthlySummary"
-            element={<StudentMonthlySummary />}
+            element={
+              <ProtectedRoute role="student">
+                <StudentMonthlySummary />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/StudentDailyAttendance"
-            element={<StudentDailyAttendance />}
+            element={
+              <ProtectedRoute role="student">
+                <StudentDailyAttendance />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/studentMonthlySummary"
-            element={<StudentMonthlySummary />}
+            element={
+              <ProtectedRoute role="student">
+                <StudentMonthlySummary />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/StudentLeaveHistory"
-            element={<StudentLeaveHistory />}
+            element={
+              <ProtectedRoute role="student">
+                <StudentLeaveHistory />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/LeaveApply" element={<LeaveApply />} />
+
+          <Route
+            path="/LeaveApply"
+            element={
+              <ProtectedRoute role="student">
+                <LeaveApply />
+              </ProtectedRoute>
+            }
+          />
 
           {/* mentor */}
-          <Route path="/mentorlogin" element={<Mentorlogin />} />
-          <Route path="/mentorcreate" element={<Mentorcreate />} />
-          <Route path="/mentordashboard" element={<MentorDashboard />} />
-          <Route path="/mystudents" element={<MyStudents />} />
-          <Route path="/dailyattendance1" element={<DailyAttendance1 />} />
-          <Route path="/monthlysummary1" element={<MonthlySummary1/>} />
-          <Route path="/leavehistory1" element={<LeaveHistory1/>} />
 
+          <Route
+            path="/mentordashboard"
+            element={
+              <ProtectedRoute role="mentor" >
+                <MentorDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/punchinrequest" element={<Punchinrequest/>}/>
-          
+          <Route
+            path="/mystudents"
+            element={
+              <ProtectedRoute role="mentor">
+                <MyStudents />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dailyattendance1"
+            element={
+              <ProtectedRoute role="mentor" >
+                <DailyAttendance1 />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/monthlysummary1"
+            element={
+              <ProtectedRoute role="mentor">
+                <MonthlySummary1 />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/leavehistory1"
+            element={
+              <ProtectedRoute role="mentor" >
+                <LeaveHistory1 />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/punchinrequest"
+            element={
+              <ProtectedRoute  role="mentor">
+                <Punchinrequest />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </>

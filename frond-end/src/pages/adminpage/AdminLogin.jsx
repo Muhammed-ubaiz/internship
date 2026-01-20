@@ -1,4 +1,4 @@
-import react, { useState } from "react"
+import  { useState } from "react"
 import {useNavigate} from"react-router-dom"
 import axios from "axios"
 
@@ -27,10 +27,10 @@ const handleSubmit = async (e) => {
     
 
     if (response.data.success) {
-      const { token, role } = response.data;
+      const { token } = response.data;
     
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", "admin");
     
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
