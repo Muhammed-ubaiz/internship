@@ -5,12 +5,8 @@ import {
   getTodayAttendance,
   punchIn,
   punchOut,
-
-  
-
-  requestPunchIn,
   resetStudentPassword,
-
+  requestPunchIn,
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
