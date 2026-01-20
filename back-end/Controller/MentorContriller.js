@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import Student from "../Model/Studentsmodel.js";
 import jwt from "jsonwebtoken"
 import nodemailer from "nodemailer";
+import Course from "../Model/Coursemodel.js";
 
 /* ===== LOGIN (existing) ===== */
 export const mentorlogin = async (req, res) => {
@@ -132,16 +133,21 @@ export const getstudent = async (req, res) => {
   try {
    
     const mentorEmail = req.user.id; 
+    console.log(mentorEmail);
+    
 
    
-    const mentor = await Mentor.findOne({ email: mentorEmail });
+    const mentor = await Mentor.findOne({ _id: mentorEmail });
 
     if (!mentor) {
       return res.status(404).json({ message: "Mentor not found" });
     }
+     const course=await Course.findOne({name:mentor.course})
+     
+    
 
     
-    const students = await Student.find({course:req.body.course}, { password: 0 });
+    const students = await Student.find({course:course._id}, { password: 0 });
     ;
 
     return res.status(200).json(students);
