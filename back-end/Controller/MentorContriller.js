@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import nodemailer from "nodemailer";
 import PunchingRequest from '../Model/PunchingRequestmodel.js';
 import Attendance from '../Model/Attendancemodel.js';
+import Course from "../Model/Coursemodel.js";
 
 
 
