@@ -7,6 +7,8 @@ import nodemailer from "nodemailer";
 import PunchingRequest from '../Model/PunchingRequestmodel.js';
 import Attendance from '../Model/Attendancemodel.js';
 
+
+
 /* ===== LOGIN (existing) ===== */
 export const mentorlogin = async (req, res) => {
   try {
@@ -123,14 +125,17 @@ export const resetPassword = async (req, res) => {
 export const getstudent = async (req, res) => {
   try {
     const mentorEmail = req.user.id; 
-
-    const mentor = await Mentor.findOne({ email: mentorEmail });
+    console.log(mentorEmail);
+  
+    const mentor = await Mentor.findOne({ _id: mentorEmail })
 
     if (!mentor) {
       return res.status(404).json({ message: "Mentor not found" });
     }
+     const course=await Course.findOne({name:mentor.course})
+    
+    const students = await Student.find({course:course._id}, { password: 0 });
 
-    const students = await Student.find({course:req.body.course}, { password: 0 });
 
     return res.status(200).json(students);
   } catch (error) {
