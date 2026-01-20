@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import Swal from "sweetalert2";
 
 function Mentorlogin() {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ function Mentorlogin() {
   // ===== STATES =====
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // login button loading
+  const [otpLoading, setOtpLoading] = useState(false); // OTP sending indicator
 
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -22,20 +25,20 @@ function Mentorlogin() {
   // ===== LOGIN =====
   const login = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/mentor/mentorlogin",
-        { email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          },
-        }
-      );
+      const res = await axios.post("http://localhost:3001/mentor/mentorlogin", {
+        email,
+        password,
+      });
 
       if (!res.data.success) {
-        alert(res.data.message || "Login failed");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: res.data.message || "Email or password is incorrect!",
+        });
         return;
       }
 
@@ -46,83 +49,128 @@ function Mentorlogin() {
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
 
+      // Auto logout after token expiry
       setTimeout(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         window.location.href = "/mentorlogin";
       }, timeout);
 
-      navigate("/mentordashboard");
+      Swal.fire({
+        
+        title: "Login Successful!",
+        icon: "success",
+        draggable: true,
+        timer: 1000,
+        showConfirmButton: false,
+      }).then(() => navigate("/mentordashboard"));
     } catch (error) {
-      console.error("LOGIN ERROR:", error);
-      alert(error.response?.data?.message || "Something went wrong");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Something went wrong!",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   // ===== FORGOT PASSWORD =====
   const sendOtp = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    if (!forgotEmail) return alert("Please enter email");
+
     try {
+      setOtpLoading(true);
+
       await axios.post("http://localhost:3001/mentor/forgot-password", {
         email: forgotEmail,
-      },{
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
       });
-      alert("OTP sent to your email!");
+
+      Swal.fire({
+        title: "OTP Sent!",
+        text: "Check your email.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       setShowEmailModal(false);
       setShowOtpModal(true);
     } catch (error) {
-      alert(error.response?.data?.message || "Error sending OTP");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Error sending OTP",
+      });
+    } finally {
+      setOtpLoading(false);
     }
   };
 
   const verifyOtpHandler = async () => {
-     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
     try {
       await axios.post("http://localhost:3001/mentor/verify-otp", {
         email: forgotEmail,
         otp,
-      },
-      {
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
-      }
-    );
-      alert("OTP verified! Enter new password.");
+      });
+
+      Swal.fire({
+        title: "OTP Verified!",
+        text: "Enter your new password.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       setShowOtpModal(false);
       setShowResetModal(true);
     } catch (error) {
-      alert(error.response?.data?.message || "Invalid OTP");
+      Swal.fire({
+        icon: "error",
+        title: "Invalid OTP",
+        text: error.response?.data?.message || "Please try again",
+      });
     }
   };
 
   const resetPasswordHandler = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
     try {
       await axios.post("http://localhost:3001/mentor/reset-password", {
         email: forgotEmail,
         newPassword,
         confirmPassword,
-      },{
-        headers: {
-          headers: { Authorization: `Bearer ${token}`,
-           Role: role }
-        },
-      }
-    );
-      alert("Password reset successfully!");
+      });
+
+      Swal.fire({
+        title: "Password Reset!",
+        text: "You can now login with your new password.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       setShowResetModal(false);
+      resetForm();
     } catch (error) {
-      alert(error.response?.data?.message || "Error resetting password");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Something went wrong",
+      });
     }
+  };
+
+  // ===== RESET FORM =====
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setForgotEmail("");
+    setOtp("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowEmailModal(false);
+    setShowOtpModal(false);
+    setShowResetModal(false);
   };
 
   return (
@@ -130,7 +178,7 @@ function Mentorlogin() {
       {/* ===== YOUR ORIGINAL DESIGN (UNCHANGED) ===== */}
 
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-[#EEF6FB] p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
+        <div className="bg-[#EEF6FB] p-8 rounded-2xl shadow-2xl w-[90%] max-w-md border-white/50">
           <h2 className="text-3xl font-bold text-center text-[#1679AB] mb-6">
             MENTOR LOGIN
           </h2>
@@ -139,7 +187,7 @@ function Mentorlogin() {
             Login to your account
           </p>
 
-          <form onSubmit={login} className="space-y-5">
+          <form onSubmit={login} className="space-y-7">
             <div className="relative">
               <input
                 value={email}
@@ -188,7 +236,7 @@ function Mentorlogin() {
               type="submit"
               className="w-full py-4 bg-[#141E46] hover:bg-[#2e3656] text-white font-bold rounded-2xl transition-all shadow-lg"
             >
-              Login
+              LOGIN
             </button>
           </form>
         </div>
@@ -202,6 +250,7 @@ function Mentorlogin() {
             <button
               onClick={() => {
                 setShowEmailModal(false);
+                resetForm();
               }}
               className=" absolute top-3 right-3"
             >
@@ -211,13 +260,21 @@ function Mentorlogin() {
             <h2 className=" text-lg font-semibold mb-4 w-full flex justify-center items-center">
               Forgot Password
             </h2>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-              className="w-full border p-2 rounded mb-4 mt-5"
-            />
+           <input
+  type="email"
+  placeholder="Enter your email"
+  value={forgotEmail}
+  onChange={(e) => setForgotEmail(e.target.value)}
+  className="w-full border p-2 rounded m"
+/>
+
+{otpLoading && (
+  <p className="text-sm text-blue-600 mt-2">
+    OTP sending...
+  </p>
+)}
+
+
             <button
               onClick={sendOtp}
               className="w-full bg-[#141E46] text-white py-2 rounded mt-5"
@@ -234,6 +291,7 @@ function Mentorlogin() {
             <button
               onClick={() => {
                 setShowOtpModal(false);
+                resetForm();
               }}
               className=" absolute top-3 right-3"
             >
@@ -266,6 +324,7 @@ function Mentorlogin() {
             <button
               onClick={() => {
                 setShowResetModal(false);
+                resetForm();
               }}
               className=" absolute top-3 right-3"
             >

@@ -20,14 +20,13 @@ function Mentorcreate() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   const [otp, setOtp] = useState("");
-const [showOtpModal, setShowOtpModal] = useState(false);
-const [isVerified, setIsVerified] = useState(false);
-const [message, setMessage] = useState("");
-const [loading, setLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // ================= FETCH MENTORS =================
   const fetchMentors = async () => {
-
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
@@ -45,26 +44,25 @@ const [loading, setLoading] = useState(false);
   };
 
   const fetchCourses = async () => {
-
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
-  try {
-    const res = await axios.get("http://localhost:3001/admin/getCourse", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Role: role,
-      },
-    });
-    setCourses(res.data);
-  } catch (error) {
-    console.error(error);
-  }
-};
+    try {
+      const res = await axios.get("http://localhost:3001/admin/getCourse", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      });
+      setCourses(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
- useEffect(() => {
-  fetchMentors();
-  fetchCourses(); 
-}, []);
+  useEffect(() => {
+    fetchMentors();
+    fetchCourses();
+  }, []);
 
   // ================= ADD MENTOR =================
   const handleAddMentor = async (e) => {
@@ -75,7 +73,6 @@ const [loading, setLoading] = useState(false);
     const role = localStorage.getItem("role");
 
     try {
-
       const res = await axios.post(
         "http://localhost:3001/admin/addMentor",
         { name, email, password, course },
@@ -84,7 +81,7 @@ const [loading, setLoading] = useState(false);
             Authorization: `Bearer ${token}`,
             Role: role,
           },
-        }
+        },
       );
 
       if (res.data.success) {
@@ -107,34 +104,34 @@ const [loading, setLoading] = useState(false);
     setShowEditModal(true);
   };
 
- const handleUpdateMentor = async (e) => {
-  e.preventDefault();
+  const handleUpdateMentor = async (e) => {
+    e.preventDefault();
 
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-  try {
-    const res = await axios.put(
-      `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
-      { name, email, course },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Role: role,
+    try {
+      const res = await axios.put(
+        `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
+        { name, email, course },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
         },
-      }
-    );
+      );
 
-    if (res.data.success) {
-      fetchMentors();
-      setShowEditModal(false);
-      resetForm();
+      if (res.data.success) {
+        fetchMentors();
+        setShowEditModal(false);
+        resetForm();
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to update mentor");
     }
-  } catch (error) {
-    console.error(error);
-    alert(error.response?.data?.message || "Failed to update mentor");
-  }
-};
+  };
 
   // ================= TOGGLE STATUS =================
   const handleToggleStatus = async (id) => {
@@ -150,7 +147,7 @@ const [loading, setLoading] = useState(false);
             Authorization: `Bearer ${token}`,
             Role: role,
           },
-        }
+        },
       );
       if (res.data.success) fetchMentors();
     } catch (error) {
@@ -159,20 +156,18 @@ const [loading, setLoading] = useState(false);
     }
   };
 
-  
- const resetForm = () => {
-  setName("");
-  setEmail("");
-  setPassword("");
-  setCourse("");
-  setOtp("");
-  setIsVerified(false);
-  setMessage("");
-  setShowModal(false);
-  setShowEditModal(false);
-  setShowOtpModal(false);
-};
-
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setCourse("");
+    setOtp("");
+    setIsVerified(false);
+    setMessage("");
+    setShowModal(false);
+    setShowEditModal(false);
+    setShowOtpModal(false);
+  };
 
   // ================= FILTERED MENTORS =================
   const filteredMentors = mentors.filter((mentor) => {
@@ -190,73 +185,72 @@ const [loading, setLoading] = useState(false);
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
+    if (!email) return setMessage("Enter email");
 
-  if (!email) return setMessage("Enter email");
+    setLoading(true);
+    setMessage("Sending OTP...");
 
-  setLoading(true);
-  setMessage("Sending OTP...");
-
-  try {
-    const res = await axios.post(
-      "http://localhost:3001/admin/send-otp",
-      { email },
-      {
-        headers:{
-          Authorization: `Bearer ${token}`,
-          Role: role,
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/send-otp",
+        { email },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
         },
+      );
+
+      if (res.data.success) {
+        setShowOtpModal(true);
+        setMessage("OTP sent! Check your email.");
+      } else {
+        setMessage(res.data.message || "Failed to send OTP");
       }
-    );
-
-    if (res.data.success) {
-      setShowOtpModal(true);
-      setMessage("OTP sent! Check your email.");
-    } else {
-      setMessage(res.data.message || "Failed to send OTP");
+    } catch (err) {
+      console.error(err);
+      setMessage("Error sending OTP");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-    setMessage("Error sending OTP");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const verifyOtp = async () => {
-  if (!otp) return setMessage("Enter OTP");
+  const verifyOtp = async () => {
+    if (!otp) return setMessage("Enter OTP");
 
-  setLoading(true);
-  setMessage("Verifying OTP...");
+    setLoading(true);
+    setMessage("Verifying OTP...");
 
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-  try {
-    const res = await axios.post(
-      "http://localhost:3001/admin/verify-otp",
-      { email, otp },
-      {
-        headers:{
-          Authorization: `Bearer ${token}`,
-          Role: role,
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/verify-otp",
+        { email, otp },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
         },
-      }
-    );
+      );
 
-    if (res.data.success) {
-      setIsVerified(true);
-      setShowOtpModal(false);
-      setMessage("Email verified successfully!");
-    } else {
-      setMessage(res.data.message || "Invalid OTP");
+      if (res.data.success) {
+        setIsVerified(true);
+        setShowOtpModal(false);
+        setMessage("Email verified successfully!");
+      } else {
+        setMessage(res.data.message || "Invalid OTP");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Error verifying OTP");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error(err);
-    setMessage("Error verifying OTP");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
@@ -480,32 +474,32 @@ const verifyOtp = async () => {
                 required
               />
               <div className="flex gap-2">
-  <input
-    type="email"
-    placeholder="Email"
-    value={email}
-    onChange={(e) => {
-      setEmail(e.target.value);
-      setIsVerified(false);
-    }}
-    className="flex-1 border p-2 rounded"
-    required
-  />
-  <button
-    type="button"
-    onClick={sendOtp}
-    className={`px-4 rounded text-white ${
-      isVerified
-        ? "bg-green-500 cursor-not-allowed"
-        : "bg-[#141E46] hover:bg-[#0f2040]"
-    }`}
-    disabled={isVerified || loading}
-  >
-    {isVerified ? "Verified" : loading ? "Sending..." : "Verify"}
-  </button>
-</div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsVerified(false);
+                  }}
+                  className="flex-1 border p-2 rounded"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={sendOtp}
+                  className={`px-4 rounded text-white ${
+                    isVerified
+                      ? "bg-green-500 cursor-not-allowed"
+                      : "bg-[#141E46] hover:bg-[#0f2040]"
+                  }`}
+                  disabled={isVerified || loading}
+                >
+                  {isVerified ? "Verified" : loading ? "Sending..." : "Verify"}
+                </button>
+              </div>
 
-{message && <p className="text-sm text-gray-600">{message}</p>}
+              {message && <p className="text-sm text-gray-600">{message}</p>}
 
               <input
                 type="password"
@@ -515,29 +509,27 @@ const verifyOtp = async () => {
                 className="w-full border p-2 rounded"
                 required
               />
-             <select
-  value={course}
-  onChange={(e) => setCourse(e.target.value)}
-  className="w-full border p-2 rounded "
-  required
->
-  <option value="">Select course</option>
-  {courses.map((c) => (
-    <option key={c._id} value={c.name}>
-      {c.name}
-    </option>
-  ))}
-</select>
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className="w-full border p-2 rounded "
+                required
+              >
+                <option value="">Select course</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
 
-
-             <button
-  className="w-full bg-[#141E46] text-white py-2 rounded disabled:opacity-50"
-  type="submit"
-  disabled={!isVerified || !course}
->
-  Create Mentor
-</button>
-
+              <button
+                className="w-full bg-[#141E46] text-white py-2 rounded disabled:opacity-50"
+                type="submit"
+                disabled={!isVerified || !course}
+              >
+                Create Mentor
+              </button>
             </form>
           </div>
         </div>
@@ -575,21 +567,20 @@ const verifyOtp = async () => {
                 className="w-full border p-2 rounded"
                 required
               />
-             
-              <select
-  value={course}
-  onChange={(e) => setCourse(e.target.value)}
-  className="w-full border p-2 rounded"
-  required
->
-  <option value="">Select course</option>
-  {courses.map((c) => (
-    <option key={c._id} value={c.name}>
-      {c.name}
-    </option>
-  ))}
-</select>
 
+              <select
+                value={course}
+                onChange={(e) => setCourse(e.target.value)}
+                className="w-full border p-2 rounded"
+                required
+              >
+                <option value="">Select course</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
 
               <button
                 type="submit"
@@ -603,49 +594,48 @@ const verifyOtp = async () => {
       )}
 
       {showOtpModal && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
-      <button
-        onClick={() => setShowOtpModal(false)}
-        className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-      >
-        ✕
-      </button>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
 
-      <h2 className="text-xl font-semibold text-center mb-4">
-        Enter OTP
-      </h2>
+            <h2 className="text-xl font-semibold text-center mb-4">
+              Enter OTP
+            </h2>
 
-      <p className="text-sm text-gray-600 text-center mb-4">
-        OTP sent to <span className="font-semibold">{email}</span>
-      </p>
+            <p className="text-sm text-gray-600 text-center mb-4">
+              OTP sent to <span className="font-semibold">{email}</span>
+            </p>
 
-      <input
-        type="text"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-        placeholder="Enter OTP"
-        className="w-full border p-2 rounded mb-4 text-center"
-      />
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter OTP"
+              className="w-full border p-2 rounded mb-4 text-center"
+            />
 
-      <button
-        onClick={verifyOtp}
-        className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
-      >
-        Verify OTP
-      </button>
+            <button
+              onClick={verifyOtp}
+              className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
+            >
+              Verify OTP
+            </button>
 
-      {message && (
-        <p className="text-sm text-gray-600 mt-2 text-center">{message}</p>
+            {message && (
+              <p className="text-sm text-gray-600 mt-2 text-center">
+                {message}
+              </p>
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
     </div>
   );
 }
-
-
-
 
 export default Mentorcreate;
