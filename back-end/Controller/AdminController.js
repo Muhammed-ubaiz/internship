@@ -124,7 +124,6 @@ export const addStudent = async (req, res) => {
 export const getStudents = async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
-    console.log(students);
     res.json(students);
   } catch (error) {
     res.status(500).json({ success: false });
