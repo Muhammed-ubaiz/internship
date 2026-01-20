@@ -6,10 +6,10 @@ import {
   punchIn,
   punchOut,
 
-  resetStudentPassword,
+  
 
   requestPunchIn,
-  resetPassword,
+  resetStudentPassword,
 
   saveLocation,
   sendStudentOtp,
