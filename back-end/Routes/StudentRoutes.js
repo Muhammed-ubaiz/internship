@@ -5,7 +5,12 @@ import {
   getTodayAttendance,
   punchIn,
   punchOut,
+
   resetStudentPassword,
+
+  requestPunchIn,
+  resetPassword,
+
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
@@ -16,6 +21,7 @@ const studentroutes = express.Router();
 
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
+studentroutes.post("/request-punch-in", verifyToken,requestPunchIn);
 studentroutes.post("/punch-out", verifyToken, punchOut);
 studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
@@ -26,6 +32,10 @@ studentroutes.get("/location/history", verifyToken, getLocationHistory);
 studentroutes.post("/send-otp",sendStudentOtp);
 studentroutes.post("/verify-otp", verifyStudentOtp);
 studentroutes.post("/reset-password", resetStudentPassword);
+
+
+
+
 
 
 

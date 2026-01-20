@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
+import PunchingRequest from "../Model/PunchingRequestmodel.js";
 
 // config/jwt.js
  const JWT_SECRET = process.env.JWT_SECRET || "key321";
@@ -63,7 +64,7 @@ export const checkstudent = async (req, res) => {
 
 export const getTodayAttendance = async (req, res) => {
   try {
-    const studentemail = req.user.id;
+    const studentId = req.user.id;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -73,7 +74,7 @@ export const getTodayAttendance = async (req, res) => {
 
     // ✅ Get the LATEST attendance record for today
     const attendance = await Attendance.findOne({
-      studentemail,
+      studentId,
       date: {
         $gte: today,
         $lt: tomorrow
@@ -364,6 +365,7 @@ export const getLocationHistory = async (req, res) => {
 };
 
 
+
 export const sendStudentOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -486,3 +488,69 @@ export const resetStudentPassword = async (req, res) => {
     });
   }
 };
+
+export const requestPunchIn = async (req, res) => {
+  try {
+    // Check your verifyToken middleware - it might set req.user.id or req.user._id
+    const studentId = req.user.id || req.user._id || req.user.userId;
+    const { latitude, longitude, distance } = req.body;
+
+    console.log('📍 Punch-in request from student:', studentId);
+
+    // Check if already punched in today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existingAttendance = await Attendance.findOne({
+      studentId,
+      date: today,
+      punchInTime: { $exists: true }
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({ message: 'Already punched in today' });
+    }
+
+    // Check for pending punch-in request
+    const pendingRequest = await PunchingRequest.findOne({
+      studentId,
+      type: 'PUNCH_IN',
+      status: 'PENDING',
+      createdAt: { $gte: today }
+    });
+
+    if (pendingRequest) {
+      return res.status(400).json({ 
+        message: 'Punch-in request already pending',
+        requestId: pendingRequest._id
+      });
+    }
+
+    // Create new punch request
+    const punchRequest = new PunchingRequest({
+      studentId,
+      type: 'PUNCH_IN',
+      latitude,
+      longitude,
+      distance,
+      punchTime: new Date()
+    });
+
+    await punchRequest.save();
+
+    console.log('✅ Punch request created:', punchRequest._id);
+
+    res.json({ 
+      message: 'Punch-in request submitted successfully',
+      requestId: punchRequest._id
+    });
+  } catch (error) {
+    console.error('❌ Error creating punch-in request:', error);
+    res.status(500).json({ 
+      message: 'Failed to submit punch-in request', 
+      error: error.message 
+    });
+  }
+};
+
+

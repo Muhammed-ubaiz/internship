@@ -28,10 +28,17 @@ function Mentorlogin() {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3001/mentor/mentorlogin", {
-        email,
-        password,
-      });
+
+      const res = await axios.post(
+        "http://localhost:3001/mentor/mentorlogin",
+        { email, password },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+
 
       if (!res.data.success) {
         Swal.fire({
@@ -42,9 +49,9 @@ function Mentorlogin() {
         return;
       }
 
-      const { token, role } = res.data;
+      const { token } = res.data;
       localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      localStorage.setItem("role", "mentor");
 
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
@@ -77,7 +84,9 @@ function Mentorlogin() {
 
   // ===== FORGOT PASSWORD =====
   const sendOtp = async () => {
+
     if (!forgotEmail) return alert("Please enter email");
+  
 
     try {
       setOtpLoading(true);
@@ -112,6 +121,7 @@ function Mentorlogin() {
       await axios.post("http://localhost:3001/mentor/verify-otp", {
         email: forgotEmail,
         otp,
+
       });
 
       Swal.fire({
@@ -121,6 +131,7 @@ function Mentorlogin() {
         timer: 1500,
         showConfirmButton: false,
       });
+
 
       setShowOtpModal(false);
       setShowResetModal(true);
@@ -134,11 +145,13 @@ function Mentorlogin() {
   };
 
   const resetPasswordHandler = async () => {
+
     try {
       await axios.post("http://localhost:3001/mentor/reset-password", {
         email: forgotEmail,
         newPassword,
         confirmPassword,
+
       });
 
       Swal.fire({
@@ -148,6 +161,7 @@ function Mentorlogin() {
         timer: 1500,
         showConfirmButton: false,
       });
+
 
       setShowResetModal(false);
       resetForm();
