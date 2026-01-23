@@ -196,7 +196,6 @@ function StudentCreate() {
       if (res.data.success) {
         fetchStudents();
 
-        // Find updated student to get new status
         const updatedStudent = students.find((s) => s._id === id);
         const newStatus =
           updatedStudent && updatedStudent.status === "Active"
@@ -361,76 +360,42 @@ function StudentCreate() {
   });
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
+    <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6">
       <Sidebar />
 
-      <div className="ml-52 p-6 max-w-7xl mx-auto">
+      <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-[#141E46] font-[Montserrat]">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
             Students Management
           </h1>
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-[#141E46] text-white px-6 py-2 rounded-lg"
+            className="bg-[#141E46] text-white px-4 sm:px-6 py-2 rounded-lg w-full sm:w-auto"
           >
             + Create Student
           </button>
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0  ">
-          <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
+        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 max-h-[640px] overflow-y-auto">
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-4 sticky top-0 bg-white py-4 z-10">
             {/* Search */}
-            <div className="group relative w-80">
-              {/* Container */}
-              <div
-                className="
-      flex items-center bg-white rounded-full
-      shadow-md
-      transition-all duration-300 ease-out
-      hover:shadow-xl hover:-translate-y-[1px]
-      focus-within:shadow-2xl focus-within:-translate-y-[2px]
-      focus-within:ring-2 focus-within:ring-[#141E46]/40
-      active:scale-[0.98]
-    "
-              >
-                {/* Input */}
+            <div className="group relative w-full sm:w-80">
+              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <input
                   type="text"
                   placeholder="Search students..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="
-        flex-1 px-5 py-3 text-sm
-        text-gray-700 placeholder-gray-400
-        bg-transparent
-        outline-none
-      "
+                  className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
                 />
-
-                {/* Search Button */}
-                <button
-                  className="
-        relative flex items-center justify-center
-        w-8 h-8 m-1
-        rounded-full
-        bg-[#141E46]
-        transition-all duration-300 ease-out
-        group-hover:scale-105
-        hover:scale-110
-        active:scale-95
-      "
-                >
-                  {/* Icon */}
+                <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#141E46] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="
-          h-4 w-4 text-white
-          transition-transform duration-300
-          group-hover:rotate-12
-        "
+                    className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -442,170 +407,176 @@ function StudentCreate() {
                       d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
                     />
                   </svg>
-
-                  {/* Ripple Effect */}
-                  <span
-                    className="
-        absolute inset-0 rounded-full
-        bg-white/20
-        scale-0
-        active:scale-100
-        transition-transform duration-300
-      "
-                  />
                 </button>
               </div>
             </div>
 
             {/* Status Filter */}
-            <div className="relative w-72 group">
-              {/* Animated Container */}
-              <div
-                className="
-      flex items-center bg-white rounded-full
-      shadow-md
-      transition-all duration-300 ease-out
-      hover:shadow-xl hover:-translate-y-[1px]
-      focus-within:shadow-2xl focus-within:-translate-y-[2px]
-      focus-within:ring-2 focus-within:ring-[#141E46]/40
-      active:scale-[0.98]
-    "
-              >
-                {/* Select */}
+            <div className="relative w-full sm:w-72 group">
+              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="
-        appearance-none w-full bg-transparent
-        px-5 py-3 pr-12
-        text-sm text-gray-700
-        rounded-full cursor-pointer
-        outline-none
-        transition-all duration-300
-        focus:text-[#141E46]
-      "
+                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#141E46]"
                 >
                   <option value="All">All Students</option>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
-
-                {/* Animated Arrow */}
-                <span
-                  className="
-        absolute right-5 text-[#141E46]
-        transition-all duration-300
-        group-hover:rotate-180
-        group-focus-within:rotate-180
-        group-active:scale-90
-      "
-                >
+                <span className="absolute right-5 text-[#141E46] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
                   ▼
                 </span>
-
-                {/* Focus Glow */}
-                <span
-                  className="
-        pointer-events-none absolute inset-0 rounded-full
-        opacity-0
-        group-focus-within:opacity-100
-        transition-opacity duration-300
-        ring-2 ring-[#141E46]/30
-      "
-                />
               </div>
             </div>
           </div>
 
-          <table className="w-full text-sm border-separate border-spacing-y-3 ">
-            <thead className=" sticky top-24 bg-white">
-              <tr className="text-[#1679AB] text-left">
-                <th className="p-3 text-center">#</th>
-                <th className="p-3 text-center">Name</th>
-                <th className="p-3 text-center">Email</th>
-                <th className="p-3 text-center">Course</th>
-                <th className="p-3 text-center">Batch</th>
-                <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.length === 0 ? (
-                <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                  <td colSpan="7" className="text-center p-3 rounded-2xl">
-                    No students found
-                  </td>
-                </tr>
-              ) : (
-                filteredStudents.map((student, index) => (
-                  <tr
-                    key={student._id}
-                    className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
-                  >
-                    <td className="px-3 py-3 text-center">{index + 1}</td>
-                    <td className="px-4 py-3 w-50 break-all text-center">
-                      {student.name}
-                    </td>
-                    <td className="px-4 py-3 w-50 break-all text-center">
-                      {student.email}
-                    </td>
-                    <td className="px-4 py-3 w-37.5 break-all text-center">
-                      {courses.find((c) => c._id === student.course)?.name ||
-                        "N/A"}
-                    </td>
-                    <td className="px-4 py-3 w-37.5 break-all text-center">
-                      {student.batch || "N/A"}
-                    </td>
-                    <td className="px-4 py-3 w-37.5 break-all text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs ${
-                          student.status === "Active"
-                            ? "bg-green-100 text-green-700 px-8"
-                            : "bg-red-100 text-red-700 px-7 "
-                        }`}
-                      >
-                        {student.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
-                      <button
-                        onClick={() => handleToggleStatus(student._id)}
-                        className={`px-5 py-1 text-xs rounded-lg text-white ${
-                          student.status === "Active"
-                            ? "bg-red-600 hover:bg-red-700"
-                            : "bg-green-600 hover:bg-green-700 px-6"
-                        }`}
-                      >
-                        {student.status === "Active" ? "Inactive" : "Active"}
-                      </button>
+          {/* Mobile Card View */}
+          <div className="block lg:hidden space-y-3">
+            {filteredStudents.length === 0 ? (
+              <div className="bg-[#EEF6FB] p-4 rounded-xl text-center">
+                No students found
+              </div>
+            ) : (
+              filteredStudents.map((student, index) => (
+                <div
+                  key={student._id}
+                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF] p-4 rounded-xl transform transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500 mb-1">#{index + 1}</p>
+                      <h3 className="font-semibold text-[#141E46] mb-1">{student.name}</h3>
+                      <p className="text-sm text-gray-600 break-all mb-1">{student.email}</p>
+                      <p className="text-xs text-gray-500">
+                        {courses.find((c) => c._id === student.course)?.name || "N/A"} - {student.batch || "N/A"}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
+                        student.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {student.status}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openEditModal(student)}
+                      className="flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(student._id)}
+                      className={`flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg text-white ${
+                        student.status === "Active"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-green-600 hover:bg-green-700"
+                      }`}
+                    >
+                      {student.status === "Active" ? "Inactive" : "Active"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-                      <button
-                        onClick={() => openEditModal(student)}
-                        className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white "
-                      >
-                        Edit
-                      </button>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full text-sm border-separate border-spacing-y-3">
+              <thead className="sticky top-18 bg-white">
+                <tr className="text-[#1679AB] text-left">
+                  <th className="p-3 text-center">#</th>
+                  <th className="p-3 text-center">Name</th>
+                  <th className="p-3 text-center">Email</th>
+                  <th className="p-3 text-center">Course</th>
+                  <th className="p-3 text-center">Batch</th>
+                  <th className="p-3 text-center">Status</th>
+                  <th className="p-3 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.length === 0 ? (
+                  <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                    <td colSpan="7" className="text-center p-3 rounded-2xl">
+                      No students found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredStudents.map((student, index) => (
+                    <tr
+                      key={student._id}
+                      className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transform transition-all duration-300 hover:scale-98"
+                    >
+                      <td className="px-3 py-3 text-center">{index + 1}</td>
+                      <td className="px-4 py-3 text-center break-words">
+                        {student.name}
+                      </td>
+                      <td className="px-4 py-3 text-center break-words">
+                        {student.email}
+                      </td>
+                      <td className="px-4 py-3 text-center break-words">
+                        {courses.find((c) => c._id === student.course)?.name ||
+                          "N/A"}
+                      </td>
+                      <td className="px-4 py-3 text-center break-words">
+                        {student.batch || "N/A"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs ${
+                            student.status === "Active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {student.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <button
+                            onClick={() => openEditModal(student)}
+                            className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(student._id)}
+                            className={`px-3 py-1 text-xs rounded-lg text-white ${
+                              student.status === "Active"
+                                ? "bg-red-600 hover:bg-red-700"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                          >
+                            {student.status === "Active" ? "Inactive" : "Active"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* ================= CREATE MODAL ================= */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 relative">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={resetForm}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold text-center mb-5">
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
               Create Student
             </h2>
 
@@ -619,8 +590,7 @@ function StudentCreate() {
                 required
               />
 
-              {/* Email Input + Verify */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
                   placeholder="Email"
@@ -635,7 +605,7 @@ function StudentCreate() {
                 <button
                   type="button"
                   onClick={sendOtp}
-                  className={`px-4 rounded text-white ${
+                  className={`px-4 py-2 rounded text-white whitespace-nowrap ${
                     isVerified
                       ? "bg-green-500 cursor-not-allowed"
                       : "bg-[#141E46] hover:bg-[#0f2040]"
@@ -707,16 +677,16 @@ function StudentCreate() {
 
       {/* ================= EDIT MODAL ================= */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 relative">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowEditModal(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold text-center mb-5">
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
               Edit Student
             </h2>
 
@@ -788,21 +758,21 @@ function StudentCreate() {
 
       {/* ================= OTP MODAL ================= */}
       {showOtpModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-sm rounded-2xl p-6 relative">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-4 sm:p-6 relative">
             <button
               onClick={() => setShowOtpModal(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
 
-            <h2 className="text-xl font-semibold text-center mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-4">
               Enter OTP
             </h2>
 
             <p className="text-sm text-gray-600 text-center mb-4">
-              OTP sent to <span className="font-semibold">{email}</span>
+              OTP sent to <span className="font-semibold break-all">{email}</span>
             </p>
 
             <input
