@@ -1,11 +1,21 @@
-import axios from "axios";
-import Sidebar from "./sidebar";
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Swal from "sweetalert2";
+import Sidebar from "./sidebar";
+
+const showErrorAlert = (error) => {
+  const message =
+    error?.response?.data?.message || error?.message || "Something went wrong!";
+  Swal.fire({
+    icon: "error",
+    title: "Oops...",
+    text: message,
+  });
+};
 
 function Mentorcreate() {
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-
   const [mentors, setMentors] = useState([]);
   const [selectedMentorId, setSelectedMentorId] = useState(null);
 
@@ -15,7 +25,6 @@ function Mentorcreate() {
   const [course, setCourse] = useState("");
 
   const [courses, setCourses] = useState([]);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -30,16 +39,12 @@ function Mentorcreate() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get("http://localhost:3001/admin/getMentors",{
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Role: role,
-        },
+      const res = await axios.get("http://localhost:3001/admin/getMentors", {
+        headers: { Authorization: `Bearer ${token}`, Role: role },
       });
-
       if (res.data.success) setMentors(res.data.mentors);
     } catch (error) {
-      console.error(error);
+      showErrorAlert(error);
     }
   };
 
@@ -48,14 +53,11 @@ function Mentorcreate() {
     const role = localStorage.getItem("role");
     try {
       const res = await axios.get("http://localhost:3001/admin/getCourse", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Role: role,
-        },
+        headers: { Authorization: `Bearer ${token}`, Role: role },
       });
       setCourses(res.data);
     } catch (error) {
-      console.error(error);
+      showErrorAlert(error);
     }
   };
 
@@ -64,10 +66,31 @@ function Mentorcreate() {
     fetchCourses();
   }, []);
 
+  // ================= RESET FORM =================
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setCourse("");
+    setOtp("");
+    setIsVerified(false);
+    setMessage("");
+    setShowModal(false);
+    setShowEditModal(false);
+    setShowOtpModal(false);
+  };
+
   // ================= ADD MENTOR =================
   const handleAddMentor = async (e) => {
     e.preventDefault();
-    if (!course) return alert("Please select course");
+    if (!course) {
+      Swal.fire({
+        icon: "warning",
+        title: "Select Course",
+        text: "Please select a course",
+      });
+      return;
+    }
 
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -76,21 +99,20 @@ function Mentorcreate() {
       const res = await axios.post(
         "http://localhost:3001/admin/addMentor",
         { name, email, password, course },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
       if (res.data.success) {
         setMentors([...mentors, res.data.mentor]);
         resetForm();
-        setShowModal(false);
+        Swal.fire({
+          icon: "success",
+          title: "Mentor created successfully",
+          confirmButtonText: "OK",
+        });
       }
     } catch (error) {
-      console.log(error);
+      showErrorAlert(error);
     }
   };
 
@@ -107,6 +129,19 @@ function Mentorcreate() {
   const handleUpdateMentor = async (e) => {
     e.preventDefault();
 
+    const result = await Swal.fire({
+      title: "Do you want to save the changes?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      denyButtonText: `Don't save`,
+    });
+
+    if (!result.isConfirmed) {
+      if (result.isDenied) Swal.fire("Changes are not saved", "", "info");
+      return;
+    }
+
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
@@ -114,22 +149,21 @@ function Mentorcreate() {
       const res = await axios.put(
         `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
         { name, email, course },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
       if (res.data.success) {
         fetchMentors();
         setShowEditModal(false);
         resetForm();
+        Swal.fire({
+          icon: "success",
+          title: "Mentor updated successfully",
+          confirmButtonText: "OK",
+        });
       }
     } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Failed to update mentor");
+      showErrorAlert(error);
     }
   };
 
@@ -142,31 +176,140 @@ function Mentorcreate() {
       const res = await axios.put(
         `http://localhost:3001/admin/mentor/status/${id}`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
-      if (res.data.success) fetchMentors();
+
+      if (res.data.success) {
+        fetchMentors();
+
+        // Get updated status from mentors array
+        const updatedMentor = mentors.find((m) => m._id === id);
+        const newStatus = updatedMentor
+          ? updatedMentor.status === "Active"
+            ? "Inactive"
+            : "Active"
+          : "Status Updated";
+
+        Swal.fire({
+          icon: "success",
+          title: `Mentor is now ${newStatus}`,
+          confirmButtonText: "OK",
+        });
+      }
     } catch (error) {
-      console.error(error);
-      alert("Failed to update status");
+      showErrorAlert(error);
     }
   };
 
-  const resetForm = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setCourse("");
-    setOtp("");
-    setIsVerified(false);
-    setMessage("");
-    setShowModal(false);
-    setShowEditModal(false);
-    setShowOtpModal(false);
+  // ================= SEND OTP =================
+  const sendOtp = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!email) {
+      Swal.fire({
+        icon: "warning",
+        title: "Email required",
+        text: "Please enter email",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    Swal.fire({
+      title: "Sending OTP...",
+      text: "Please wait",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/send-otp",
+        { email },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      Swal.close();
+
+      if (res.data.success) {
+        setShowOtpModal(true);
+        setMessage("OTP sent! Check your email.");
+        Swal.fire({
+          icon: "success",
+          title: "OTP sent successfully",
+          confirmButtonText: "OK",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: res.data.message || "Failed to send OTP",
+        });
+      }
+    } catch (error) {
+      Swal.close();
+      showErrorAlert(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= VERIFY OTP =================
+  const verifyOtp = async () => {
+    if (!otp) {
+      Swal.fire({
+        icon: "warning",
+        title: "OTP required",
+        text: "Please enter OTP",
+      });
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    setLoading(true);
+
+    Swal.fire({
+      title: "Verifying OTP...",
+      text: "Please wait",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/verify-otp",
+        { email, otp },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      Swal.close();
+
+      if (res.data.success) {
+        setIsVerified(true);
+        setShowOtpModal(false);
+        setMessage("Email verified successfully!");
+        Swal.fire({
+          icon: "success",
+          title: "Email verified successfully",
+          confirmButtonText: "OK",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid OTP",
+          text: res.data.message || "OTP verification failed",
+        });
+      }
+    } catch (error) {
+      Swal.close();
+      showErrorAlert(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ================= FILTERED MENTORS =================
@@ -180,77 +323,6 @@ function Mentorcreate() {
       statusFilter === "All" || mentor.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
-  const sendOtp = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    if (!email) return setMessage("Enter email");
-
-    setLoading(true);
-    setMessage("Sending OTP...");
-
-    try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/send-otp",
-        { email },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        },
-      );
-
-      if (res.data.success) {
-        setShowOtpModal(true);
-        setMessage("OTP sent! Check your email.");
-      } else {
-        setMessage(res.data.message || "Failed to send OTP");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Error sending OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyOtp = async () => {
-    if (!otp) return setMessage("Enter OTP");
-
-    setLoading(true);
-    setMessage("Verifying OTP...");
-
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/verify-otp",
-        { email, otp },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        },
-      );
-
-      if (res.data.success) {
-        setIsVerified(true);
-        setShowOtpModal(false);
-        setMessage("Email verified successfully!");
-      } else {
-        setMessage(res.data.message || "Invalid OTP");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Error verifying OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
 import { MdDelete } from "react-icons/md";
+import Swal from "sweetalert2";
 
 function Course() {
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -48,30 +49,40 @@ function Course() {
   }, []);
 
   const handleAddCourse = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+  e.preventDefault();
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
-    try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/addCourse",
-        { name: courseName, duration },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
+  try {
+    const res = await axios.post(
+      "http://localhost:3001/admin/addCourse",
+      { name: courseName, duration },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
+      }
+    );
 
-      setCourses([...courses, res.data.course]);
-      setCourseName("");
-      setDuration("");
-      setShowCourseModal(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    setCourses([...courses, res.data.course]);
+    setCourseName("");
+    setDuration("");
+    setShowCourseModal(false);
+
+    // ✅ Sweet Alert
+    Swal.fire({
+      title: "Course Added Successfully!",
+      icon: "success",
+      draggable: true,
+      
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
   const handleViewBatch = async (course) => {
     setSelectedCourse(course);
@@ -97,43 +108,79 @@ function Course() {
   };
 
   const handleAddBatch = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
-    try {
-      const res = await axios.post(
-        `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
-        { name: batchName.trim() },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
-      setBatches([...batches, res.data.batch]);
-      setBatchName("");
-      setShowAddBatchModal(false);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDeleteBatch = async (id) => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    try {
-      await axios.delete(`http://localhost:3001/admin/deleteBatch/${id}`, {
+  try {
+    const res = await axios.post(
+      `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
+      { name: batchName.trim() },
+      {
         headers: {
           Authorization: `Bearer ${token}`,
           Role: role,
         },
-      });
-      setBatches(batches.filter((b) => b._id !== id));
-    } catch (error) {
-      console.error(error);
+      }
+    );
+
+    setBatches([...batches, res.data.batch]);
+    setBatchName("");
+    setShowAddBatchModal(false);
+
+    // ✅ Sweet Alert
+    Swal.fire({
+      title: "Batch Added Successfully!",
+      icon: "success",
+      draggable: true,
+      
+    });
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+ const handleDeleteBatch = async (id) => {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    confirmButtonText: "Yes, delete it!"
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      try {
+        await axios.delete(
+          `http://localhost:3001/admin/deleteBatch/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Role: role,
+            },
+          }
+        );
+
+        setBatches(batches.filter((b) => b._id !== id));
+
+        Swal.fire({
+          title: "Deleted!",
+          text: "Batch has been deleted.",
+          icon: "success"
+        });
+
+      } catch (error) {
+        console.error(error);
+      }
     }
-  };
+  });
+};
+
 
   const handleEditClick = (course) => {
     setSelectedCourse(course);
@@ -143,44 +190,70 @@ function Course() {
   };
 
   const handleEditCourse = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+  Swal.fire({
+    title: "Do you want to save the changes?",
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: "Save",
+    denyButtonText: `Don't save`
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
 
-    try {
-      const res = await axios.post(
-        `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
-        { editCourseName, editDuration },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
+      try {
+        const res = await axios.post(
+          `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+          { editCourseName, editDuration },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Role: role,
+            },
+          }
+        );
 
-      setCourses(
-        courses.map((c) => (c._id === selectedCourse._id ? res.data.course : c))
-      );
+        setCourses(
+          courses.map((c) =>
+            c._id === selectedCourse._id ? res.data.course : c
+          )
+        );
 
-      setShowEditCourseModal(false);
-    } catch (error) {
-      console.error(error);
+        setShowEditCourseModal(false);
+
+        Swal.fire("Saved!", "", "success");
+      } catch (error) {
+        console.error(error);
+      }
+    } else if (result.isDenied) {
+      Swal.fire("Changes are not saved", "", "info");
     }
-  };
+  });
+};
+
 
   const handleToggleStatus = async (course) => {
-    try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/course/status/${course._id}`
-      );
+  try {
+    const res = await axios.put(
+      `http://localhost:3001/admin/course/status/${course._id}`
+    );
 
-      setCourses(
-        courses.map((c) => (c._id === course._id ? res.data.data : c))
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    setCourses(
+      courses.map((c) => (c._id === course._id ? res.data.data : c))
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Course status updated",
+      showConfirmButton: false,
+      timer: 1500
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
   const filteredCourses = courses.filter((course) => {
     const search = searchTerm.toLowerCase();

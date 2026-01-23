@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 function StudentCreate() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,7 +22,6 @@ function StudentCreate() {
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
 
-  // OTP related states
   const [otp, setOtp] = useState("");
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -52,7 +52,7 @@ function StudentCreate() {
         `http://localhost:3001/admin/getBatches/${courseName}`,
         {
           headers: { Authorization: `Bearer ${token}`, Role: role },
-        }
+        },
       );
       setBatches(res.data.batches);
     } catch (error) {
@@ -83,7 +83,12 @@ function StudentCreate() {
   const handleAddStudent = async (e) => {
     e.preventDefault();
     if (!isVerified) {
-      setMessage("Please verify email before creating student");
+      Swal.fire({
+        icon: "error",
+        title: "Email not verified",
+        text: "Please verify email before creating student",
+        draggable: true,
+      });
       return;
     }
 
@@ -94,16 +99,233 @@ function StudentCreate() {
       const res = await axios.post(
         "http://localhost:3001/admin/addStudent",
         { name, email, password, course, batch },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } }
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
       if (res.data.success) {
         setStudents([...students, res.data.student]);
         resetForm();
+
+        Swal.fire({
+          title: "Student Added Successfully!",
+          icon: "success",
+          draggable: true,
+        });
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Failed to create student");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Failed to create student",
+        footer: '<a href="#">Why do I have this issue?</a>',
+        draggable: true,
+      });
+    }
+  };
+
+  // --------------------- UPDATE ---------------------
+  const handleUpdateStudent = async (e) => {
+    e.preventDefault();
+
+    const result = await Swal.fire({
+      title: "Do you want to save the changes?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      denyButtonText: `Don't save`,
+      draggable: true,
+    });
+
+    if (!result.isConfirmed) {
+      if (result.isDenied) {
+        Swal.fire("Changes are not saved", "", "info");
+      }
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.put(
+        `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
+        { name, email, course, batch, password },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      if (res.data.success) {
+        fetchStudents();
+        setShowEditModal(false);
+
+        Swal.fire("Saved!", "Student updated successfully.", "success");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Failed to update student",
+        footer: '<a href="#">Why do I have this issue?</a>',
+        draggable: true,
+      });
+    }
+  };
+
+  const openEditModal = (student) => {
+    setSelectedStudentId(student._id);
+    setName(student.name);
+    setEmail(student.email);
+    setCourse(student.course);
+    setBatch(student.batch);
+    setShowEditModal(true);
+  };
+
+  // --------------------- STATUS TOGGLE ---------------------
+  const handleToggleStatus = async (id) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.put(
+        `http://localhost:3001/admin/student/status/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      if (res.data.success) {
+        fetchStudents();
+
+        // Find updated student to get new status
+        const updatedStudent = students.find((s) => s._id === id);
+        const newStatus =
+          updatedStudent && updatedStudent.status === "Active"
+            ? "Inactive"
+            : "Active";
+
+        Swal.fire({
+          icon: "success",
+          title: `Student is now ${newStatus}`,
+          showConfirmButton: false,
+          timer: 1500,
+          draggable: true,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Failed to update status",
+        draggable: true,
+      });
+    }
+  };
+
+  // --------------------- SEND OTP ---------------------
+  const sendOtp = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!email) {
+      Swal.fire({
+        icon: "error",
+        title: "Email required",
+        text: "Enter email to send OTP",
+        draggable: true,
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/send-otp",
+        { email },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      if (res.data.success) {
+        setShowOtpModal(true);
+        Swal.fire({
+          title: "OTP Sent!",
+          text: "Check your email",
+          icon: "success",
+          draggable: true,
+        });
+      } else {
+        Swal.fire({
+          title: "Failed",
+          text: res.data.message || "Could not send OTP",
+          icon: "error",
+          draggable: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Error",
+        text: "Error sending OTP",
+        icon: "error",
+        draggable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --------------------- VERIFY OTP ---------------------
+  const verifyOtp = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!otp) {
+      Swal.fire({
+        icon: "error",
+        title: "OTP required",
+        text: "Enter OTP to verify",
+        draggable: true,
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await axios.post(
+        "http://localhost:3001/admin/verify-otp",
+        { email, otp },
+        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+      );
+
+      if (res.data.success) {
+        setIsVerified(true);
+        setShowOtpModal(false);
+
+        Swal.fire({
+          title: "Email Verified!",
+          icon: "success",
+          draggable: true,
+        });
+      } else {
+        Swal.fire({
+          title: "Invalid OTP",
+          text: res.data.message || "Please try again",
+          icon: "error",
+          draggable: true,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Error",
+        text: "Error verifying OTP",
+        icon: "error",
+        draggable: true,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,132 +335,11 @@ function StudentCreate() {
     setPassword("");
     setCourse("");
     setBatch("");
-    setBatches([]);
-    setIsVerified(false);
     setOtp("");
+    setIsVerified(false);
     setMessage("");
     setShowCreateModal(false);
-    setShowEditModal(false);
-  };
-
-  // --------------------- EDIT ---------------------
-  const openEditModal = (student) => {
-    setSelectedStudentId(student._id);
-    setName(student.name);
-    setEmail(student.email);
-    setCourse(student.course);
-    setBatch(student.batch);
-
-    const selectedCourse = courses.find((c) => c._id === student.course);
-    if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
-
-    setPassword("");
-    setShowEditModal(true);
-    setIsVerified(true); // skip OTP for edit
-    setMessage("");
-  };
-
-  const handleUpdateStudent = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
-        { name, email, course, batch, password },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } }
-      );
-
-      if (res.data.success) {
-        fetchStudents();
-        setShowEditModal(false);
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Failed to update student");
-    }
-  };
-
-  // --------------------- STATUS ---------------------
-  const handleToggleStatus = async (id) => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/student/status/${id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}`, Role: role } }
-      );
-
-      if (res.data.success) fetchStudents();
-    } catch (error) {
-      console.error("Failed to toggle status", error);
-      alert("Failed to update status");
-    }
-  };
-
-  // --------------------- OTP ---------------------
-  const sendOtp = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    if (!email) return setMessage("Enter email");
-
-    setLoading(true);
-    setMessage("Sending OTP...");
-
-    try {
-      const res = await axios.post("http://localhost:3001/admin/send-otp", {
-        email,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}`, Role: role },
-      }
-    );
-      if (res.data.success) {
-        setShowOtpModal(true);
-        setMessage("OTP sent! Check your email");
-      } else {
-        setMessage(res.data.message || "Failed to send OTP");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Error sending OTP");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyOtp = async () => {
-
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-    if (!otp) return setMessage("Enter OTP");
-
-    setLoading(true);
-    setMessage("Verifying OTP...");
-
-    try {
-      const res = await axios.post("http://localhost:3001/admin/verify-otp", {
-        email,
-        otp,
-      },{
-        headers: { Authorization: `Bearer ${token}`, Role: role },
-      });
-      if (res.data.success) {
-        setIsVerified(true);
-        setShowOtpModal(false);
-        setMessage("Email verified successfully!");
-      } else {
-        setMessage(res.data.message || "Invalid OTP");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Error verifying OTP");
-    } finally {
-      setLoading(false);
-    }
+    setBatches([]);
   };
 
   const filteredStudents = students.filter((student) => {
@@ -280,8 +381,6 @@ function StudentCreate() {
 
         {/* TABLE */}
         <div className="bg-white rounded-3xl shadow-2xl p-5 max-h-[640px] overflow-y-auto pt-0  ">
-
-
           <div className="flex flex-wrap gap-4 items-center mb-4 sticky top-0 bg-white h-20 p-5">
             {/* Search */}
             <div className="group relative w-80">
@@ -418,8 +517,6 @@ function StudentCreate() {
             </div>
           </div>
 
-          
-
           <table className="w-full text-sm border-separate border-spacing-y-3 ">
             <thead className=" sticky top-24 bg-white">
               <tr className="text-[#1679AB] text-left">
@@ -433,7 +530,6 @@ function StudentCreate() {
               </tr>
             </thead>
             <tbody>
-               
               {filteredStudents.length === 0 ? (
                 <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
                   <td colSpan="7" className="text-center p-3 rounded-2xl">
@@ -441,58 +537,58 @@ function StudentCreate() {
                   </td>
                 </tr>
               ) : (
+                filteredStudents.map((student, index) => (
+                  <tr
+                    key={student._id}
+                    className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
+                  >
+                    <td className="px-3 py-3 text-center">{index + 1}</td>
+                    <td className="px-4 py-3 w-50 break-all text-center">
+                      {student.name}
+                    </td>
+                    <td className="px-4 py-3 w-50 break-all text-center">
+                      {student.email}
+                    </td>
+                    <td className="px-4 py-3 w-37.5 break-all text-center">
+                      {courses.find((c) => c._id === student.course)?.name ||
+                        "N/A"}
+                    </td>
+                    <td className="px-4 py-3 w-37.5 break-all text-center">
+                      {student.batch || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 w-37.5 break-all text-center">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs ${
+                          student.status === "Active"
+                            ? "bg-green-100 text-green-700 px-8"
+                            : "bg-red-100 text-red-700 px-7 "
+                        }`}
+                      >
+                        {student.status}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
+                      <button
+                        onClick={() => handleToggleStatus(student._id)}
+                        className={`px-5 py-1 text-xs rounded-lg text-white ${
+                          student.status === "Active"
+                            ? "bg-red-600 hover:bg-red-700"
+                            : "bg-green-600 hover:bg-green-700 px-6"
+                        }`}
+                      >
+                        {student.status === "Active" ? "Inactive" : "Active"}
+                      </button>
 
-              filteredStudents.map((student, index) => (
-                <tr
-                  key={student._id}
-                  className="bg-[#EEF6FB] hover:bg-[#D1E8FF]  transform transition-all duration-300 hover:scale-98"
-                >
-                  <td className="px-3 py-3 text-center">{index + 1}</td>
-                  <td className="px-4 py-3 w-50 break-all text-center">
-                    {student.name}
-                  </td>
-                  <td className="px-4 py-3 w-50 break-all text-center">
-                    {student.email}
-                  </td>
-                  <td className="px-4 py-3 w-37.5 break-all text-center">
-                    {courses.find((c) => c._id === student.course)?.name ||
-                      "N/A"}
-                  </td>
-                  <td className="px-4 py-3 w-37.5 break-all text-center">
-                    {student.batch || "N/A"}
-                  </td>
-                  <td className="px-4 py-3 w-37.5 break-all text-center">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs ${
-                        student.status === "Active"
-                          ? "bg-green-100 text-green-700 px-8"
-                          : "bg-red-100 text-red-700 px-7 "
-                      }`}
-                    >
-                      {student.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center flex flex-wrap gap-2 justify-center">
-                    <button
-                      onClick={() => handleToggleStatus(student._id)}
-                      className={`px-5 py-1 text-xs rounded-lg text-white ${
-                        student.status === "Active"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700 px-6"
-                      }`}
-                    >
-                      {student.status === "Active" ? "Inactive" : "Active"}
-                    </button>
-
-                    <button
-                      onClick={() => openEditModal(student)}
-                      className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white "
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              )))}
+                      <button
+                        onClick={() => openEditModal(student)}
+                        className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white "
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -567,7 +663,7 @@ function StudentCreate() {
                   const selectedCourseId = e.target.value;
                   setCourse(selectedCourseId);
                   const selectedCourse = courses.find(
-                    (c) => c._id === selectedCourseId
+                    (c) => c._id === selectedCourseId,
                   );
                   if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
                   setBatch("");
@@ -643,15 +739,13 @@ function StudentCreate() {
                 required
               />
 
-             
-
               <select
                 value={course}
                 onChange={(e) => {
                   const selectedCourseId = e.target.value;
                   setCourse(selectedCourseId);
                   const selectedCourse = courses.find(
-                    (c) => c._id === selectedCourseId
+                    (c) => c._id === selectedCourseId,
                   );
                   if (selectedCourse) fetchBatchesByCourse(selectedCourse.name);
                   setBatch("");
