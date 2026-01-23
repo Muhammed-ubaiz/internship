@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "./sidebar";
 
-function DailyAttendance() {
+function AdminDailyAttendance() {
   const [search, setSearch] = useState("");
   const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
@@ -172,4 +172,4 @@ function DailyAttendance() {
   );
 }
 
-export default DailyAttendance;
+export default AdminDailyAttendance;

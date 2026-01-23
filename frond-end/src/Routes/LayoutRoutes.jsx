@@ -6,8 +6,6 @@ import Studentsdashboard from "../pages/studentpage/Studentsdashboard";
 import Admindashboard from "../pages/adminpage/Admindashboard";
 import Course from "../pages/adminpage/Course";
 import StudentCreate from "../pages/adminpage/StudentCreate";
-import SideBarStudent from "../pages/studentpage/SideBarStudent";
-import Attendance from "../pages/adminpage/DailyAttendance";
 import StudentLogin from "../pages/studentpage/StudentLogin";
 import DailyAttendance from "../pages/studentpage/DailyAttendance";
 import MonthlySummary from "../pages/adminpage/MonthlySummary";
@@ -25,6 +23,7 @@ import LeaveHistory1 from "../pages/mentorpage/LeaveHistory1";
 import DailyAttendance1 from "../pages/mentorpage/DailyAttendance1";
 import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
 import Punchinrequest from "../pages/mentorpage/Punchinrequest";
+import AdminDailyAttendance from "../pages/adminpage/AdminDailyAttendance";
 
 function LayoutRoutes() {
   return (
@@ -72,7 +71,7 @@ function LayoutRoutes() {
             path="/attendance"
             element={
               <ProtectedRoute role="admin">
-                <Attendance />
+                <AdminDailyAttendance />
               </ProtectedRoute>
             }
           />
@@ -117,14 +116,14 @@ function LayoutRoutes() {
 
         
 
-          <Route
+          {/* <Route
             path="/dailyAttendance"
             element={
               <ProtectedRoute role="student">
                 <DailyAttendance />
               </ProtectedRoute>
             }
-          />
+          /> */}
         
           
           
@@ -146,14 +145,8 @@ function LayoutRoutes() {
             }
           />
 
-          <Route
-            path="/studentMonthlySummary"
-            element={
-              <ProtectedRoute role="student">
-                <StudentMonthlySummary />
-              </ProtectedRoute>
-            }
-          />
+         
+          
 
           <Route
             path="/StudentLeaveHistory"
