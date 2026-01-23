@@ -163,6 +163,7 @@ export const getPunchRequests = async (req, res) => {
 export const acceptPunchRequest = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('✅ Accepting punch request:', id);
 
     // 1️⃣ Find punch request
     const punchRequest = await PunchingRequest.findById(id);
@@ -170,11 +171,19 @@ export const acceptPunchRequest = async (req, res) => {
       return res.status(404).json({ message: "Punch request not found" });
     }
 
-    // 2️⃣ Update request status (ENUM must match)
+    console.log('📋 Punch request found:', {
+      studentId: punchRequest.studentId,
+      type: punchRequest.type,
+      status: punchRequest.status,
+      punchTime: punchRequest.punchTime
+    });
+
+    // 2️⃣ Update request status
     punchRequest.status = "APPROVED";
+    punchRequest.processedAt = new Date();
     await punchRequest.save();
 
-    // 3️⃣ Today date (normalized)
+    // 3️⃣ Today date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -184,35 +193,138 @@ export const acceptPunchRequest = async (req, res) => {
       date: today,
     });
 
+    console.log('📅 Attendance found:', attendance ? 'Yes' : 'No');
+
     if (!attendance) {
       attendance = new Attendance({
         studentId: punchRequest.studentId,
         date: today,
-        totalWorkingTime: 0,
-        totalBreakTime: 0,
       });
     }
 
-    await attendance.save(); // ✅ IMPORTANT
+    // 5️⃣ Based on punch type, update attendance
+    if (punchRequest.type === 'PUNCH_IN') {
+      // Set punch in time
+      attendance.punchInTime = punchRequest.punchTime || new Date();
+      attendance.punchInAcceptedAt = new Date();
 
-    // 5️⃣ Update student punch-in
-    const student = await Student.findById(punchRequest.studentId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      // ✅ Add to punch records for frontend compatibility
+      if (!attendance.punchRecords) {
+        attendance.punchRecords = [];
+      }
+      attendance.punchRecords.push({
+        punchIn: attendance.punchInTime,
+        punchOut: null,
+        sessionWorkingSeconds: 0
+      });
+
+      // Update student status
+      const student = await Student.findById(punchRequest.studentId);
+      if (student) {
+        student.isPunchedIn = true;
+        student.punchInTime = attendance.punchInTime;
+        student.lastPunchTime = attendance.punchInTime;
+        await student.save();
+        console.log('✅ Student updated with punch-in time');
+      }
+    }
+    else if (punchRequest.type === 'PUNCH_OUT') {
+      // Set punch out time
+      attendance.punchOutTime = punchRequest.punchTime || new Date();
+      
+      // Calculate working hours if punch in exists
+      if (attendance.punchInTime) {
+        const workingSeconds = Math.floor(
+          (attendance.punchOutTime - attendance.punchInTime) / 1000
+        );
+        attendance.totalWorkingTime = workingSeconds;
+        
+        // Update student status
+        const student = await Student.findById(punchRequest.studentId);
+        if (student) {
+          student.isPunchedIn = false;
+          student.punchOutTime = attendance.punchOutTime;
+          await student.save();
+          console.log('✅ Student updated with punch-out time');
+        }
+      }
     }
 
-    student.isPunchedIn = true;
-    student.punchInTime = punchRequest.punchTime || new Date();
-    await student.save();
+    // 6️⃣ Save attendance
+    await attendance.save();
+
+    console.log('💾 Attendance saved:', {
+      punchInTime: attendance.punchInTime,
+      punchOutTime: attendance.punchOutTime,
+      workingTime: attendance.totalWorkingTime
+    });
+
+    // 7️⃣ Emit socket event to notify student
+    // Make sure you have socket instance available
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(punchRequest.studentId.toString()).emit('requestApproved', {
+        requestId: punchRequest._id,
+        type: punchRequest.type,
+        punchTime: attendance.punchInTime || attendance.punchOutTime,
+        message: `Your ${punchRequest.type.toLowerCase().replace('_', ' ')} request has been approved`
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: "Punch request approved & student punched in",
+      message: `Punch ${punchRequest.type.toLowerCase().replace('_', ' ')} request approved successfully`,
+      attendance: {
+        punchInTime: attendance.punchInTime,
+        punchOutTime: attendance.punchOutTime,
+        totalWorkingTime: attendance.totalWorkingTime
+      }
     });
 
   } catch (err) {
-    console.error("❌ BACKEND ERROR:", err);
-    res.status(500).json({ message: err.message });
+    console.error("❌ BACKEND ERROR in acceptPunchRequest:", err);
+    res.status(500).json({ 
+      message: "Failed to accept punch request",
+      error: err.message 
+    });
   }
 };
 
+export const rejectPunchRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const punchRequest = await PunchingRequest.findById(id);
+    if (!punchRequest) {
+      return res.status(404).json({ message: "Punch request not found" });
+    }
+
+    punchRequest.status = "REJECTED";
+    punchRequest.rejectionReason = reason || "No reason provided";
+    await punchRequest.save();
+
+    // Emit socket event to notify student
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(punchRequest.studentId.toString()).emit('requestRejected', {
+        requestId: punchRequest._id,
+        type: punchRequest.type,
+        reason: punchRequest.rejectionReason,
+        message: `Your ${punchRequest.type.toLowerCase().replace('_', ' ')} request was rejected`
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Punch request rejected successfully"
+    });
+
+  } catch (err) {
+    console.error("❌ BACKEND ERROR in rejectPunchRequest:", err);
+    res.status(500).json({ 
+      message: "Failed to reject punch request",
+      error: err.message 
+    });
+  }
+};
