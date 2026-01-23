@@ -1,31 +1,18 @@
-
 import express from "express";
-import {
-  mentorlogin,
-  sendOtp,
-  verifyOtp,
-  resetPassword,
-  getstudent,
-  getPunchRequests,
-  acceptPunchRequest,
-} from "../Controller/MentorContriller.js";
-
-
 import { verifyToken } from "../AuthMiddleware.js";
+import { acceptPunchRequest, getPunchRequests, getstudent, mentorlogin, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
 
 const mentorroutes = express.Router();
 
-mentorroutes.post("/mentorlogin",mentorlogin);
+mentorroutes.post("/mentorlogin", mentorlogin);
 
+mentorroutes.post("/forgot-password", verifyToken, sendOtp);
+mentorroutes.post("/verify-otp", verifyToken, verifyOtp);
+mentorroutes.post("/reset-password", verifyToken, resetPassword);
 
-mentorroutes.post("/forgot-password",verifyToken, sendOtp);
-mentorroutes.post("/verify-otp",verifyToken, verifyOtp);
-mentorroutes.post("/reset-password",verifyToken, resetPassword);
+mentorroutes.get("/getStudents", verifyToken, getstudent);
 
-
-mentorroutes.get("/getStudents",verifyToken,getstudent)
-
-mentorroutes.get("/punch-requests", getPunchRequests);
+mentorroutes.get("/punch-requests", verifyToken, getPunchRequests);
 mentorroutes.post(
   "/punch-requests/:id/accept",
   verifyToken,

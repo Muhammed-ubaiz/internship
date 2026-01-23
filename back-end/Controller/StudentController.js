@@ -1,5 +1,6 @@
 import Student from "../Model/Studentsmodel.js";
 import Attendance from "../Model/Attendancemodel.js";
+import Location from "../Model/Locationmodel.js";
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
@@ -62,207 +63,194 @@ export const checkstudent = async (req, res) => {
 
 
 
+const getTodayRange = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return { today, tomorrow };
+};
+
+// GET /student/today-attendance
 export const getTodayAttendance = async (req, res) => {
   try {
     const studentId = req.user.id;
+    const { today, tomorrow } = getTodayRange();
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // ✅ Get the LATEST attendance record for today
     const attendance = await Attendance.findOne({
       studentId,
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      }
-    }).sort({ punchInTime: -1 });
+      date: { $gte: today, $lt: tomorrow }
+    });
 
-    if (!attendance) {
-      return res.status(200).json({
-        success: true,
-        attendance: null,
-      });
-    }
-
-    // ✅ Return all accumulated data
     res.status(200).json({
       success: true,
-      attendance: {
-        punchInTime: attendance.punchInTime,
-        punchOutTime: attendance.punchOutTime || null,
-        totalWorkingTime: attendance.totalWorkingTime || 0,
-        totalBreakTime: attendance.totalBreakTime || 0,
-        breakStartTime: attendance.breakStartTime || null,
-        date: attendance.date,
-        latitude: attendance.latitude,
-        longitude: attendance.longitude,
-      },
+      attendance: attendance || null
     });
   } catch (error) {
-    console.error("Error in getTodayAttendance:", error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message 
-    });
+    console.error('Error in getTodayAttendance:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// 2️⃣ PUNCH IN - Updated with Break Time
-export const punchIn = async (req, res) => {
+// POST /student/first-punch-in-with-location
+export const firstPunchInWithLocation = async (req, res) => {
   try {
-    const studentemail = req.user.id;
-    const { latitude, longitude, distance, totalBreakTime } = req.body;
+    const studentId = req.user.id;
+    const { latitude, longitude, distance } = req.body;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (distance > 50) { // Assuming MAX_DISTANCE = 50
+      return res.status(400).json({ success: false, message: 'Too far from institution' });
+    }
 
-    // ✅ Check for existing attendance record today
+    const { today, tomorrow } = getTodayRange();
+
     let attendance = await Attendance.findOne({
-      studentemail,
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      }
-    }).sort({ punchInTime: -1 });
+      studentId,
+      date: { $gte: today, $lt: tomorrow }
+    });
+
+    const now = new Date();
 
     if (attendance) {
-      // ✅ Check if already punched in (not punched out yet)
-      if (!attendance.punchOutTime) {
-        return res.status(400).json({
-          success: false,
-          message: "Already punched in. Please punch out first.",
-        });
+      if (attendance.initialLocationChecked) {
+        return res.status(400).json({ success: false, message: 'Location already checked for today' });
       }
-
-      // ✅ Multiple punch in - Update existing record
-      attendance.punchInTime = new Date();
-      attendance.punchOutTime = null;
-      attendance.breakStartTime = null;
-      
-      // ✅ Save accumulated break time from frontend
-      if (totalBreakTime !== undefined) {
-        attendance.totalBreakTime = totalBreakTime;
-      }
-
-      attendance.latitude = latitude;
-      attendance.longitude = longitude;
-      attendance.distance = distance;
-
-      await attendance.save();
+      // Update existing attendance with location and first punch-in
+      attendance.initialLatitude = latitude;
+      attendance.initialLongitude = longitude;
+      attendance.initialDistance = distance;
+      attendance.initialLocationChecked = true;
+      attendance.punchRecords = [{ punchIn: now, punchOut: null }];
+      attendance.totalWorkingSeconds = 0;
+      attendance.totalBreakSeconds = 0;
+      attendance.currentBreakStart = null;
+      attendance.isCurrentlyOnBreak = false;
     } else {
-      // ✅ First punch in of the day - Create new record
-      attendance = await Attendance.create({
-        studentemail,
-        punchInTime: new Date(),
-        punchOutTime: null,
-        totalWorkingTime: 0,
-        totalBreakTime: totalBreakTime || 0,
-        breakStartTime: null,
-        latitude,
-        longitude,
-        distance,
+      // Create new attendance
+      attendance = new Attendance({
+        studentId,
         date: today,
+        initialLatitude: latitude,
+        initialLongitude: longitude,
+        initialDistance: distance,
+        initialLocationChecked: true,
+        punchRecords: [{ punchIn: now, punchOut: null }],
+        totalWorkingSeconds: 0,
+        totalBreakSeconds: 0,
+        currentBreakStart: null,
+        isCurrentlyOnBreak: false
       });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "Punch in successful",
-      attendance: {
-        punchInTime: attendance.punchInTime,
-        punchOutTime: attendance.punchOutTime,
-        totalWorkingTime: attendance.totalWorkingTime,
-        totalBreakTime: attendance.totalBreakTime,
-        breakStartTime: attendance.breakStartTime
-      }
-    });
-  } catch (error) {
-    console.error("Error in punchIn:", error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message 
-    });
-  }
-};
-
-// 3️⃣ PUNCH OUT - Updated with Working Time Calculation
-export const punchOut = async (req, res) => {
-  try {
-    const studentemail = req.user.id;
-    const { latitude, longitude } = req.body;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // ✅ Find today's active attendance (not punched out)
-    const attendance = await Attendance.findOne({
-      studentemail,
-      date: {
-        $gte: today,
-        $lt: tomorrow
-      },
-      $or: [
-        { punchOutTime: null }, 
-        { punchOutTime: { $exists: false } }
-      ]
-    }).sort({ punchInTime: -1 });
-
-    if (!attendance) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ No active punch in found. Please punch in first.",
-      });
-    }
-
-    // ✅ Create punch out time
-    const punchOutTime = new Date();
-    
-    // ✅ Calculate current session working time in seconds
-    const sessionWorkingSeconds = Math.floor(
-      (punchOutTime - attendance.punchInTime) / 1000
-    );
-
-    // ✅ Add to total accumulated working time
-    attendance.totalWorkingTime = (attendance.totalWorkingTime || 0) + sessionWorkingSeconds;
-    
-    // Set punch out details
-    attendance.punchOutTime = punchOutTime;
-    attendance.punchOutLatitude = latitude;
-    attendance.punchOutLongitude = longitude;
-    
-    // ✅ Start break timer
-    attendance.breakStartTime = punchOutTime;
 
     await attendance.save();
 
     res.status(200).json({
       success: true,
-      message: "✅ Punch out successful",
-      attendance: {
-        punchInTime: attendance.punchInTime,
-        punchOutTime: attendance.punchOutTime,
-        totalWorkingTime: attendance.totalWorkingTime,
-        totalBreakTime: attendance.totalBreakTime,
-        breakStartTime: attendance.breakStartTime,
-        sessionWorkingTime: sessionWorkingSeconds
-      }
+      message: 'First punch-in successful',
+      attendance
     });
   } catch (error) {
-    console.error("Error in punchOut:", error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message 
+    console.error('Error in firstPunchInWithLocation:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /student/punch-in
+export const punchIn = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { today, tomorrow } = getTodayRange();
+
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: { $gte: today, $lt: tomorrow }
     });
+
+    if (!attendance) {
+      return res.status(400).json({ success: false, message: 'No attendance record for today' });
+    }
+
+    if (!attendance.initialLocationChecked) {
+      return res.status(400).json({ success: false, message: 'Location check required first' });
+    }
+
+    const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
+
+    if (lastRecord && !lastRecord.punchOut) {
+      return res.status(400).json({ success: false, message: 'Already punched in' });
+    }
+
+    // If was on break, calculate and add break time
+    if (attendance.currentBreakStart) {
+      const breakEnd = new Date();
+      const breakSeconds = Math.floor((breakEnd - attendance.currentBreakStart) / 1000);
+      attendance.totalBreakSeconds += breakSeconds;
+      attendance.currentBreakStart = null;
+      attendance.isCurrentlyOnBreak = false;
+    }
+
+    // Add new punch-in record
+    attendance.punchRecords.push({ punchIn: new Date(), punchOut: null });
+
+    await attendance.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Punch-in successful',
+      attendance
+    });
+  } catch (error) {
+    console.error('Error in punchIn:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// POST /student/punch-out
+export const punchOut = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { today, tomorrow } = getTodayRange();
+
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: { $gte: today, $lt: tomorrow }
+    });
+
+    if (!attendance) {
+      return res.status(400).json({ success: false, message: 'No attendance record for today' });
+    }
+
+    const lastRecordIndex = attendance.punchRecords.length - 1;
+    const lastRecord = attendance.punchRecords[lastRecordIndex];
+
+    if (!lastRecord || lastRecord.punchOut) {
+      return res.status(400).json({ success: false, message: 'Not punched in' });
+    }
+
+    const now = new Date();
+    const sessionSeconds = Math.floor((now - lastRecord.punchIn) / 1000);
+
+    // Update the last record
+    attendance.punchRecords[lastRecordIndex].punchOut = now;
+    attendance.punchRecords[lastRecordIndex].sessionWorkingSeconds = sessionSeconds;
+
+    // Add to total working
+    attendance.totalWorkingSeconds += sessionSeconds;
+
+    // Start break
+    attendance.currentBreakStart = now;
+    attendance.isCurrentlyOnBreak = true;
+
+    await attendance.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Punch-out successful',
+      attendance
+    });
+  } catch (error) {
+    console.error('Error in punchOut:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -491,24 +479,22 @@ export const resetStudentPassword = async (req, res) => {
 
 export const requestPunchIn = async (req, res) => {
   try {
-    // Check your verifyToken middleware - it might set req.user.id or req.user._id
-    const studentId = req.user.id || req.user._id || req.user.userId;
+    const studentId = req.user.id;
     const { latitude, longitude, distance } = req.body;
 
     console.log('📍 Punch-in request from student:', studentId);
 
-    // Check if already punched in today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const { today, tomorrow } = getTodayRange();
 
+    // Check if already has attendance with location checked today
     const existingAttendance = await Attendance.findOne({
       studentId,
-      date: today,
-      punchInTime: { $exists: true }
+      date: { $gte: today, $lt: tomorrow },
+      initialLocationChecked: true
     });
 
     if (existingAttendance) {
-      return res.status(400).json({ message: 'Already punched in today' });
+      return res.status(400).json({ message: 'Location already checked for today' });
     }
 
     // Check for pending punch-in request
@@ -520,7 +506,7 @@ export const requestPunchIn = async (req, res) => {
     });
 
     if (pendingRequest) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Punch-in request already pending',
         requestId: pendingRequest._id
       });
@@ -533,22 +519,93 @@ export const requestPunchIn = async (req, res) => {
       latitude,
       longitude,
       distance,
-      punchTime: new Date()
+      punchTime: new Date(),
+      status: 'PENDING'
     });
 
     await punchRequest.save();
 
     console.log('✅ Punch request created:', punchRequest._id);
 
-    res.json({ 
+    res.json({
       message: 'Punch-in request submitted successfully',
       requestId: punchRequest._id
     });
   } catch (error) {
     console.error('❌ Error creating punch-in request:', error);
+    res.status(500).json({
+      message: 'Failed to submit punch-in request',
+      error: error.message
+    });
+  }
+};
+
+export const requestPunchOut = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { latitude, longitude, distance } = req.body;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // ✅ Find today's attendance with CONFIRMED punch-in time
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: { $gte: today, $lt: tomorrow },
+      punchInTime: { $exists: true, $ne: null }, // ✅ CRITICAL: Must have actual punch-in
+      $or: [
+        { punchOutTime: null }, 
+        { punchOutTime: { $exists: false } }
+      ]
+    }).sort({ punchInTime: -1 });
+
+    if (!attendance) {
+      console.log(`❌ No confirmed punch-in found for ${studentId}`);
+      return res.status(400).json({
+        success: false,
+        message: "Not punched in today"
+      });
+    }
+
+    console.log(`✅ Punch-in confirmed at ${attendance.punchInTime}`);
+
+    // Create punch-out request
+    const requestId = `PUNCHOUT_${Date.now()}_${studentId}`;
+    
+    const punchOutRequest = {
+      requestId,
+      studentId,
+      type: 'PUNCH_OUT',
+      latitude,
+      longitude,
+      distance,
+      requestTime: new Date(),
+      status: 'PENDING'
+    };
+
+    // Store in database (if you have PunchRequest model)
+    // await PunchRequest.create(punchOutRequest);
+
+    // Emit to mentor
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('newPunchRequest', punchOutRequest);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Punch-out request submitted",
+      requestId
+    });
+
+  } catch (error) {
+    console.error("❌ Error in requestPunchOut:", error);
     res.status(500).json({ 
-      message: 'Failed to submit punch-in request', 
-      error: error.message 
+      success: false,
+      message: error.message 
     });
   }
 };
