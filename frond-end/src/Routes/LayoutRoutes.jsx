@@ -12,7 +12,6 @@ import MonthlySummary from "../pages/adminpage/MonthlySummary";
 import AdminLeaveRequest from "../pages/adminpage/AdminLeaveRequest";
 import LeaveHistory from "../pages/adminpage/LeaveHistory";
 import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
-import StudentDailyAttendance from "../pages/studentpage/StudentDailyAttendance";
 import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
 import Mentorlogin from "../pages/mentorpage/Mentorlogin";
@@ -137,10 +136,10 @@ function LayoutRoutes() {
             }
           />
           <Route
-            path="/StudentDailyAttendance"
+            path="/DailyAttendance"
             element={
               <ProtectedRoute role="student">
-                <StudentDailyAttendance />
+                <DailyAttendance/>
               </ProtectedRoute>
             }
           />
