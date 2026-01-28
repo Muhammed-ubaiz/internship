@@ -611,3 +611,15 @@ export const requestPunchOut = async (req, res) => {
 };
 
 
+export const getStudentDailyAttendance = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    const records = await Attendance.find({ studentId })
+      .sort({ date: -1 });
+
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch attendance" });
+  }
+};

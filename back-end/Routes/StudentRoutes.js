@@ -11,16 +11,12 @@ import {
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
-  // ─── NEW ───
   firstPunchInWithLocation,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
 const studentroutes = express.Router();
 
-// ────────────────────────────────────────────────
-//               Existing routes (unchanged)
-// ────────────────────────────────────────────────
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
 studentroutes.post("/request-punch-in", verifyToken, requestPunchIn);
@@ -40,5 +36,7 @@ studentroutes.post(
   verifyToken,
   firstPunchInWithLocation,
 );
+
+
 
 export default studentroutes;

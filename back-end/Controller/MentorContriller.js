@@ -145,17 +145,59 @@ export const getstudent = async (req, res) => {
   }
 };
 
-// Get all pending punch requests
+// ✅ UPDATED: Get punch requests with optional status filter
 export const getPunchRequests = async (req, res) => {
   try {
-    const requests = await PunchingRequest.find({ status: 'PENDING' })
+    const { status, includeAll } = req.query;
+    
+    // Build query based on parameters
+    let query = {};
+    
+    // If includeAll is true, get all requests
+    // If status is provided, filter by that status
+    // Otherwise, default to PENDING only
+    if (!includeAll && status) {
+      query.status = status;
+    } else if (!includeAll) {
+      query.status = 'PENDING';
+    }
+    
+    console.log('📋 Fetching punch requests with query:', query);
+    
+    const requests = await PunchingRequest.find(query)
       .populate('studentId', 'name email batch course')
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1, createdAt: -1 }); // Sort by most recent first
 
+    console.log(`✅ Found ${requests.length} requests`);
+    
     res.json(requests);
   } catch (error) {
-    console.error('Error fetching punch requests:', error);
+    console.error('❌ Error fetching punch requests:', error);
     res.status(500).json({ message: 'Failed to fetch requests' });
+  }
+};
+
+// ✅ NEW: Get punch request history (approved/rejected only)
+export const getPunchRequestHistory = async (req, res) => {
+  try {
+    const { days = 30 } = req.query; // Default to last 30 days
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    
+    const requests = await PunchingRequest.find({
+      status: { $in: ['APPROVED', 'REJECTED'] },
+      updatedAt: { $gte: startDate }
+    })
+      .populate('studentId', 'name email batch course')
+      .sort({ updatedAt: -1 });
+
+    console.log(`✅ Found ${requests.length} history records`);
+    
+    res.json(requests);
+  } catch (error) {
+    console.error('❌ Error fetching history:', error);
+    res.status(500).json({ message: 'Failed to fetch history' });
   }
 };
 
@@ -171,6 +213,10 @@ export const acceptPunchRequest = async (req, res) => {
       return res.status(404).json({ message: "Punch request not found" });
     }
 
+    if (punchRequest.status !== 'PENDING') {
+      return res.status(400).json({ message: "Request already processed" });
+    }
+
     console.log('📋 Punch request found:', {
       studentId: punchRequest.studentId,
       type: punchRequest.type,
@@ -181,7 +227,10 @@ export const acceptPunchRequest = async (req, res) => {
     // 2️⃣ Update request status
     punchRequest.status = "APPROVED";
     punchRequest.processedAt = new Date();
+    punchRequest.updatedAt = new Date(); // Explicitly set updatedAt
     await punchRequest.save();
+
+    console.log('✅ Request status updated to APPROVED');
 
     // 3️⃣ Today date
     const today = new Date();
@@ -207,6 +256,7 @@ export const acceptPunchRequest = async (req, res) => {
       // Set punch in time
       attendance.punchInTime = punchRequest.punchTime || new Date();
       attendance.punchInAcceptedAt = new Date();
+      attendance.status = 'WORKING';
 
       // ✅ Add to punch records for frontend compatibility
       if (!attendance.punchRecords) {
@@ -237,7 +287,14 @@ export const acceptPunchRequest = async (req, res) => {
         const workingSeconds = Math.floor(
           (attendance.punchOutTime - attendance.punchInTime) / 1000
         );
-        attendance.totalWorkingTime = workingSeconds;
+        attendance.totalWorkingSeconds = (attendance.totalWorkingSeconds || 0) + workingSeconds;
+        
+        // Update the last punch record with punch out time
+        if (attendance.punchRecords && attendance.punchRecords.length > 0) {
+          const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
+          lastRecord.punchOut = attendance.punchOutTime;
+          lastRecord.sessionWorkingSeconds = workingSeconds;
+        }
         
         // Update student status
         const student = await Student.findById(punchRequest.studentId);
@@ -256,19 +313,20 @@ export const acceptPunchRequest = async (req, res) => {
     console.log('💾 Attendance saved:', {
       punchInTime: attendance.punchInTime,
       punchOutTime: attendance.punchOutTime,
-      workingTime: attendance.totalWorkingTime
+      workingTime: attendance.totalWorkingSeconds
     });
 
     // 7️⃣ Emit socket event to notify student
-    // Make sure you have socket instance available
     const io = req.app.get('socketio');
     if (io) {
       io.to(punchRequest.studentId.toString()).emit('requestApproved', {
         requestId: punchRequest._id,
+        studentId: punchRequest.studentId,
         type: punchRequest.type,
         punchTime: attendance.punchInTime || attendance.punchOutTime,
         message: `Your ${punchRequest.type.toLowerCase().replace('_', ' ')} request has been approved`
       });
+      console.log('📡 Socket event emitted to student');
     }
 
     res.status(200).json({
@@ -277,7 +335,7 @@ export const acceptPunchRequest = async (req, res) => {
       attendance: {
         punchInTime: attendance.punchInTime,
         punchOutTime: attendance.punchOutTime,
-        totalWorkingTime: attendance.totalWorkingTime
+        totalWorkingSeconds: attendance.totalWorkingSeconds
       }
     });
 
@@ -295,14 +353,24 @@ export const rejectPunchRequest = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
+    console.log('❌ Rejecting punch request:', id);
+
     const punchRequest = await PunchingRequest.findById(id);
     if (!punchRequest) {
       return res.status(404).json({ message: "Punch request not found" });
     }
 
+    if (punchRequest.status !== 'PENDING') {
+      return res.status(400).json({ message: "Request already processed" });
+    }
+
     punchRequest.status = "REJECTED";
     punchRequest.rejectionReason = reason || "No reason provided";
+    punchRequest.processedAt = new Date();
+    punchRequest.updatedAt = new Date(); // Explicitly set updatedAt
     await punchRequest.save();
+
+    console.log('✅ Request status updated to REJECTED');
 
     // Emit socket event to notify student
     const io = req.app.get('socketio');
@@ -313,6 +381,7 @@ export const rejectPunchRequest = async (req, res) => {
         reason: punchRequest.rejectionReason,
         message: `Your ${punchRequest.type.toLowerCase().replace('_', ' ')} request was rejected`
       });
+      console.log('📡 Socket event emitted to student');
     }
 
     res.status(200).json({

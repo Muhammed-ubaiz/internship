@@ -72,7 +72,7 @@ function SideBarStudent() {
           <div>
             <div
               className={subItem}
-              onClick={() => navigate("/StudentDailyAttendance")}
+              onClick={() => navigate("/DailyAttendance")}
             >
               Daily Attendance
             </div>
