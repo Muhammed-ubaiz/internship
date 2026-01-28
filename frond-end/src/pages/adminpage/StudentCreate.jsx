@@ -365,7 +365,7 @@ function StudentCreate() {
 
       <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-7 mb-4 sm:mb-6 ">
           <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
             Students Management
           </h1>
@@ -412,7 +412,8 @@ function StudentCreate() {
             </div>
 
             {/* Status Filter */}
-            <div className="relative w-full sm:w-72 group">
+            <div className="relative w-full sm:max-w-[280px] group">
+
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <select
                   value={statusFilter}
@@ -487,7 +488,7 @@ function StudentCreate() {
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm border-separate border-spacing-y-3">
-              <thead className="sticky top-18 bg-white">
+              <thead className=" top-18 bg-white">
                 <tr className="text-[#1679AB] text-left">
                   <th className="p-3 text-center">#</th>
                   <th className="p-3 text-center">Name</th>
