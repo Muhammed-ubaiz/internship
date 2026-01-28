@@ -15,7 +15,7 @@ function MentorDashboard() {
       const role = localStorage.getItem("role");
 
       const res = await axios.get(
-        "http://localhost:3001/admin/getStudents",
+        "http://localhost:3001/mentor/getStudents", // ✅ ONLY CHANGE
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -36,9 +36,11 @@ function MentorDashboard() {
 
   // ---------------- COUNTS ----------------
   const totalStudents = students.length;
+
   const activeStudents = students.filter(
     (s) => s.status === "Active"
   ).length;
+
   const inactiveStudents = students.filter(
     (s) => s.status === "Inactive"
   ).length;
@@ -75,7 +77,7 @@ function MentorDashboard() {
                 <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
               </div>
 
-              {/* TOTAL COURSES (UNCHANGED) */}
+              {/* TOTAL COURSES */}
               <div className="bg-white rounded-2xl shadow-2xl p-5 transform transition-all duration-500 hover:scale-105">
                 <p className="text-sm text-[#1679AB]">Total Courses</p>
                 <h2 className="text-3xl font-bold text-[#141E46] mt-2">6</h2>
