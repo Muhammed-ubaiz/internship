@@ -42,14 +42,14 @@ function Topbar() {
 
   return (
     <>
-      <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
-        
-        <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]">
-          Dashboard
-        </h2>
+   <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
+  
+  <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]
+                 text-center w-full md:w-auto md:text-left">
+    Dashboard
+  </h2>
 
-     
-     
+
 
         
         <div className="flex items-center gap-6">
