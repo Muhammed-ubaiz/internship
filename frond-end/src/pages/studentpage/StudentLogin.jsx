@@ -42,9 +42,19 @@ function StudentLogin() {
       return;
     }
 
-    const { token, student } = res.data;
+    const { token, role } = res.data;
     localStorage.setItem("token", token);
-    localStorage.setItem("role", student.role);
+    localStorage.setItem("role", role);
+
+    const decoded = jwtDecode(token);
+    const expiry = decoded.exp * 1000;
+    const timeout = expiry - Date.now();
+
+    setTimeout(()=>{
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "/studentlogin";
+    },timeout);
 
     Swal.fire({
       

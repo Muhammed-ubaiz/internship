@@ -379,8 +379,11 @@ function Studentsdashboard() {
   const loadTodayAttendance = async () => {
     try {
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role")
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`,
+        Role:role,
+       },
       });
 
       const att = res.data.attendance;
