@@ -7,8 +7,36 @@ import nodemailer from "nodemailer";
 import PunchingRequest from '../Model/PunchingRequestmodel.js';
 import Attendance from '../Model/Attendancemodel.js';
 import Course from "../Model/Coursemodel.js";
+import Notification from "../Model/NotificationModel.js";
 
 
+
+
+
+
+
+
+
+
+
+export const getMentorNotifications = async (req, res) => {
+  try {
+
+    const notifications = await Notification.find({
+      $or: [
+        { audience: "mentors" },
+        { audience: "all" }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json(notifications);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 
 /* ===== LOGIN (existing) ===== */
 export const mentorlogin = async (req, res) => {
@@ -397,3 +425,5 @@ export const rejectPunchRequest = async (req, res) => {
     });
   }
 };
+
+

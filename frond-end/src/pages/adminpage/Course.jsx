@@ -645,4 +645,5 @@ sticky top-0 bg-[#EEF6FB] py-2">
   );
 }
 
+
 export default Course;

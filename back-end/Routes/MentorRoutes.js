@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyToken } from "../AuthMiddleware.js";
-import { acceptPunchRequest, getPunchRequests, getstudent, mentorlogin, rejectPunchRequest, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
+import { acceptPunchRequest, getMentorNotifications, getPunchRequests, getstudent, mentorlogin, rejectPunchRequest, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
 
 const mentorroutes = express.Router();
 
@@ -22,5 +22,7 @@ mentorroutes.put(
   "/reject-punch/:id", rejectPunchRequest
 );
 
+
+mentorroutes.get("/notifications", getMentorNotifications)
 
 export default mentorroutes;

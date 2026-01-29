@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import Location from "../Model/Locationmodel.js";
 import Mentor from "../Model/Mentormodel.js";
+import Notification from "../Model/NotificationModel.js";
 
 
 
@@ -21,7 +22,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "1d" } //  expiry
+      { expiresIn: "1h" } //  expiry
     );
 
     return res.json({
@@ -466,6 +467,38 @@ export const toggleMentorStatus = async (req, res) => {
   }
 };
 
+
+export const sendInformation = async (req, res) => {
+  try {
+
+    const { title, message, audience } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "Title and message required",
+      });
+    }
+
+    const notification = new Notification({
+      title,
+      message,
+      audience,
+    });
+
+    await notification.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Information sent successfully",
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 
 
 

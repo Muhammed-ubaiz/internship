@@ -6,6 +6,34 @@ import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
 import PunchingRequest from "../Model/PunchingRequestmodel.js";
+import Notification from "../Model/NotificationModel.js";
+
+
+export const getsStudentNotifications = async (req, res) => {
+  try {
+
+    const notifications = await Notification.find({
+      $or: [
+        { audience: "students" },
+        { audience: "all" }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json(notifications);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
+
+
+
+
+
+
 
 // config/jwt.js
  const JWT_SECRET = process.env.JWT_SECRET || "key321";

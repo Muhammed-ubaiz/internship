@@ -12,6 +12,7 @@ import {
   sendStudentOtp,
   verifyStudentOtp,
   firstPunchInWithLocation,
+  getsStudentNotifications,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -36,7 +37,7 @@ studentroutes.post(
   verifyToken,
   firstPunchInWithLocation,
 );
-
+studentroutes.get("/notifications", getsStudentNotifications)
 
 
 export default studentroutes;
