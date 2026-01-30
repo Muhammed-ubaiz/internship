@@ -9,6 +9,7 @@ function Admindashboard() {
 
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [activeCoursesCount, setActiveCoursesCount] = useState(0);
+  const [activeMentorsCount, setActiveMentorsCount] = useState(0); // ✅ NEW STATE
 
   // ---------------- FETCH ACTIVE STUDENTS ----------------
   const fetchActiveStudentsCount = async () => {
@@ -62,9 +63,38 @@ function Admindashboard() {
     }
   };
 
+  // ---------------- FETCH ACTIVE MENTORS ----------------
+  const fetchActiveMentorsCount = async () => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    try {
+      const res = await axios.get(
+        "http://localhost:3001/admin/getMentors",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
+      );
+
+      // Mentorcreate code pole response.data.mentors aanu
+      const activeMentors = res.data.mentors.filter(
+        (mentor) => mentor.status === "Active"
+      );
+
+      setActiveMentorsCount(activeMentors.length);
+
+    } catch (error) {
+      console.error("Failed to fetch mentors", error);
+    }
+  };
+
   useEffect(() => {
     fetchActiveStudentsCount();
     fetchActiveCoursesCount();
+    fetchActiveMentorsCount(); // ✅ CALL
   }, []);
 
   return (
@@ -101,23 +131,28 @@ function Admindashboard() {
             </div>
   
             <div className="bg-white rounded-2xl shadow-2xl p-5 transition hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Present Students</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">180</h2>
+              <p className="text-sm text-[#1679AB]">Active mentors</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                {activeMentorsCount} {/* ✅ DYNAMIC */}
+              </h2>
+               <p className="text-xs mt-1 text-green-500">Currently active mentors</p>
+              <div className="h-10 rounded mt-4 bg-[#FFE7D1]"></div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl p-5 transition hover:scale-105">
+              <p className="text-sm text-[#1679AB]">Active</p>
+              <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+                {activeMentorsCount} 
+              </h2>
+               <p className="text-xs mt-1 text-green-500">Currently active mentors</p>
               <div className="h-10 rounded mt-4 bg-[#FFE7D1]"></div>
             </div>
   
-            <div className="bg-white rounded-2xl shadow-2xl p-5 transition hover:scale-105">
-              <p className="text-sm text-[#1679AB]">Absent Students</p>
-              <h2 className="text-3xl font-bold text-[#141E46] mt-2">25</h2>
-              <div className="h-10 rounded mt-4 bg-[#D1E8FF]"></div>
-            </div>
-  
           </div>
-  
+
           {/* ================= BOTTOM SECTION ================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-{/* Working & Break Hours → TOP on Mobile */}
 <div className="space-y-4 flex flex-col justify-between order-1 md:order-3">
   <div className="h-[140px] bg-white rounded-2xl shadow-2xl p-4">
     <p className="text-sm text-[#1679AB]">
@@ -138,24 +173,19 @@ function Admindashboard() {
   </div>
 </div>
 
-{/* Calendar */}
 <div className="order-2 md:order-1 transition hover:scale-105">
   <DashboardCalendar />
 </div>
 
-{/* Clock */}
 <div className="h-80 bg-blue-50 rounded-2xl shadow-2xl flex justify-center items-center order-3 md:order-2 transition hover:scale-105">
   <LiveClockUpdate />
 </div>
 
 </div>
-
-  
         </div>
       </div>
     </div>
   );
-  
 }
 
 export default Admindashboard;
