@@ -11,7 +11,10 @@ import {
   resetPassword, 
   sendOtp,  
   updateStudentLeaveStatus, 
-  verifyOtp , getMentorNotifications
+  verifyOtp ,
+   getMentorNotifications,
+   getTodayAttendance,
+   deleteMentorNotification
 } from "../Controller/MentorContriller.js";
 
 
@@ -44,7 +47,6 @@ mentorroutes.put(
 );
 
 mentorroutes.get("/today-attendance", getTodayAttendance);
-
 
 
 
