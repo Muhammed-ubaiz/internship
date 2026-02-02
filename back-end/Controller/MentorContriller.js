@@ -22,20 +22,17 @@ import Notification from "../Model/NotificationModel.js";
 
 export const getMentorNotifications = async (req, res) => {
   try {
-
     const notifications = await Notification.find({
-      $or: [
-        { audience: "mentors" },
-        { audience: "all" }
-      ]
+      audience: { $in: ["mentors", "all"] },
+      deletedBy: { $ne: "mentor" }, // ⭐ mentor deleted ones hidden
     }).sort({ createdAt: -1 });
 
-    res.json(notifications);
-
-  } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    res.json({
+      success: true,
+      notifications,
     });
+  } catch (error) {
+    res.status(500).json({ success: false });
   }
 };
 
@@ -427,7 +424,21 @@ export const rejectPunchRequest = async (req, res) => {
   }
 };
 
+export const deleteMentorNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    await Notification.findByIdAndUpdate(id, {
+      $addToSet: { deletedBy: "mentor" }, // ⭐ only mentor removed
+    });
+
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+};
+=======
 // ✅ FIXED: Get leave requests for mentor - ONLY their course students
 export const getStudentLeavesForMentor = async (req, res) => {
   try {
@@ -522,4 +533,5 @@ export const updateStudentLeaveStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
 

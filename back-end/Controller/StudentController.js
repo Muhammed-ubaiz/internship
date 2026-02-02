@@ -12,22 +12,34 @@ import Mentor from "../Model/Mentormodel.js";
 import Notification from "../Model/NotificationModel.js";
 
 
-export const getsStudentNotifications = async (req, res) => {
+export const getStudentNotifications = async (req, res) => {
   try {
-
     const notifications = await Notification.find({
-      $or: [
-        { audience: "students" },
-        { audience: "all" }
-      ]
+      audience: { $in: ["students", "all"] },
+      deletedBy: { $ne: "student" }, // ⭐ student deleted ones hidden
     }).sort({ createdAt: -1 });
 
-    res.json(notifications);
-
-  } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
+    res.json({
+      success: true,
+      notifications,
     });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+};
+
+// ✅ DELETE only for student (soft delete)
+export const deleteStudentNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Notification.findByIdAndUpdate(id, {
+      $addToSet: { deletedBy: "student" }, // ⭐ student only
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
   }
 };
 
