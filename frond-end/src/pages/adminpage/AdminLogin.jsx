@@ -19,26 +19,22 @@ function AdminLogin() {
     try {
       const response = await axios.post(
         "http://localhost:3001/admin/login",
-        { email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+        { email, password }
       );
-
+    
       if (response.data.success) {
-        const { token, role } = response.data;
+        const { token } = response.data;
 
         localStorage.setItem("token", token);
-        localStorage.setItem("role", role);
+        localStorage.setItem("role", "admin");
 
         const decoded = jwtDecode(token);
         const timeout = decoded.exp * 1000 - Date.now();
 
-        // Auto logout after token expires
+        // // Auto logout after token expires
         setTimeout(() => {
-          localStorage.clear();
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
           window.location.href = "/adminlogin";
         }, timeout);
 
@@ -59,6 +55,7 @@ function AdminLogin() {
         });
       }
     } catch (error) {
+      console.log(error);
       Swal.fire({
         icon: "error",
         title: "Oops...",

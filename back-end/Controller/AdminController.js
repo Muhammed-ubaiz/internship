@@ -8,6 +8,9 @@ import nodemailer from "nodemailer";
 import Location from "../Model/Locationmodel.js";
 import Mentor from "../Model/Mentormodel.js";
 import Attendancemodel from "../Model/Attendancemodel.js";
+import Leave from "../Model/LeaveModel.js";
+import Notification from "../Model/NotificationModel.js";
+
 
 
 
@@ -22,7 +25,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "1d" } //  expiry
+      { expiresIn: "1h" } //  expiry
     );
 
     return res.json({
@@ -526,6 +529,75 @@ export const getDailyAttendance = async (req, res) => {
     });
   }
 };
+
+export const getAllPendingLeaves = async (req, res) => {
+  try {
+    const leaves = await Leave.find({ status: "Pending" })
+      .populate("studentId", "name email course batch");
+
+    res.json({ success: true, leaves });
+  } catch (error) {
+    console.error("Get all pending leaves error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Update leave status (approve/reject)
+export const updateLeaveStatusAdmin = async (req, res) => {
+  try {
+    const { id } = req.params; // leave id
+    const { status } = req.body; // Approved / Rejected
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
+    }
+
+    const leave = await Leave.findById(id);
+    if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
+
+    leave.status = status;
+    await leave.save();
+
+    res.json({ success: true, leave });
+  } catch (error) {
+    console.error("Update leave status admin error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const sendInformation = async (req, res) => {
+  try {
+
+    const { title, message, audience } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "Title and message required",
+      });
+    }
+
+    const notification = new Notification({
+      title,
+      message,
+      audience,
+    });
+
+    await notification.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Information sent successfully",
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
+
 
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
