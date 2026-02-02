@@ -505,7 +505,7 @@ export const updateLeaveStatusAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-=======
+
 export const sendInformation = async (req, res) => {
   try {
 

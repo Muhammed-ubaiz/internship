@@ -714,8 +714,9 @@ export const getLeaveCount = async (req, res) => {
     res.status(200).json({ total: totalLeaves, used: usedLeaves, remaining });
   } catch (error) {
     console.error("Error getting leave count:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-
+    res.status(500).json({ success: false, message: "Server error" })
+  }}
+  
 export const getStudentDailyAttendance = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -728,4 +729,6 @@ export const getStudentDailyAttendance = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch attendance" });
 
   }
+
 };
+  
