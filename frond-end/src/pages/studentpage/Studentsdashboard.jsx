@@ -379,8 +379,11 @@ function Studentsdashboard() {
   const loadTodayAttendance = async () => {
     try {
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role")
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`,
+        Role:role,
+       },
       });
 
       const att = res.data.attendance;
@@ -647,23 +650,25 @@ function Studentsdashboard() {
         isLoading={loading}
       />
 
-      <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <StudentTopbar />
-        </div>
 
-        {locationStatus && (
-          <div
-            className={`mb-4 p-3 rounded-lg text-center font-semibold ${
-              locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
-              locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
-              locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
-              "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {locationStatus}
-          </div>
-        )}
+          <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
+            <div className="flex justify-center items-center mb-10">
+              <StudentTopbar />
+            </div>
+
+            {locationStatus && (
+              <div
+                className={`mb-4 p-3 rounded-lg text-center mb-10 font-semibold ${
+                  locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
+                  locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
+                  locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
+                  "bg-blue-100 text-blue-700"
+                }`}
+              >
+                {locationStatus}
+              </div>
+            )}
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-2xl p-5">

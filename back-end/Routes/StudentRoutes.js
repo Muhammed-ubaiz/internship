@@ -12,12 +12,21 @@ import {
   sendStudentOtp,
   verifyStudentOtp,
   firstPunchInWithLocation,
+
   getStudentNotifications,
   deleteStudentNotification,
+
+  getMyLeaves,
+  applyLeave,
+  getLeaveCount,
+  getsStudentNotifications,
+
+
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
 const studentroutes = express.Router();
+
 
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
@@ -41,5 +50,9 @@ studentroutes.post(
 studentroutes.get("/notifications", getStudentNotifications);
 studentroutes.delete("/notifications/:id", deleteStudentNotification);
 
+
+studentroutes.post("/apply-leave", verifyToken, applyLeave);
+studentroutes.get("/my-leaves", verifyToken, getMyLeaves);
+studentroutes.get("/leave-count", verifyToken, getLeaveCount); 
 
 export default studentroutes;

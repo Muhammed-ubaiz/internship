@@ -23,9 +23,11 @@ import DailyAttendance1 from "../pages/mentorpage/DailyAttendance1";
 import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
 import Punchinrequest from "../pages/mentorpage/Punchinrequest";
 import AdminDailyAttendance from "../pages/adminpage/AdminDailyAttendance";
+import MentorLeaveRequest from "../pages/mentorpage/MentorLeaveRequest";
 import Information from "../pages/adminpage/Information";
 import MentorNotifications from "../pages/mentorpage/Mentornotification";
 import StuentsNotification from "../pages/studentpage/StuentsNotification";
+
 
 function LayoutRoutes() {
   return (
@@ -208,6 +210,8 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/mentorleaverequest" element={<MentorLeaveRequest/>}/>
 
           <Route
             path="/leavehistory1"
