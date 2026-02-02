@@ -1,9 +1,6 @@
 import express from "express";
 import { verifyToken } from "../AuthMiddleware.js";
 
-import { acceptPunchRequest, deleteMentorNotification, getMentorNotifications, getPunchRequests, getstudent, mentorlogin, rejectPunchRequest, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
-
-
 import { 
   acceptPunchRequest,  
   getPunchRequests, 
@@ -45,6 +42,10 @@ mentorroutes.post(
 mentorroutes.put(
   "/reject-punch/:id", rejectPunchRequest
 );
+
+mentorroutes.get("/today-attendance", getTodayAttendance);
+
+
 
 
 mentorroutes.get("/notifications", getMentorNotifications)
