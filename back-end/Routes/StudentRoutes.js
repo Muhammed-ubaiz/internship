@@ -10,13 +10,11 @@ import {
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
-  firstPunchInWithLocation,
   getStudentNotifications,
   deleteStudentNotification,
   getMyLeaves,
   applyLeave,
   getLeaveCount,
-  getsStudentNotifications,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -37,11 +35,6 @@ studentroutes.post("/verify-otp", verifyStudentOtp);
 studentroutes.post("/reset-password", resetStudentPassword);
 
 
-studentroutes.post(
-  "/first-punch-in-with-location",
-  verifyToken,
-  firstPunchInWithLocation,
-);
 studentroutes.get("/notifications", getStudentNotifications);
 studentroutes.delete("/notifications/:id", deleteStudentNotification);
 

@@ -1,5 +1,5 @@
 import express from "express";
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor,  getAllPendingLeaves, updateLeaveStatusAdmin, sendInformation } from "../Controller/AdminController.js";
+import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor,  getAllPendingLeaves, updateLeaveStatusAdmin, sendInformation, getDailyAttendance } from "../Controller/AdminController.js";
 
 import { verifyToken } from "../AuthMiddleware.js";
 
