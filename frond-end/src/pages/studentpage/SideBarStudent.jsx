@@ -117,7 +117,7 @@ function SideBarStudent() {
               <div
                 className={subItem}
 
-                onClick={() => handleNavigation("/StudentDailyAttendance")}
+                onClick={() => handleNavigation("/DailyAttendance")}
 
               >
                 Daily Attendance
