@@ -269,7 +269,10 @@ function Course() {
 
       <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-6 
+sticky top-0 bg-[#EEF6FB] py-2">
+
+
           <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
             Courses Management
           </h1>
@@ -477,7 +480,11 @@ function Course() {
               >
                 ✕
               </button>
-              <h2 className="text-lg font-semibold mb-4">Add Course</h2>
+ <h2 className="text-lg font-semibold mb-4 mt-2 sm:mt-3 md:mt-0">
+  Add Course
+</h2>
+
+
               <input
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
@@ -637,5 +644,6 @@ function Course() {
     </div>
   );
 }
+
 
 export default Course;

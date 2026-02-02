@@ -180,6 +180,14 @@ function Sidebar() {
             </div>
           )}
 
+             {/* information */}
+          <div className={menuItem} onClick={() => handleNavigation("/information")}>
+            <div className="flex items-center gap-3">
+              <FaUsers />
+              <span>informaition</span>
+            </div>
+          </div>
+
           {/* Logout */}
           <div className="mt-auto border-t border-gray-700 pt-2">
             <div className={menuItem} onClick={handleLogout}>

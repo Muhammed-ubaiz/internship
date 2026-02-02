@@ -297,7 +297,7 @@ function Studentsdashboard() {
   const INSTITUTION_LNG = 75.77045696982046;
   const MAX_DISTANCE = 50;
 
-  // Socket connection (your original, but might need adjustment if using approvals)
+  // Socket connection
   useEffect(() => {
     const token = localStorage.getItem('token');
     
@@ -336,12 +336,11 @@ function Studentsdashboard() {
             setPendingRequestId(null);
             setPendingAction(null);
             setLocationStatus("✅ Punch-in approved");
-            // Update state immediately for real-time sync
             setIsPunchedIn(true);
             setPunchInTime(new Date(data.punchTime));
             setIsOnBreak(false);
             setBreakStartTime(null);
-            loadTodayAttendance(); // Refresh attendance data to ensure consistency
+            loadTodayAttendance();
           }
         } catch (error) {
           console.error('Error decoding token:', error);
@@ -349,7 +348,7 @@ function Studentsdashboard() {
       }
     });
 
-    // Handle punch-out approval if needed
+    // Handle punch-out approval
     newSocket.on('punchOutApproved', (data) => {
       console.log('✅ Punch-out approved:', data);
       const token = localStorage.getItem('token');
@@ -360,15 +359,13 @@ function Studentsdashboard() {
             setPendingRequestId(null);
             setPendingAction(null);
             setLocationStatus("✅ Punch-out approved - Break started");
-            loadTodayAttendance(); // Refresh attendance data and update all states
+            loadTodayAttendance();
           }
         } catch (error) {
           console.error('Error decoding token:', error);
         }
       }
     });
-
-    // ... your other socket events ...
 
     setSocket(newSocket);
 
@@ -382,8 +379,11 @@ function Studentsdashboard() {
   const loadTodayAttendance = async () => {
     try {
       const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role")
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`,
+        Role:role,
+       },
       });
 
       const att = res.data.attendance;
@@ -403,12 +403,11 @@ function Studentsdashboard() {
       setBreakTime(att.totalBreakSeconds || 0);
       setLiveBreakTime(formatTimeFromSeconds(att.totalBreakSeconds || 0));
 
-      // ✅ Handle both old format (punchInTime) and new format (punchRecords)
+      // Handle both old format (punchInTime) and new format (punchRecords)
       let lastRecord = null;
       if (att.punchRecords && att.punchRecords.length > 0) {
         lastRecord = att.punchRecords[att.punchRecords.length - 1];
       } else if (att.punchInTime) {
-        // Fallback for old format - create virtual record
         lastRecord = {
           punchIn: new Date(att.punchInTime),
           punchOut: att.punchOutTime ? new Date(att.punchOutTime) : null
@@ -450,28 +449,28 @@ function Studentsdashboard() {
 
   // Live timers
   useEffect(() => {
-  const interval = setInterval(() => {
-    const now = Date.now();
+    const interval = setInterval(() => {
+      const now = Date.now();
 
-    if (isPunchedIn && punchInTime) {
-      const extraMs = now - punchInTime.getTime();
-      const liveTotal = totalWorkingTime + Math.floor(extraMs / 1000);
-      setLiveWorkingTime(formatTimeFromSeconds(liveTotal));
-    } else {
-      setLiveWorkingTime(formatTimeFromSeconds(totalWorkingTime));
-    }
+      if (isPunchedIn && punchInTime) {
+        const extraMs = now - punchInTime.getTime();
+        const liveTotal = totalWorkingTime + Math.floor(extraMs / 1000);
+        setLiveWorkingTime(formatTimeFromSeconds(liveTotal));
+      } else {
+        setLiveWorkingTime(formatTimeFromSeconds(totalWorkingTime));
+      }
 
-    if (isOnBreak && breakStartTime) {
-      const extraBreakMs = now - breakStartTime.getTime();
-      const liveBreak = breakTime + Math.floor(extraBreakMs / 1000);
-      setLiveBreakTime(formatTimeFromSeconds(liveBreak));
-    } else {
-      setLiveBreakTime(formatTimeFromSeconds(breakTime));
-    }
-  }, 1000);
+      if (isOnBreak && breakStartTime) {
+        const extraBreakMs = now - breakStartTime.getTime();
+        const liveBreak = breakTime + Math.floor(extraBreakMs / 1000);
+        setLiveBreakTime(formatTimeFromSeconds(liveBreak));
+      } else {
+        setLiveBreakTime(formatTimeFromSeconds(breakTime));
+      }
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, [isPunchedIn, punchInTime, totalWorkingTime, isOnBreak, breakStartTime, breakTime]);
+    return () => clearInterval(interval);
+  }, [isPunchedIn, punchInTime, totalWorkingTime, isOnBreak, breakStartTime, breakTime]);
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -512,7 +511,6 @@ function Studentsdashboard() {
         setPendingAction('punchIn');
         setShowMap(true);
       } else {
-        // Normal punch in
         const res = await axios.post("http://localhost:3001/student/punch-in", {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
@@ -525,6 +523,7 @@ function Studentsdashboard() {
           setBreakTime(res.data.attendance.totalBreakSeconds);
           setTotalWorkingTime(res.data.attendance.totalWorkingSeconds);
           setLocationStatus("✅ Punched in");
+          loadTodayAttendance(); // Reload to sync
         }
       }
     } catch (error) {
@@ -534,72 +533,91 @@ function Studentsdashboard() {
     }
   };
 
- const confirmPunchIn = async () => {
-  // 🛑 VERY IMPORTANT CHECK
-  if (hasLocationCheckedToday) {
-    // Already punched in today → just resume UI
-    setIsPunchedIn(true);
-    setIsOnBreak(false);
-    setLocationStatus("ℹ️ Already punched in today");
-    return;
-  }
-
-  if (!currentLocation?.latitude || !currentLocation?.longitude) {
-    alert("📍 Fetching location, please wait...");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await axios.post(
-      "http://localhost:3001/student/request-punch-in",
-      {
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude,
-        distance: currentDistance || 0,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-
-    if (res.data.message === 'Punch-in request submitted successfully') {
-      setPendingRequestId(res.data.requestId);
-      setPendingAction('punchIn');
-      setLocationStatus("⏳ Punch-in request submitted");
-      setShowMap(false);
+  const confirmPunchIn = async () => {
+    if (hasLocationCheckedToday) {
+      setIsPunchedIn(true);
+      setIsOnBreak(false);
+      setLocationStatus("ℹ️ Already punched in today");
+      return;
     }
-  } catch (err) {
-    console.error("Punch-in request error:", err.response?.data);
-    alert(err.response?.data?.message || "Punch-in request failed");
-  } finally {
-    setLoading(false);
-  }
-};
 
+    if (!currentLocation?.latitude || !currentLocation?.longitude) {
+      alert("📍 Fetching location, please wait...");
+      return;
+    }
 
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        "http://localhost:3001/student/request-punch-in",
+        {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          distance: currentDistance || 0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (res.data.message === 'Punch-in request submitted successfully') {
+        setPendingRequestId(res.data.requestId);
+        setPendingAction('punchIn');
+        setLocationStatus("⏳ Punch-in request submitted");
+        setShowMap(false);
+      }
+    } catch (err) {
+      console.error("Punch-in request error:", err.response?.data);
+      alert(err.response?.data?.message || "Punch-in request failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePunchOutClick = async () => {
     if (!isPunchedIn || loading) return;
 
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:3001/student/punch-out", {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      setLocationStatus("Processing punch-out...");
+      
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        "http://localhost:3001/student/punch-out", 
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log("✅ Punch-out response:", res.data);
+
       if (res.data.success) {
+        // Update local state immediately
         setIsPunchedIn(false);
         setPunchOutTime(new Date());
         setIsOnBreak(true);
         setBreakStartTime(new Date());
-        setBreakTime(res.data.attendance.totalBreakSeconds);
-        setTotalWorkingTime(res.data.attendance.totalWorkingSeconds);
+        
+        // Update from server response
+        if (res.data.attendance) {
+          setBreakTime(res.data.attendance.totalBreakSeconds || 0);
+          setTotalWorkingTime(res.data.attendance.totalWorkingSeconds || 0);
+          setWorkingHours(formatTimeFromSeconds(res.data.attendance.totalWorkingSeconds || 0));
+        }
+        
         setLocationStatus("✅ Punched out - Break started");
+        
+        // Reload attendance to sync with DB
+        setTimeout(() => {
+          loadTodayAttendance();
+        }, 500);
       }
     } catch (error) {
+      console.error("❌ Punch-out error:", error);
       setLocationStatus("❌ Error: " + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
@@ -617,11 +635,12 @@ function Studentsdashboard() {
     if (!time) return "--:--";
     return new Date(time).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
   };
-      return (
-        <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
-          <SideBarStudent />
 
-           <MapModal
+  return (
+    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6">
+      <SideBarStudent />
+
+      <MapModal
         isOpen={showMap}
         onClose={() => setShowMap(false)}
         userLocation={currentLocation}
@@ -630,6 +649,7 @@ function Studentsdashboard() {
         onConfirm={confirmPunchIn}
         isLoading={loading}
       />
+
 
           <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
             <div className="flex justify-center items-center mb-10">
@@ -649,120 +669,121 @@ function Studentsdashboard() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-2xl shadow-2xl p-5">
-                <p className="text-sm text-[#1679AB]">On Time Percentage</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">65%</h2>
-                <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-2xl p-5">
+            <p className="text-sm text-[#1679AB]">On Time Percentage</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">65%</h2>
+            <div className="h-10 rounded mt-4 bg-[#D1F7DC]" />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-2xl p-5">
+            <p className="text-sm text-[#1679AB]">Late Percentage</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">35%</h2>
+            <div className="h-10 rounded mt-4 bg-[#FDE2E2]" />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-2xl p-5">
+            <p className="text-sm text-[#1679AB]">Total Break Hours</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+              {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
+            </h2>
+            <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-2xl p-5">
+            <p className="text-sm text-[#1679AB]">Total Working Hours</p>
+            <h2 className="text-3xl font-bold text-[#141E46] mt-2">
+              {isPunchedIn ? liveWorkingTime : workingHours}
+            </h2>
+            <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="hidden lg:block">
+            <DashboardCalendar />
+          </div>
+
+          <div className="hidden lg:flex h-80 bg-blue-50 rounded-2xl shadow-2xl justify-center items-center">
+            <LiveClockUpdate />
+          </div>
+
+          <div className="flex flex-col gap-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-2xl shadow-2xl p-4">
+                <p className="text-sm text-[#1679AB]">Punch In Time</p>
+                <p className="text-lg font-semibold text-[#141E46]">
+                  {formatTime(punchInTime)}
+                </p>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-2xl p-5">
-                <p className="text-sm text-[#1679AB]">Late Percentage</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">35%</h2>
-                <div className="h-10 rounded mt-4 bg-[#FDE2E2]" />
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-2xl p-5">
-                <p className="text-sm text-[#1679AB]">Total Break Hours</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
-                  {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
-                </h2>
-                <div className="h-10 rounded mt-4 bg-[#FFE7D1]" />
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-2xl p-5">
-                <p className="text-sm text-[#1679AB]">Total Working Hours</p>
-                <h2 className="text-3xl font-bold text-[#141E46] mt-2">
-                  {isPunchedIn ? liveWorkingTime : workingHours}
-                </h2>
-                <div className="h-10 rounded mt-4 bg-[#D1E8FF]" />
+              <div className="bg-white rounded-2xl shadow-2xl p-4">
+                <p className="text-sm text-[#1679AB]">Punch Out Time</p>
+                <p className="text-lg font-semibold text-[#141E46]">
+                  {formatTime(punchOutTime)}
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="hidden lg:block">
-                <DashboardCalendar />
-              </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4">
+              <p className="text-sm text-[#1679AB]">Today Break Hours</p>
+              <p className="text-lg font-semibold text-[#141E46]">
+                {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
+              </p>
+            </div>
 
-              <div className="hidden lg:flex h-80 bg-blue-50 rounded-2xl shadow-2xl justify-center items-center">
-                <LiveClockUpdate />
-              </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4">
+              <p className="text-sm text-[#1679AB]">Today Working Hours</p>
+              <p className="text-lg font-semibold text-[#141E46]">
+                {isPunchedIn ? liveWorkingTime : workingHours}
+              </p>
+            </div>
 
-              <div className="flex flex-col gap-4 w-full">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-2xl shadow-2xl p-4">
-                    <p className="text-sm text-[#1679AB]">Punch In Time</p>
-                    <p className="text-lg font-semibold text-[#141E46]">
-                      {formatTime(punchInTime)}
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              <button
+                onClick={handlePunchInClick}
+                disabled={loading || isPunchedIn || pendingRequestId}
+                className={`py-3 rounded-lg font-semibold text-white transition-colors ${
+                  loading || isPunchedIn || pendingRequestId
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#0dd635] hover:bg-[#0dd664]"
+                }`}
+              >
+                {pendingRequestId && pendingAction === 'punchIn'
+                  ? "Waiting Approval..."
+                  : loading
+                  ? "Getting Location..."
+                  : isPunchedIn
+                  ? "Already Punched In"
+                  : "Punch In"}
+              </button>
 
-                  <div className="bg-white rounded-2xl shadow-2xl p-4">
-                    <p className="text-sm text-[#1679AB]">Punch Out Time</p>
-                    <p className="text-lg font-semibold text-[#141E46]">
-                      {formatTime(punchOutTime)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow-2xl p-4">
-                  <p className="text-sm text-[#1679AB]">Today Break Hours</p>
-                  <p className="text-lg font-semibold text-[#141E46]">
-                    {isOnBreak ? liveBreakTime : formatTimeFromSeconds(breakTime)}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow-2xl p-4">
-                  <p className="text-sm text-[#1679AB]">Today Working Hours</p>
-                  <p className="text-lg font-semibold text-[#141E46]">
-                    {isPunchedIn ? liveWorkingTime : workingHours}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                  <button
-                    onClick={handlePunchInClick}
-                    disabled={loading || isPunchedIn || pendingRequestId}
-                    className={`py-3 rounded-lg font-semibold text-white transition-colors ${
-                      loading || isPunchedIn || pendingRequestId
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-[#0dd635] hover:bg-[#0dd664]"
-                    }`}
-                  >
-                    {pendingRequestId && pendingAction === 'punchIn'
-                      ? "Waiting Approval..."
-                      : loading
-                      ? "Getting Location..."
-                      : isPunchedIn
-                      ? "Already Punched In"
-                      : "Punch In"}
-                  </button>
-
-          <button
-  onClick={handlePunchOutClick}
-  disabled={loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')}
-  className={`py-3 rounded-lg font-semibold text-white transition-colors ${
-    loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')
-      ? "bg-gray-400 cursor-not-allowed"
-      : "bg-[#ed1717] hover:bg-[#d60d0de2]"
-  }`}
->
-  {pendingRequestId && pendingAction === 'punchIn'
-    ? "⏳ Approve Punch-in First"
-    : pendingRequestId && pendingAction === 'punchOut'
-    ? "Waiting Approval..."
-    : loading
-    ? "Getting Location..."
-    : !isPunchedIn
-    ? "Punch In First"
-    : "Punch Out"}
-</button>
-                </div>
-              </div>
+              <button
+                onClick={handlePunchOutClick}
+                disabled={loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')}
+                className={`py-3 rounded-lg font-semibold text-white transition-colors ${
+                  loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#ed1717] hover:bg-[#d60d0de2]"
+                }`}
+              >
+                {pendingRequestId && pendingAction === 'punchIn'
+                  ? "⏳ Approve Punch-in First"
+                  : pendingRequestId && pendingAction === 'punchOut'
+                  ? "Waiting Approval..."
+                  : loading
+                  ? "Processing..."
+                  : !isPunchedIn
+                  ? "Punch In First"
+                  : "Punch Out"}
+              </button>
             </div>
           </div>
         </div>
-      );
-    }
+      </div>
+    </div>
+  );
+}
 
-    export default Studentsdashboard;
+export default Studentsdashboard;

@@ -7,7 +7,7 @@ function StudentMonthlySummary() {
     <div className="min-h-screen bg-[#EEF6FB]">
 
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64 hidden lg:block">
+      <div className="fixed left-0 top-0 h-screen w-64">
         <SideBarStudent />
       </div>
 
@@ -16,7 +16,11 @@ function StudentMonthlySummary() {
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-[#141E46]">Monthly Summary - Rahul</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold text-[#141E46] 
+               text-center lg:text-left w-full">
+  Monthly Summary
+</h2>
+
         </div>
 
         {/* Stats / Summary Cards */}

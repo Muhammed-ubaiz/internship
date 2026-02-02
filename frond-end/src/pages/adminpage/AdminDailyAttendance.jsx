@@ -54,32 +54,36 @@ function AdminDailyAttendance() {
     });
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] p-4 sm:p-6 ">
+    <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6 flex">
       {/* Sidebar */}
-        <Sidebar />
-      
+      <Sidebar />
 
-      {/* Content */}
-      <div className="ml-52 p-6 max-w-7xl mx-auto">
-        <h2 className="text-2xl font-bold text-[#0a2540] mb-1 font-[Montserrat]">
-          Daily Attendance
-        </h2>
-        <p className="text-sm text-gray-500 mb-4">Date : 2026-01-07</p>
+      {/* Main Content */}
+      <div className="ml-0 lg:ml-52 w-full">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-2xl font-bold text-[#0a2540] font-[Montserrat] mb-1 text-center lg:text-left">
+            Daily Attendance
+          </h2>
+          <p className="text-sm text-gray-500 text-center lg:text-left">
+            Date: 2026-01-07
+          </p>
+        </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-4">
+        <div className="bg-white rounded-xl shadow p-4 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <input
             type="text"
             placeholder="Search name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border px-4 py-2 rounded-lg w-56"
+            className="border px-3 py-2 rounded-lg w-full text-sm"
           />
 
           <select
             value={course}
             onChange={(e) => setCourse(e.target.value)}
-            className="border px-4 py-2 rounded-lg"
+            className="border px-3 py-2 rounded-lg w-full text-sm"
           >
             <option>All</option>
             <option>React JS</option>
@@ -90,7 +94,7 @@ function AdminDailyAttendance() {
           <select
             value={batch}
             onChange={(e) => setBatch(e.target.value)}
-            className="border px-4 py-2 rounded-lg"
+            className="border px-3 py-2 rounded-lg w-full text-sm"
           >
             <option>All</option>
             <option>Batch A</option>
@@ -101,7 +105,7 @@ function AdminDailyAttendance() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="border px-4 py-2 rounded-lg"
+            className="border px-3 py-2 rounded-lg w-full text-sm"
           >
             <option>All</option>
             <option>Present</option>
@@ -112,16 +116,48 @@ function AdminDailyAttendance() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="border px-4 py-2 rounded-lg"
+            className="border px-3 py-2 rounded-lg w-full text-sm"
           >
             <option value="name">Sort by Name</option>
             <option value="punchIn">Sort by Punch In</option>
           </select>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <table className="w-full border-separate border-spacing-y-4">
+        {/* Mobile Cards */}
+        <div className="block lg:hidden space-y-3 mb-6">
+          {filteredData.map((i, idx) => (
+            <div
+              key={idx}
+              className="bg-[#f1f8fd] p-4 rounded-xl shadow transform transition-all duration-300"
+            >
+              <p className="font-semibold">{i.name}</p>
+              <p className="text-sm">Course: {i.course}</p>
+              <p className="text-sm">Batch: {i.batch}</p>
+              <p className="text-sm text-green-600 font-semibold">
+                Punch In: {i.punchIn || "--"}
+              </p>
+              <p className="text-sm text-blue-600 font-semibold">
+                Punch Out: {i.punchOut || "--"}
+              </p>
+              <p className="text-sm">Worked: {i.worked}</p>
+              <span
+                className={`inline-block mt-2 px-3 py-1 text-xs rounded-full ${
+                  i.status === "Present"
+                    ? "bg-green-100 text-green-700"
+                    : i.status === "Working"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {i.status}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block bg-white rounded-2xl shadow-lg p-4 overflow-x-auto">
+          <table className="w-full border-separate border-spacing-y-4 min-w-[700px]">
             <thead>
               <tr className="text-left text-[#0077b6] font-semibold">
                 <th className="px-4">Name</th>
@@ -136,10 +172,11 @@ function AdminDailyAttendance() {
 
             <tbody>
               {filteredData.map((i, idx) => (
-                <tr key={idx} className="bg-[#f1f8fd]  transform transition-all duration-500 hover:scale-98">
-                  <td className="px-4 py-3 rounded-l-lg font-medium">
-                    {i.name}
-                  </td>
+                <tr
+                  key={idx}
+                  className="bg-[#f1f8fd] transform transition-all duration-300 hover:scale-98"
+                >
+                  <td className="px-4 py-3 rounded-l-lg font-medium">{i.name}</td>
                   <td className="px-4 py-3">{i.course}</td>
                   <td className="px-4 py-3">{i.batch}</td>
                   <td className="px-4 py-3 text-green-600 font-semibold">

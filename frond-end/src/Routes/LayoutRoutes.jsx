@@ -12,7 +12,6 @@ import MonthlySummary from "../pages/adminpage/MonthlySummary";
 import AdminLeaveRequest from "../pages/adminpage/AdminLeaveRequest";
 import LeaveHistory from "../pages/adminpage/LeaveHistory";
 import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
-import StudentDailyAttendance from "../pages/studentpage/StudentDailyAttendance";
 import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
 import Mentorlogin from "../pages/mentorpage/Mentorlogin";
@@ -25,6 +24,10 @@ import MonthlySummary1 from "../pages/mentorpage/MonthlySummary1";
 import Punchinrequest from "../pages/mentorpage/Punchinrequest";
 import AdminDailyAttendance from "../pages/adminpage/AdminDailyAttendance";
 import MentorLeaveRequest from "../pages/mentorpage/MentorLeaveRequest";
+import Information from "../pages/adminpage/Information";
+import MentorNotifications from "../pages/mentorpage/Mentornotification";
+import StuentsNotification from "../pages/studentpage/StuentsNotification";
+
 
 function LayoutRoutes() {
   return (
@@ -34,6 +37,9 @@ function LayoutRoutes() {
           <Route path="/adminlogin" element={<AdminLogin />} />
           <Route path="/mentorlogin" element={<Mentorlogin />} />
           <Route path="/" element={<StudentLogin />} />
+             <Route path="/information" element={<Information />} />
+             <Route path="/mentornotification" element={<MentorNotifications/>} />
+              <Route path="/studentsnotification" element={<StuentsNotification/>} />
           <Route
             path="/admindashboard"
             element={
@@ -138,10 +144,10 @@ function LayoutRoutes() {
             }
           />
           <Route
-            path="/StudentDailyAttendance"
+            path="/DailyAttendance"
             element={
               <ProtectedRoute role="student">
-                <StudentDailyAttendance />
+                <DailyAttendance/>
               </ProtectedRoute>
             }
           />

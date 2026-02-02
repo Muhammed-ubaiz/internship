@@ -9,6 +9,36 @@ import PunchingRequest from "../Model/PunchingRequestmodel.js";
 import Leave from "../Model/LeaveModel.js";
 import Mentor from "../Model/Mentormodel.js";
 
+import Notification from "../Model/NotificationModel.js";
+
+
+export const getsStudentNotifications = async (req, res) => {
+  try {
+
+    const notifications = await Notification.find({
+      $or: [
+        { audience: "students" },
+        { audience: "all" }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json(notifications);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
 // config/jwt.js
  const JWT_SECRET = process.env.JWT_SECRET || "key321";
 
@@ -613,6 +643,7 @@ export const requestPunchOut = async (req, res) => {
 };
 
 
+
 export const applyLeave = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -684,5 +715,17 @@ export const getLeaveCount = async (req, res) => {
   } catch (error) {
     console.error("Error getting leave count:", error);
     res.status(500).json({ success: false, message: "Server error" });
+
+export const getStudentDailyAttendance = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    const records = await Attendance.find({ studentId })
+      .sort({ date: -1 });
+
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch attendance" });
+
   }
 };
