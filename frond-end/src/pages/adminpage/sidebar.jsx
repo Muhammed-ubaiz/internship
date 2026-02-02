@@ -46,7 +46,7 @@ function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
+        className="lg:hidden fixed top-1 left-1 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
       >
         {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>

@@ -632,13 +632,13 @@ function Studentsdashboard() {
       />
 
           <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-center items-center mb-10">
               <StudentTopbar />
             </div>
 
             {locationStatus && (
               <div
-                className={`mb-4 p-3 rounded-lg text-center font-semibold ${
+                className={`mb-4 p-3 rounded-lg text-center mb-10 font-semibold ${
                   locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
                   locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
                   locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
