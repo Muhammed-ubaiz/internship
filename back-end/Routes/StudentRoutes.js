@@ -12,7 +12,8 @@ import {
   sendStudentOtp,
   verifyStudentOtp,
   firstPunchInWithLocation,
-  getsStudentNotifications,
+  getStudentNotifications,
+  deleteStudentNotification,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -37,7 +38,8 @@ studentroutes.post(
   verifyToken,
   firstPunchInWithLocation,
 );
-studentroutes.get("/notifications", getsStudentNotifications)
+studentroutes.get("/notifications", getStudentNotifications);
+studentroutes.delete("/notifications/:id", deleteStudentNotification);
 
 
 export default studentroutes;

@@ -1,6 +1,6 @@
 import express from "express";
 import { verifyToken } from "../AuthMiddleware.js";
-import { acceptPunchRequest, getMentorNotifications, getPunchRequests, getstudent, mentorlogin, rejectPunchRequest, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
+import { acceptPunchRequest, deleteMentorNotification, getMentorNotifications, getPunchRequests, getstudent, mentorlogin, rejectPunchRequest, resetPassword, sendOtp, verifyOtp } from "../Controller/MentorContriller.js";
 
 const mentorroutes = express.Router();
 
@@ -24,5 +24,7 @@ mentorroutes.put(
 
 
 mentorroutes.get("/notifications", getMentorNotifications)
+
+mentorroutes.delete("/notifications/:id", deleteMentorNotification);
 
 export default mentorroutes;

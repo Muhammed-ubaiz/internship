@@ -1,22 +1,26 @@
 import mongoose from "mongoose";
 
-const NotificationSchema = new mongoose.Schema(
+const notificationSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    message: {
-      type: String,
-      required: true,
-    },
+    title: String,
+    message: String,
     audience: {
       type: String,
-      enum: ["all", "students", "mentors"],
+      enum: ["all", "mentors", "students"],
       default: "all",
     },
+    sender: {
+      type: String,
+      default: "Admin",
+    },
+
+    // ⭐ IMPORTANT
+    deletedBy: {
+      type: [String], // ["mentor", "student"]
+      default: [],
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-export default mongoose.model("Notification", NotificationSchema);
+export default mongoose.model("Notification", notificationSchema);
