@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 import PunchingRequest from '../Model/PunchingRequestmodel.js';
 import Attendance from '../Model/Attendancemodel.js';
 import Course from "../Model/Coursemodel.js";
+import Leave from "../Model/LeaveModel.js";
 import Notification from "../Model/NotificationModel.js";
 
 
@@ -426,4 +427,99 @@ export const rejectPunchRequest = async (req, res) => {
   }
 };
 
+
+// ✅ FIXED: Get leave requests for mentor - ONLY their course students
+export const getStudentLeavesForMentor = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    console.log("🔍 Fetching leaves for mentor:", mentorId);
+
+    // 1️⃣ Find the mentor
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    console.log("👨‍🏫 Mentor course:", mentor.course);
+
+    // 2️⃣ Find the course by name
+    const course = await Course.findOne({ name: mentor.course });
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    console.log("📚 Course ID:", course._id);
+
+    // 3️⃣ Find all students in this course
+    const studentsInCourse = await Student.find({ course: course._id }).select("_id name email batch");
+    const studentIds = studentsInCourse.map(s => s._id);
+
+    console.log("👥 Students in course:", studentIds.length);
+
+    // 4️⃣ Find pending leaves for these students only
+    const pendingLeaves = await Leave.find({ 
+      studentId: { $in: studentIds }, 
+      status: "Pending" 
+    })
+    .populate("studentId", "name email batch")
+    .sort({ createdAt: -1 });
+
+    console.log("📋 Pending leaves found:", pendingLeaves.length);
+
+    // 5️⃣ Format the response to match frontend expectations
+    const formattedLeaves = pendingLeaves.map(leave => ({
+      _id: leave._id,
+      studentName: leave.studentId.name,
+      studentEmail: leave.studentId.email,
+      batch: leave.studentId.batch,
+      leaveType: leave.type,
+      fromDate: new Date(leave.from).toLocaleDateString(),
+      toDate: new Date(leave.to).toLocaleDateString(),
+      reason: leave.reason,
+      status: leave.status,
+      createdAt: leave.createdAt
+    }));
+
+    res.json(formattedLeaves);
+  } catch (error) {
+    console.error("❌ Mentor get leaves error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ FIXED: Update leave status to match frontend endpoint format
+export const updateStudentLeaveStatus = async (req, res) => {
+  try {
+    const { id, action } = req.params; // id = leave id, action = "approved" or "rejected"
+    
+    console.log("📝 Updating leave:", id, "Action:", action);
+
+    // Map action to status
+    const statusMap = {
+      'approved': 'Approved',
+      'rejected': 'Rejected'
+    };
+
+    const status = statusMap[action.toLowerCase()];
+
+    if (!status) {
+      return res.status(400).json({ success: false, message: "Invalid action" });
+    }
+
+    const leave = await Leave.findById(id);
+    if (!leave) {
+      return res.status(404).json({ success: false, message: "Leave not found" });
+    }
+
+    leave.status = status;
+    await leave.save();
+
+    console.log("✅ Leave updated:", leave._id, "New status:", leave.status);
+
+    res.json({ success: true, message: `Leave ${status.toLowerCase()} successfully`, leave });
+  } catch (error) {
+    console.error("❌ Update leave status error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
 

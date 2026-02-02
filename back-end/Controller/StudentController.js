@@ -6,6 +6,9 @@ import bcrypt from "bcryptjs";
 import ForgetModel from "../Model/ForgetModel.js";
 import nodemailer from "nodemailer"
 import PunchingRequest from "../Model/PunchingRequestmodel.js";
+import Leave from "../Model/LeaveModel.js";
+import Mentor from "../Model/Mentormodel.js";
+
 import Notification from "../Model/NotificationModel.js";
 
 
@@ -27,6 +30,7 @@ export const getsStudentNotifications = async (req, res) => {
     });
   }
 };
+
 
 
 
@@ -639,6 +643,79 @@ export const requestPunchOut = async (req, res) => {
 };
 
 
+
+export const applyLeave = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { leaveType, fromDate, toDate, reason } = req.body;
+
+    if (!leaveType || !fromDate || !toDate || !reason) {
+      return res.status(400).json({ success: false, message: "All fields required" });
+    }
+
+    // Monthly limit check (only APPROVED leaves count)
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const endOfMonth = new Date(startOfMonth);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+
+    const approvedLeavesThisMonth = await Leave.countDocuments({
+      studentId,
+      status: "Approved",
+      createdAt: { $gte: startOfMonth, $lt: endOfMonth },
+    });
+
+    if (approvedLeavesThisMonth >= 2) {
+      return res.status(400).json({ success: false, message: "Monthly leave limit reached" });
+    }
+
+    const newLeave = await Leave.create({
+      studentId,
+      type: leaveType,
+      from: new Date(fromDate),
+      to: new Date(toDate),
+      reason,
+      status: "Pending", // new leave starts as Pending
+    });
+
+    res.status(201).json({ success: true, leave: newLeave });
+  } catch (error) {
+    console.error("Apply leave error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
+
+
+// Get student leave history
+export const getMyLeaves = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const leaves = await Leave.find({ studentId }).sort({ createdAt: -1 });
+    res.json({ success: true, leaves });
+  } catch (error) {
+    console.error("Get leaves error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Get student leave count
+export const getLeaveCount = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+
+    const totalLeaves = 2; // total allowed per month
+    const usedLeaves = await Leave.countDocuments({ studentId, status: "Approved" }); // only approved
+    const remaining = totalLeaves - usedLeaves;
+
+    res.status(200).json({ total: totalLeaves, used: usedLeaves, remaining });
+  } catch (error) {
+    console.error("Error getting leave count:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+
 export const getStudentDailyAttendance = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -649,5 +726,6 @@ export const getStudentDailyAttendance = async (req, res) => {
     res.json(records);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch attendance" });
+
   }
 };
