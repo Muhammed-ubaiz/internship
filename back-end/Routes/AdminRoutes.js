@@ -1,6 +1,6 @@
 import express from "express";
 
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor } from "../Controller/AdminController.js";
+import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor ,getDailyAttendance} from "../Controller/AdminController.js";
 
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -40,7 +40,7 @@ adminRoutes.put("/updateMentor/:id", verifyToken, updateMentor);
 
 adminRoutes.put("/mentor/status/:id",verifyToken, toggleMentorStatus);
 
-
+adminRoutes.get('/daily-attendance', getDailyAttendance);
 
 
 export default adminRoutes;

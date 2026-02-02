@@ -7,11 +7,9 @@ import {
   punchOut,
   resetStudentPassword,
   requestPunchIn,
-  requestPunchOut,
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
-  firstPunchInWithLocation,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -20,7 +18,6 @@ const studentroutes = express.Router();
 studentroutes.post("/checkstudent", checkstudent);
 studentroutes.post("/punch-in", verifyToken, punchIn);
 studentroutes.post("/request-punch-in", verifyToken, requestPunchIn);
-studentroutes.post("/request-punch-out", verifyToken, requestPunchOut);
 studentroutes.post("/punch-out", verifyToken, punchOut);
 studentroutes.get("/today-attendance", verifyToken, getTodayAttendance);
 
@@ -31,11 +28,7 @@ studentroutes.post("/send-otp", sendStudentOtp);
 studentroutes.post("/verify-otp", verifyStudentOtp);
 studentroutes.post("/reset-password", resetStudentPassword);
 
-studentroutes.post(
-  "/first-punch-in-with-location",
-  verifyToken,
-  firstPunchInWithLocation,
-);
+
 
 
 

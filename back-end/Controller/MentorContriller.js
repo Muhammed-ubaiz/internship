@@ -7,10 +7,10 @@ import nodemailer from "nodemailer";
 import PunchingRequest from '../Model/PunchingRequestmodel.js';
 import Attendance from '../Model/Attendancemodel.js';
 import Course from "../Model/Coursemodel.js";
+import Attendancemodel from "../Model/Attendancemodel.js";
 
 
 
-/* ===== LOGIN (existing) ===== */
 export const mentorlogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -145,30 +145,23 @@ export const getstudent = async (req, res) => {
   }
 };
 
-// ✅ UPDATED: Get punch requests with optional status filter
 export const getPunchRequests = async (req, res) => {
   try {
     const { status, includeAll } = req.query;
     
-    // Build query based on parameters
     let query = {};
     
-    // If includeAll is true, get all requests
-    // If status is provided, filter by that status
-    // Otherwise, default to PENDING only
+    
     if (!includeAll && status) {
       query.status = status;
     } else if (!includeAll) {
       query.status = 'PENDING';
     }
-    
-    console.log('📋 Fetching punch requests with query:', query);
-    
+        
     const requests = await PunchingRequest.find(query)
       .populate('studentId', 'name email batch course')
-      .sort({ updatedAt: -1, createdAt: -1 }); // Sort by most recent first
+      .sort({ updatedAt: -1, createdAt: -1 }); 
 
-    console.log(`✅ Found ${requests.length} requests`);
     
     res.json(requests);
   } catch (error) {
@@ -177,10 +170,9 @@ export const getPunchRequests = async (req, res) => {
   }
 };
 
-// ✅ NEW: Get punch request history (approved/rejected only)
 export const getPunchRequestHistory = async (req, res) => {
   try {
-    const { days = 30 } = req.query; // Default to last 30 days
+    const { days = 30 } = req.query; 
     
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
@@ -201,48 +193,31 @@ export const getPunchRequestHistory = async (req, res) => {
   }
 };
 
-// ✅ FIXED: Accept punch request
 export const acceptPunchRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('✅ Accepting punch request:', id);
 
-    // 1️⃣ Find punch request
     const punchRequest = await PunchingRequest.findById(id);
     if (!punchRequest) {
       return res.status(404).json({ message: "Punch request not found" });
     }
 
-    if (punchRequest.status !== 'PENDING') {
-      return res.status(400).json({ message: "Request already processed" });
+    if (punchRequest.status !== "PENDING") {
+      return res.status(400).json({ message: "Already processed" });
     }
 
-    console.log('📋 Punch request found:', {
-      studentId: punchRequest.studentId,
-      type: punchRequest.type,
-      status: punchRequest.status,
-      punchTime: punchRequest.punchTime
-    });
-
-    // 2️⃣ Update request status
+    // APPROVE REQUEST
     punchRequest.status = "APPROVED";
     punchRequest.processedAt = new Date();
-    punchRequest.updatedAt = new Date(); // Explicitly set updatedAt
     await punchRequest.save();
 
-    console.log('✅ Request status updated to APPROVED');
-
-    // 3️⃣ Today date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 4️⃣ Find or create attendance
     let attendance = await Attendance.findOne({
       studentId: punchRequest.studentId,
       date: today,
     });
-
-    console.log('📅 Attendance found:', attendance ? 'Yes' : 'No');
 
     if (!attendance) {
       attendance = new Attendance({
@@ -251,102 +226,81 @@ export const acceptPunchRequest = async (req, res) => {
       });
     }
 
-    // 5️⃣ Based on punch type, update attendance
-    if (punchRequest.type === 'PUNCH_IN') {
-      // Set punch in time
-      attendance.punchInTime = punchRequest.punchTime || new Date();
-      attendance.punchInAcceptedAt = new Date();
-      attendance.status = 'WORKING';
+    // ===== PUNCH IN =====
+    if (punchRequest.type === "PUNCH_IN") {
+      const punchTime = punchRequest.punchTime || new Date();
 
-      // ✅ Add to punch records for frontend compatibility
-      if (!attendance.punchRecords) {
-        attendance.punchRecords = [];
-      }
+      attendance.punchInTime = punchTime;
+      attendance.status = "WORKING";
+      attendance.initialLocationChecked = true;
+
+      if (!attendance.punchRecords) attendance.punchRecords = [];
+
       attendance.punchRecords.push({
-        punchIn: attendance.punchInTime,
+        punchIn: punchTime,
         punchOut: null,
-        sessionWorkingSeconds: 0
+        sessionWorkingSeconds: 0,
       });
 
-      // Update student status
       const student = await Student.findById(punchRequest.studentId);
       if (student) {
         student.isPunchedIn = true;
-        student.punchInTime = attendance.punchInTime;
-        student.lastPunchTime = attendance.punchInTime;
+        student.punchInTime = punchTime;
         await student.save();
-        console.log('✅ Student updated with punch-in time');
-      }
-    }
-    else if (punchRequest.type === 'PUNCH_OUT') {
-      // Set punch out time
-      attendance.punchOutTime = punchRequest.punchTime || new Date();
-      
-      // Calculate working hours if punch in exists
-      if (attendance.punchInTime) {
-        const workingSeconds = Math.floor(
-          (attendance.punchOutTime - attendance.punchInTime) / 1000
-        );
-        attendance.totalWorkingSeconds = (attendance.totalWorkingSeconds || 0) + workingSeconds;
-        
-        // Update the last punch record with punch out time
-        if (attendance.punchRecords && attendance.punchRecords.length > 0) {
-          const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
-          lastRecord.punchOut = attendance.punchOutTime;
-          lastRecord.sessionWorkingSeconds = workingSeconds;
-        }
-        
-        // Update student status
-        const student = await Student.findById(punchRequest.studentId);
-        if (student) {
-          student.isPunchedIn = false;
-          student.punchOutTime = attendance.punchOutTime;
-          await student.save();
-          console.log('✅ Student updated with punch-out time');
-        }
       }
     }
 
-    // 6️⃣ Save attendance
+    // ===== PUNCH OUT =====
+    if (punchRequest.type === "PUNCH_OUT") {
+      const punchOut = punchRequest.punchTime || new Date();
+
+      attendance.punchOutTime = punchOut;
+
+      if (attendance.punchInTime) {
+        const secs = Math.floor(
+          (punchOut - attendance.punchInTime) / 1000
+        );
+
+        attendance.totalWorkingSeconds =
+          (attendance.totalWorkingSeconds || 0) + secs;
+
+        const last =
+          attendance.punchRecords[attendance.punchRecords.length - 1];
+
+        if (last) {
+          last.punchOut = punchOut;
+          last.sessionWorkingSeconds = secs;
+        }
+      }
+
+      const student = await Student.findById(punchRequest.studentId);
+      if (student) {
+        student.isPunchedIn = false;
+        await student.save();
+      }
+    }
+
     await attendance.save();
 
-    console.log('💾 Attendance saved:', {
-      punchInTime: attendance.punchInTime,
-      punchOutTime: attendance.punchOutTime,
-      workingTime: attendance.totalWorkingSeconds
+    // ===== SOCKET EMIT =====
+    const io = req.app.get("socketio");
+
+    io.to(String(punchRequest.studentId)).emit("requestApproved", {
+      studentId: String(punchRequest.studentId),
+      type: punchRequest.type,
+      punchTime:
+        attendance.punchInTime || attendance.punchOutTime,
     });
 
-    // 7️⃣ Emit socket event to notify student
-    const io = req.app.get('socketio');
-    if (io) {
-      io.to(punchRequest.studentId.toString()).emit('requestApproved', {
-        requestId: punchRequest._id,
-        studentId: punchRequest.studentId,
-        type: punchRequest.type,
-        punchTime: attendance.punchInTime || attendance.punchOutTime,
-        message: `Your ${punchRequest.type.toLowerCase().replace('_', ' ')} request has been approved`
-      });
-      console.log('📡 Socket event emitted to student');
-    }
+    console.log("📡 Approval emitted to student");
 
-    res.status(200).json({
-      success: true,
-      message: `Punch ${punchRequest.type.toLowerCase().replace('_', ' ')} request approved successfully`,
-      attendance: {
-        punchInTime: attendance.punchInTime,
-        punchOutTime: attendance.punchOutTime,
-        totalWorkingSeconds: attendance.totalWorkingSeconds
-      }
-    });
-
+    res.json({ success: true });
   } catch (err) {
-    console.error("❌ BACKEND ERROR in acceptPunchRequest:", err);
-    res.status(500).json({ 
-      message: "Failed to accept punch request",
-      error: err.message 
-    });
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const rejectPunchRequest = async (req, res) => {
   try {
@@ -367,12 +321,11 @@ export const rejectPunchRequest = async (req, res) => {
     punchRequest.status = "REJECTED";
     punchRequest.rejectionReason = reason || "No reason provided";
     punchRequest.processedAt = new Date();
-    punchRequest.updatedAt = new Date(); // Explicitly set updatedAt
+    punchRequest.updatedAt = new Date();
     await punchRequest.save();
 
     console.log('✅ Request status updated to REJECTED');
 
-    // Emit socket event to notify student
     const io = req.app.get('socketio');
     if (io) {
       io.to(punchRequest.studentId.toString()).emit('requestRejected', {
@@ -394,6 +347,34 @@ export const rejectPunchRequest = async (req, res) => {
     res.status(500).json({ 
       message: "Failed to reject punch request",
       error: err.message 
+    });
+  }
+};
+
+export const getTodayAttendance = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await Attendancemodel.find({
+      date: { $gte: today }
+    })
+      .populate({
+        path: "studentId",
+        select: "name rollNo course batch email"
+      });
+
+    res.status(200).json({
+      success: true,
+      data: attendance
+    });
+
+  } catch (error) {
+    console.error("Mentor today attendance error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch today attendance",
+      error: error.message
     });
   }
 };

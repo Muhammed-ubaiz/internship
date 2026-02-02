@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import Location from "../Model/Locationmodel.js";
 import Mentor from "../Model/Mentormodel.js";
+import Attendancemodel from "../Model/Attendancemodel.js";
 
 
 
@@ -467,6 +468,64 @@ export const toggleMentorStatus = async (req, res) => {
 };
 
 
+export const getDailyAttendance = async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date parameter is required (format: YYYY-MM-DD)"
+      });
+    }
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    const records = await Attendancemodel.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lt: end }
+        }
+      },
+      {
+        $lookup: {
+          from: "students",
+          localField: "studentId",
+          foreignField: "_id",
+          as: "student"
+        }
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          studentName: { $ifNull: ["$student.name", "Unknown"] },
+          course: { $ifNull: ["$student.course", "—"] },
+          batch: { $ifNull: ["$student.batch", "—"] },
+          attendance: "$$ROOT"
+        }
+      },
+      { $sort: { studentName: 1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      attendanceData: records,
+      count: records.length
+    });
+
+  } catch (error) {
+    console.error("getDailyAttendance error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching daily attendance",
+      error: error.message
+    });
+  }
+};
 
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
