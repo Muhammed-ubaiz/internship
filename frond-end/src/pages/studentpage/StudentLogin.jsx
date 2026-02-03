@@ -38,14 +38,27 @@ const handleLogin = async (e) => {
       return;
     }
 
+
+    const { token} = res.data;
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", "student");
+
     const { token, student } = res.data;
 
     localStorage.setItem("token", token);
     localStorage.setItem("role", student.role);
     localStorage.setItem("studentId", student.id);
 
+
     const decoded = jwtDecode(token);
     const timeout = decoded.exp * 1000 - Date.now();
+
+
+    setTimeout(()=>{
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "/";
+    },timeout);
 
     if (timeout > 0) {
       setTimeout(() => {
@@ -53,6 +66,7 @@ const handleLogin = async (e) => {
         window.location.href = "/studentlogin";
       }, timeout);
     }
+
 
     Swal.fire({
       title: "Login Successful!",

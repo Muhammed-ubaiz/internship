@@ -16,6 +16,7 @@ import {
   getTodayAttendance,
   deleteMentorNotification,
   getMentorProfile
+
 } from "../Controller/MentorContriller.js";
 
 const mentorroutes = express.Router();
@@ -35,6 +36,12 @@ mentorroutes.post("/leave-requests/:id/:action", verifyToken, updateStudentLeave
 
 // ✅ FIXED: Punch request routes - removed duplicates and fixed parameter names
 mentorroutes.get("/punch-requests", verifyToken, getPunchRequests);
+
+mentorroutes.post("/punch-requests/:id/accept",verifyToken,acceptPunchRequest);
+mentorroutes.put("/reject-punch/:id", rejectPunchRequest);
+
+mentorroutes.post("/announcementsend",verifyToken,announcementsend)
+
 mentorroutes.post("/punch-requests/:requestId/accept", verifyToken, acceptPunchRequest);
 mentorroutes.post("/punch-requests/:requestId/reject", verifyToken, rejectPunchRequest);
 
@@ -48,4 +55,6 @@ mentorroutes.delete("/notifications/:id", deleteMentorNotification);
 // Profile routes
 mentorroutes.get("/profile", verifyToken, getMentorProfile);
 
+
+mentorroutes.get("/getbatch",verifyToken, getbatch) // ✅ verifyToken, NOT verifyOtp
 export default mentorroutes;

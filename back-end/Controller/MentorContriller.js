@@ -12,6 +12,141 @@ import Leave from "../Model/LeaveModel.js";
 import Notification from "../Model/NotificationModel.js";
 import PunchRequest from "../Model/PunchingRequestmodel.js";
 
+import Announcement from "../Model/Announcementmodel.js";
+import Batch from "../Model/Batchmodel.js";
+
+export const getbatch = async (req, res) => {
+  try {
+    const mentorEmail = req.user?.email;
+
+    if (!mentorEmail) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed - mentor email missing",
+      });
+    }
+
+    // ⚠️ IMPORTANT: field name must match Course schema
+    const courses = await Course.find({ mentorEmail });
+
+    if (!courses.length) {
+      return res.json({
+        success: true,
+        batches: [],
+        message: "No batches assigned",
+      });
+    }
+
+    const batches = [
+      ...new Set(courses.map(c => c.batch).filter(Boolean))
+    ];
+
+    res.json({
+      success: true,
+      batches,
+    });
+
+  } catch (error) {
+    console.error("❌ getbatch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch batches",
+    });
+  }
+};
+
+
+
+// POST /mentor/announcementsend
+export const announcementsend = async (req, res) => {
+  try {
+    const { title, message, batch } = req.body;
+    
+    // Try to get email from different possible fields
+    const mentorEmail = req.user?.email || req.user?.userEmail || req.user?.emailId;
+    const mentorId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!mentorEmail && !mentorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed - no user info",
+      });
+    }
+
+    if (!title || !message || !batch) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, message, and batch are required",
+      });
+    }
+
+    // Try to find mentor by email first, then by ID
+    let mentor = null;
+    if (mentorEmail) {
+      mentor = await Mentor.findOne({ email: mentorEmail });
+    }
+    if (!mentor && mentorId) {
+      mentor = await Mentor.findById(mentorId);
+    }
+
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
+
+    // Validate batch if not "All"
+    if (batch != "All") {
+      const mentorBatches = mentor.course?.map(course => 
+        typeof course === 'string' ? course : (course.batch || course.batchName || course.name)
+      ).filter(Boolean) || [];
+      if (!mentorBatches.includes(batch)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid batch: ${batch}`,
+        });
+      }
+    }
+
+    const announcement = await Announcement.create({
+      title,
+      message,
+      batch,
+      mentorEmail: mentor.email,
+      mentorId: mentor._id,
+    });
+
+    // Count recipients
+    let recipientCount = 0;
+    if (batch === "All") {
+      recipientCount = await Student.countDocuments({ mentorId: mentor._id });
+    } else {
+      recipientCount = await Student.countDocuments({
+        mentorId: mentor._id,
+        batch,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Announcement sent successfully",
+      recipientCount,
+      announcement,
+    });
+    
+
+  } catch (error) {
+    console.error("[announcementsend] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create announcement",
+      error: error.message,
+    });
+  }
+};
+
+
 
 export const getMentorNotifications = async (req, res) => {
   try {
@@ -61,6 +196,7 @@ export const mentorlogin = async (req, res) => {
   }
 };
 
+
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -100,6 +236,7 @@ export const sendOtp = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const verifyOtp = async (req, res) => {
   try {

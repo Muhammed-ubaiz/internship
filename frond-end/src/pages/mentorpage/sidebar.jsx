@@ -7,8 +7,13 @@ import {
   FaPowerOff,
   FaChevronDown,
   FaUsers,
+
+  FaMicrophone,
+ 
+
   FaBars,
   FaTimes,
+
 } from "react-icons/fa";
 
 function Sidebar() {
@@ -111,6 +116,25 @@ function Sidebar() {
             />
           </div>
 
+
+        {/* Leave History */}
+        <div
+          className={menuItem}
+          onClick={() => navigate("/announcement")}
+        >
+          <div className="flex items-center gap-3">
+          <FaMicrophone />
+            <span>Announcement</span>
+          </div>
+        </div>
+        <div
+          className={menuItem}
+          onClick={() => navigate("/leavehistory1")}
+        >
+          <div className="flex items-center gap-3">
+            <FaUmbrellaBeach />
+            <span>Leave History</span>
+
           {attendanceOpen && (
             <div>
               <div
@@ -151,6 +175,7 @@ function Sidebar() {
                 leaveOpen ? "rotate-180" : ""
               }`}
             />
+
           </div>
 
           {leaveOpen && (

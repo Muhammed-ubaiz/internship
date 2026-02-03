@@ -10,11 +10,16 @@ import {
   saveLocation,
   sendStudentOtp,
   verifyStudentOtp,
+
+  firstPunchInWithLocation,
+  getStudentsByMentor,
+
   getStudentNotifications,
   deleteStudentNotification,
   getMyLeaves,
   applyLeave,
   getLeaveCount,
+
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -39,8 +44,12 @@ studentroutes.get("/notifications", getStudentNotifications);
 studentroutes.delete("/notifications/:id", deleteStudentNotification);
 
 
+studentroutes.get("/mentor/:mentorEmail", getStudentsByMentor)
+
+
 studentroutes.post("/apply-leave", verifyToken, applyLeave);
 studentroutes.get("/my-leaves", verifyToken, getMyLeaves);
 studentroutes.get("/leave-count", verifyToken, getLeaveCount); 
+
 
 export default studentroutes;
