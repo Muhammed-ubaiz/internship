@@ -8,8 +8,8 @@ import nodemailer from "nodemailer"
 import PunchingRequest from "../Model/PunchingRequestmodel.js";
 import Leave from "../Model/LeaveModel.js";
 import Mentor from "../Model/Mentormodel.js";
-
 import Notification from "../Model/NotificationModel.js";
+import Announcement from "../Model/Announcementmodel.js"; // Added import
 
 
 export const getStudentNotifications = async (req, res) => {
@@ -755,6 +755,48 @@ export const getStudentDailyAttendance = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch attendance" });
 
   }
+};
 
+// ✅ GET STUDENT ANNOUNCEMENTS - Get announcements sent to this student
+export const getStudentAnnouncements = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    
+    // First, find the student to get their batch and mentor info
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const studentBatch = student.batch;
+    const mentorId = student.mentorId;
+
+    // Find announcements where:
+    // 1. batch is "All", OR
+    // 2. batch matches student's batch, OR
+    // 3. announcement is for specific batch and matches student's batch
+    const announcements = await Announcement.find({
+      $or: [
+        { batch: "All" },
+        { batch: studentBatch },
+        // Also get announcements from this student's mentor
+        ...(mentorId ? [{ mentorId: mentorId }] : [])
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      announcements,
+    });
+  } catch (error) {
+    console.error("❌ getStudentAnnouncements error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch announcements",
+    });
+  }
 };
   

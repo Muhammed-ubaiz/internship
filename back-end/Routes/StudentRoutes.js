@@ -19,6 +19,7 @@ import {
   getMyLeaves,
   applyLeave,
   getLeaveCount,
+  getStudentAnnouncements,
 
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
@@ -51,5 +52,7 @@ studentroutes.post("/apply-leave", verifyToken, applyLeave);
 studentroutes.get("/my-leaves", verifyToken, getMyLeaves);
 studentroutes.get("/leave-count", verifyToken, getLeaveCount); 
 
+// Announcement routes
+studentroutes.get("/announcements", verifyToken, getStudentAnnouncements);
 
 export default studentroutes;

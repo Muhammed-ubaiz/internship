@@ -17,7 +17,9 @@ import {
   deleteMentorNotification,
   getMentorProfile,
   getbatch,
-  announcementsend
+  announcementsend,
+  getMyAnnouncements,
+  deleteAnnouncement
 
 } from "../Controller/MentorContriller.js";
 
@@ -59,4 +61,9 @@ mentorroutes.get("/profile", verifyToken, getMentorProfile);
 
 
 mentorroutes.get("/getbatch",verifyToken, getbatch) // ✅ verifyToken, NOT verifyOtp
+
+// Announcement routes
+mentorroutes.get("/my-announcements", verifyToken, getMyAnnouncements);
+mentorroutes.delete("/announcements/:id", verifyToken, deleteAnnouncement);
+
 export default mentorroutes;

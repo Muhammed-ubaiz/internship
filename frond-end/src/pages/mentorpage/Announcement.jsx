@@ -3,9 +3,6 @@ import axios from "axios";
 import Sidebar from "./sidebar";
 
 function Announcement() {
-  // 🔐 TOKEN
-  const token = localStorage.getItem("token");
-
   // 🧠 STATES
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -21,6 +18,9 @@ function Announcement() {
       setFetchingBatches(true);
       setError(null);
 
+      // Get fresh token each time
+      const token = localStorage.getItem("token");
+      
       if (!token) {
         setError("Please login again");
         setBatches([]);
@@ -77,6 +77,14 @@ function Announcement() {
 
     try {
       setLoading(true);
+
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        alert("Please login again");
+        setLoading(false);
+        return;
+      }
 
       const res = await axios.post(
         "http://localhost:3001/mentor/announcementsend",
