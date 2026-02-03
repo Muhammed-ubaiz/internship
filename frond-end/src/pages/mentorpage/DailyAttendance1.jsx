@@ -9,15 +9,41 @@ function DailyAttendance1() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liveTime, setLiveTime] = useState(Date.now());
+  const [mentorCourse, setMentorCourse] = useState(""); // NEW: Store mentor's course
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
   const [search, setSearch] = useState("");
-  const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
   const [status, setStatus] = useState("All");
   const [sortBy, setSortBy] = useState("name");
+
+  // -------------------- FETCH MENTOR INFO --------------------
+  const fetchMentorInfo = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Decode JWT to get mentor ID
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const mentorId = decoded.id;
+
+      // Fetch mentor details to get their course
+      const res = await axios.get(
+        `http://localhost:3001/mentor/profile/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const course = res.data?.course || res.data?.data?.course;
+      setMentorCourse(course);
+      console.log(`👨‍🏫 Mentor's course: ${course}`);
+    } catch (err) {
+      console.error("❌ Error fetching mentor info:", err);
+    }
+  }, []);
 
   // -------------------- FETCH ATTENDANCE --------------------
   const fetchAttendance = useCallback(async () => {
@@ -45,7 +71,15 @@ function DailyAttendance1() {
       }
 
       console.log("✅ Fetched attendance:", dataArray);
-      setAttendanceData(dataArray);
+      
+      // FILTER BY MENTOR'S COURSE AUTOMATICALLY
+      const filteredByCourse = dataArray.filter((student) => {
+        const studentCourse = student?.studentId?.course || student?.course || "";
+        return !mentorCourse || studentCourse === mentorCourse;
+      });
+
+      console.log(`📊 Showing ${filteredByCourse.length} students from course: ${mentorCourse}`);
+      setAttendanceData(filteredByCourse);
     } catch (err) {
       console.error("❌ Fetch error:", err);
       setError(
@@ -57,14 +91,20 @@ function DailyAttendance1() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mentorCourse]);
 
-  // -------------------- AUTO FETCH --------------------
+  // -------------------- INITIAL LOAD --------------------
   useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 30000);
-    return () => clearInterval(interval);
-  }, [fetchAttendance]);
+    fetchMentorInfo();
+  }, [fetchMentorInfo]);
+
+  useEffect(() => {
+    if (mentorCourse) {
+      fetchAttendance();
+      const interval = setInterval(fetchAttendance, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchAttendance, mentorCourse]);
 
   // -------------------- LIVE CLOCK --------------------
   useEffect(() => {
@@ -165,17 +205,15 @@ function DailyAttendance1() {
   const filteredData = attendanceData
     .filter((student) => {
       const studentName = student?.studentId?.name || student?.name || "";
-      const studentCourse = student?.studentId?.course || student?.course || "";
       const studentBatch = student?.studentId?.batch || student?.batch || "";
       
       const nameMatch = studentName.toLowerCase().includes(search.toLowerCase());
-      const courseMatch = course === "All" || studentCourse === course;
       const batchMatch = batch === "All" || studentBatch === batch;
       const statusMatch =
         status === "All" ||
         getStudentStatus(student?.attendance || student) === status;
 
-      return nameMatch && courseMatch && batchMatch && statusMatch;
+      return nameMatch && batchMatch && statusMatch;
     })
     .sort((a, b) => {
       if (sortBy === "name") {
@@ -193,14 +231,6 @@ function DailyAttendance1() {
       return 0;
     });
 
-  const uniqueCourses = [
-    "All",
-    ...new Set(
-      attendanceData
-        .map((s) => s?.studentId?.course || s?.course)
-        .filter(Boolean)
-    ),
-  ];
   const uniqueBatches = [
     "All",
     ...new Set(
@@ -217,7 +247,7 @@ function DailyAttendance1() {
       <Sidebar />
 
       <div className="lg:ml-52 p-6 max-w-7xl mx-auto">
-        {/* Header + Date picker + Refresh */}
+        {/* Header with Course Info */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[#0a2540] mb-1">
@@ -230,6 +260,11 @@ function DailyAttendance1() {
                 day: "numeric",
               })}
             </p>
+            {mentorCourse && (
+              <p className="text-sm font-medium text-blue-600 mt-1">
+                📚 Course: {mentorCourse}
+              </p>
+            )}
           </div>
           <div className="flex gap-4">
             <input
@@ -262,6 +297,9 @@ function DailyAttendance1() {
           <div className="bg-white p-5 rounded-xl shadow">
             <p className="text-sm text-gray-600">Total Students</p>
             <p className="text-3xl font-bold">{attendanceData.length}</p>
+            {mentorCourse && (
+              <p className="text-xs text-gray-500 mt-1">in {mentorCourse}</p>
+            )}
           </div>
           <div className="bg-white p-5 rounded-xl shadow">
             <p className="text-sm text-gray-600">Present</p>
@@ -295,7 +333,7 @@ function DailyAttendance1() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - REMOVED COURSE FILTER */}
         <div className="bg-white p-5 rounded-xl shadow mb-8 flex flex-wrap gap-4">
           <input
             type="text"
@@ -304,17 +342,6 @@ function DailyAttendance1() {
             onChange={(e) => setSearch(e.target.value)}
             className="border rounded-lg px-4 py-2 w-64"
           />
-          <select
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-            className="border rounded-lg px-4 py-2"
-          >
-            {uniqueCourses.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
           <select
             value={batch}
             onChange={(e) => setBatch(e.target.value)}
@@ -357,7 +384,7 @@ function DailyAttendance1() {
             <div className="text-center py-16 text-gray-600">
               {attendanceData.length === 0
                 ? isToday
-                  ? "No students have marked attendance today yet."
+                  ? `No students from ${mentorCourse || 'your course'} have marked attendance today yet.`
                   : "No records found for selected date."
                 : "No matching records with current filters."}
             </div>
@@ -367,7 +394,6 @@ function DailyAttendance1() {
                 <thead>
                   <tr className="bg-[#f0f9ff] text-[#0077b6] font-semibold">
                     <th className="px-6 py-4 text-left rounded-tl-lg">Name</th>
-                    <th className="px-6 py-4 text-left">Course</th>
                     <th className="px-6 py-4 text-left">Batch</th>
                     <th className="px-6 py-4 text-left">Punch In</th>
                     <th className="px-6 py-4 text-left">Punch Out</th>
@@ -380,18 +406,15 @@ function DailyAttendance1() {
                 </thead>
                 <tbody>
                   {filteredData.map((student) => {
-                    // Handle both data structures
                     const attendance = student?.attendance || student;
                     const studentInfo = student?.studentId || student;
 
-                    // Calculate derived values
                     const status = getStudentStatus(attendance);
                     const lastPunchIn = getLastPunchIn(attendance);
                     const lastPunchOut = getLastPunchOut(attendance);
                     const workingTime = calculateLiveWorkingTime(attendance);
                     const breakTime = calculateLiveBreakTime(attendance);
 
-                    // Status badge classes
                     const statusClasses = {
                       Present: "bg-green-100 text-green-800",
                       Working: "bg-blue-100 text-blue-800",
@@ -408,9 +431,6 @@ function DailyAttendance1() {
                         <td className="px-6 py-4 font-medium" scope="row">
                           {studentInfo?.name || "—"}
                         </td>
-
-                        {/* COURSE */}
-                        <td className="px-6 py-4">{studentInfo?.course || "—"}</td>
 
                         {/* BATCH */}
                         <td className="px-6 py-4">{studentInfo?.batch || "—"}</td>

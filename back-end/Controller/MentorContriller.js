@@ -10,6 +10,7 @@ import Course from "../Model/Coursemodel.js";
 import Attendancemodel from "../Model/Attendancemodel.js";
 import Leave from "../Model/LeaveModel.js";
 import Notification from "../Model/NotificationModel.js";
+import PunchRequest from "../Model/PunchingRequestmodel.js";
 
 
 export const getMentorNotifications = async (req, res) => {
@@ -211,111 +212,135 @@ export const getPunchRequestHistory = async (req, res) => {
   }
 };
 
+
 export const acceptPunchRequest = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { requestId } = req.params;
+    const mentorId = req.userId;
 
-    const punchRequest = await PunchingRequest.findById(id);
+    console.log("📝 Accept request - ID:", requestId, "Mentor:", mentorId);
+
+    const punchRequest = await PunchRequest.findById(requestId);
+    
     if (!punchRequest) {
-      return res.status(404).json({ message: "Punch request not found" });
+      console.log("❌ Punch request not found");
+      return res.status(404).json({ message: 'Punch request not found' });
     }
 
-    if (punchRequest.status !== "PENDING") {
-      return res.status(400).json({ message: "Already processed" });
+    console.log("✅ Found punch request:", punchRequest);
+
+    if (punchRequest.status !== 'PENDING') {
+      console.log("⚠️ Request already processed:", punchRequest.status);
+      return res.status(400).json({ message: 'Request already processed' });
     }
 
-    // APPROVE REQUEST
-    punchRequest.status = "APPROVED";
-    punchRequest.processedAt = new Date();
+    // Update the request
+    punchRequest.status = 'APPROVED';
+    punchRequest.approvedAt = new Date();
+    punchRequest.processedBy = mentorId;
+    
+    console.log("💾 Saving punch request...");
     await punchRequest.save();
+    console.log("✅ Punch request saved");
 
+    // ✅ GET TODAY'S DATE (start and end of day)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
+    console.log("📅 Finding/creating attendance for student:", punchRequest.studentId);
+
+    // ✅ FIND OR CREATE TODAY'S ATTENDANCE
     let attendance = await Attendance.findOne({
       studentId: punchRequest.studentId,
-      date: today,
+      date: {
+        $gte: today,
+        $lt: tomorrow
+      }
     });
 
+    const now = new Date();
+
     if (!attendance) {
+      // ✅ CREATE NEW ATTENDANCE FOR TODAY
+      console.log("📝 Creating new attendance record");
+      
       attendance = new Attendance({
         studentId: punchRequest.studentId,
         date: today,
+        punchRecords: [{
+          punchIn: now,
+          punchOut: null
+        }],
+        totalWorkingSeconds: 0,
+        totalBreakSeconds: 0,
+        initialLocationChecked: true,
+        currentBreakStart: null
       });
-    }
 
-    // ===== PUNCH IN =====
-    if (punchRequest.type === "PUNCH_IN") {
-      const punchTime = punchRequest.punchTime || new Date();
+      await attendance.save();
+      console.log("✅ New attendance created:", attendance);
+    } else {
+      // ✅ UPDATE EXISTING ATTENDANCE
+      console.log("📝 Updating existing attendance");
+      
+      // Add new punch record
+      attendance.punchRecords.push({
+        punchIn: now,
+        punchOut: null
+      });
 
-      attendance.punchInTime = punchTime;
-      attendance.status = "WORKING";
+      // Mark initial location as checked
       attendance.initialLocationChecked = true;
 
-      if (!attendance.punchRecords) attendance.punchRecords = [];
-
-      attendance.punchRecords.push({
-        punchIn: punchTime,
-        punchOut: null,
-        sessionWorkingSeconds: 0,
-      });
-
-      const student = await Student.findById(punchRequest.studentId);
-      if (student) {
-        student.isPunchedIn = true;
-        student.punchInTime = punchTime;
-        await student.save();
+      // Clear current break if student was on break
+      if (attendance.currentBreakStart) {
+        const breakDuration = Math.floor((now - new Date(attendance.currentBreakStart)) / 1000);
+        attendance.totalBreakSeconds += breakDuration;
+        attendance.currentBreakStart = null;
       }
+
+      await attendance.save();
+      console.log("✅ Attendance updated:", attendance);
     }
 
-    // ===== PUNCH OUT =====
-    if (punchRequest.type === "PUNCH_OUT") {
-      const punchOut = punchRequest.punchTime || new Date();
-
-      attendance.punchOutTime = punchOut;
-
-      if (attendance.punchInTime) {
-        const secs = Math.floor(
-          (punchOut - attendance.punchInTime) / 1000
-        );
-
-        attendance.totalWorkingSeconds =
-          (attendance.totalWorkingSeconds || 0) + secs;
-
-        const last =
-          attendance.punchRecords[attendance.punchRecords.length - 1];
-
-        if (last) {
-          last.punchOut = punchOut;
-          last.sessionWorkingSeconds = secs;
-        }
-      }
-
-      const student = await Student.findById(punchRequest.studentId);
-      if (student) {
-        student.isPunchedIn = false;
-        await student.save();
-      }
-    }
-
-    await attendance.save();
-
-    // ===== SOCKET EMIT =====
+    // ✅ Emit socket event
     const io = req.app.get("socketio");
+    
+    if (io) {
+      const studentRoom = String(punchRequest.studentId);
+      
+      const emitData = {
+        studentId: String(punchRequest.studentId),
+        type: punchRequest.type,
+        punchTime: now,
+        requestId: punchRequest._id
+      };
+      
+      console.log("📡 Emitting to room:", studentRoom);
+      console.log("📦 Emit data:", emitData);
+      
+      io.to(studentRoom).emit("requestApproved", emitData);
+      
+      console.log("✅ Approval emitted to student");
+    } else {
+      console.warn("⚠️ Socket.IO not initialized");
+    }
 
-    io.to(String(punchRequest.studentId)).emit("requestApproved", {
-      studentId: String(punchRequest.studentId),
-      type: punchRequest.type,
-      punchTime:
-        attendance.punchInTime || attendance.punchOutTime,
+    res.json({ 
+      success: true, 
+      data: punchRequest,
+      attendance: attendance,
+      message: 'Punch request approved successfully' 
     });
-
-    console.log("📡 Approval emitted to student");
-
-    res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ ERROR in acceptPunchRequest:", err);
+    console.error("Stack trace:", err.stack);
+    res.status(500).json({ 
+      message: "Server error",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -504,6 +529,32 @@ export const updateStudentLeaveStatus = async (req, res) => {
   } catch (error) {
     console.error("❌ Update leave status error:", error);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
+export const getMentorProfile = async (req, res) => {
+  try {
+    const mentorId = req.params.mentorId || req.user.id;
+
+    const mentor = await Mentor.findById(mentorId)
+      .select("name email course batch");
+
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: mentor,
+    });
+
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ success: false });
   }
 };
 
