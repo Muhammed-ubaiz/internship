@@ -119,15 +119,7 @@ function StudentsNotification() {
                 <span className="text-xs text-gray-400 block mb-3">
                   {new Date(msg.createdAt).toLocaleString()}
                 </span>
-
-                {/* LIKE BUTTON */}
-                <FaHeart
-                  size={22}
-                  className={`cursor-pointer transition ${
-                    msg.liked ? "text-red-500" : "text-gray-300"
-                  }`}
-                  onClick={() => handleLike(msg._id)}
-                />
+                
               </div>
             ))}
           </div>

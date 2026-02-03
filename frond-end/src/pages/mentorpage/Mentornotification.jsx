@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Sidebar from "./Sidebar";
+import Sidebar from "./sidebar";
 import { MdDelete } from "react-icons/md";
 import { FaHeart } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -116,17 +116,6 @@ function MentorNotifications() {
                 <span className="text-xs text-gray-400 block mb-3">
                   {new Date(note.createdAt).toLocaleString()}
                 </span>
-
-                {/* LIKE BUTTON */}
-                <FaHeart
-                  size={22}
-                  className={`cursor-pointer transition ${
-                    note.liked
-                      ? "text-red-500"
-                      : "text-gray-300"
-                  }`}
-                  onClick={() => handleLike(note._id)}
-                />
               </div>
             ))}
           </div>
