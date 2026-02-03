@@ -42,9 +42,9 @@ function StudentLogin() {
       return;
     }
 
-    const { token, role } = res.data;
+    const { token} = res.data;
     localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
+    localStorage.setItem("role", "student");
 
     const decoded = jwtDecode(token);
     const expiry = decoded.exp * 1000;
@@ -53,7 +53,7 @@ function StudentLogin() {
     setTimeout(()=>{
       localStorage.removeItem("token");
       localStorage.removeItem("role");
-      window.location.href = "/studentlogin";
+      window.location.href = "/";
     },timeout);
 
     Swal.fire({

@@ -12,6 +12,7 @@ import {
   sendStudentOtp,
   verifyStudentOtp,
   firstPunchInWithLocation,
+  getStudentsByMentor,
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
 
@@ -37,6 +38,6 @@ studentroutes.post(
   firstPunchInWithLocation,
 );
 
-
+studentroutes.get("/mentor/:mentorEmail", getStudentsByMentor)
 
 export default studentroutes;

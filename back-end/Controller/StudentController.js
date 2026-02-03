@@ -61,6 +61,20 @@ export const checkstudent = async (req, res) => {
   }
 };
 
+export const getStudentsByMentor = async (req, res) => {
+  try {
+    const { mentorEmail } = req.params;
+
+    const students = await Student.find({ mentorEmail });
+
+    res.json(students);
+
+    
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 
 const getTodayRange = () => {
