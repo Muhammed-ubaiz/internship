@@ -122,8 +122,6 @@ function MapModal({
         }).addTo(map);
 
         map._line = line;
-      } else {
-        console.warn("Institution coordinates missing – map initialized without markers");
       }
 
       setMapInstance(map);
@@ -204,8 +202,8 @@ function MapModal({
       <div className="bg-white w-full max-w-md rounded-xl shadow-lg overflow-hidden animate-scaleIn">
         <div className="bg-gray-600 text-white px-4 py-2.5 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold">Location</h2>
-            <p className="text-[11px] text-blue-100 opacity-80">100m range check</p>
+            <h2 className="text-base font-bold">Location Verification</h2>
+            <p className="text-[11px] text-blue-100 opacity-80">First punch of the day - 50m range</p>
           </div>
           <button onClick={onClose} className="hover:bg-white/20 rounded p-1 transition text-sm">✕</button>
         </div>
@@ -254,9 +252,9 @@ function MapModal({
             {isLoading ? (
               <span className="flex items-center justify-center">
                 <span className="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full mr-1"></span>
-                Checking...
+                Submitting...
               </span>
-            ) : "Confirm"}
+            ) : "Submit Request"}
           </button>
         </div>
       </div>
@@ -274,7 +272,6 @@ function Studentsdashboard() {
   const [socket, setSocket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [punchInTime, setPunchInTime] = useState(null);
-  const [punchInAcceptedAt, setPunchInAcceptedAt] = useState(null);
   const [punchOutTime, setPunchOutTime] = useState(null);
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
@@ -292,85 +289,118 @@ function Studentsdashboard() {
   const [pendingRequestId, setPendingRequestId] = useState(null);
   const [hasLocationCheckedToday, setHasLocationCheckedToday] = useState(false);
   const [attendance, setAttendance] = useState(null);
+  
+  const [gpsWatchId, setGpsWatchId] = useState(null);
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
 
   const INSTITUTION_LAT = 11.280610467307952;
   const INSTITUTION_LNG = 75.77045696982046;
   const MAX_DISTANCE = 50;
 
-  // Socket connection
+  // ✅ SOCKET CONNECTION
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     if (!token) {
-      console.error('❌ No token found - cannot connect to socket');
+      console.error("❌ No token found");
       return;
     }
 
-    const newSocket = io('http://localhost:3001', {
+    const decoded = JSON.parse(atob(token.split(".")[1]));
+    const studentId = decoded.id;
+    console.log("👤 Student ID:", studentId);
+
+    const newSocket = io("http://localhost:3001", {
       auth: { token },
-      transports: ['polling', 'websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 10000,
-    });
-    
-    newSocket.on('connect', () => {
-      console.log('✅ Socket connected successfully!');
-      setLocationStatus('');
+      transports: ["websocket"],
     });
 
-    newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error.message);
-      setLocationStatus('❌ Connection failed');
+    newSocket.on("connect", () => {
+      console.log("✅ Socket connected:", newSocket.id);
+      newSocket.emit("joinStudentRoom", studentId);
+      console.log("👨‍🎓 Joined student room:", studentId);
+      setLocationStatus("");
     });
 
-    // Handle punch-in approval
-    newSocket.on('requestApproved', (data) => {
-      console.log('✅ Punch-in approved:', data);
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const decoded = JSON.parse(atob(token.split('.')[1]));
-          if (data.type === 'PUNCH_IN' && data.studentId.toString() === decoded.id) {
-            setPendingRequestId(null);
-            setPendingAction(null);
-            setLocationStatus("✅ Punch-in approved");
-            setIsPunchedIn(true);
-            setPunchInTime(new Date(data.punchTime));
-            setIsOnBreak(false);
-            setBreakStartTime(null);
-            loadTodayAttendance();
-          }
-        } catch (error) {
-          console.error('Error decoding token:', error);
-        }
+    newSocket.on("connect_error", (err) => {
+      console.error("❌ Socket error:", err.message);
+      setLocationStatus("❌ Connection failed");
+    });
+
+    // ✅ APPROVAL EVENT
+    newSocket.on("requestApproved", (data) => {
+      console.log("🔥 Approval received:", data);
+      console.log("📍 Comparing IDs:", {
+        received: data.studentId,
+        current: studentId,
+        match: String(data.studentId) === String(studentId)
+      });
+
+      if (String(data.studentId) !== String(studentId)) {
+        console.log("⚠️ Not for this student, ignoring");
+        return;
+      }
+
+      if (data.type === "PUNCH_IN") {
+        console.log("✅ Processing PUNCH_IN approval");
+        
+        setPendingRequestId(null);
+        setPendingAction(null);
+        setIsPunchedIn(true);
+        setPunchInTime(new Date(data.punchTime));
+        setPunchOutTime(null);
+        setIsOnBreak(false);
+        setBreakStartTime(null);
+        setHasLocationCheckedToday(true);
+        setLocationStatus("✅ Punch-in approved - GPS tracking active");
+
+        startLocationTracking();
+        
+        setTimeout(() => {
+          loadTodayAttendance();
+        }, 500);
+      }
+
+      if (data.type === "PUNCH_OUT") {
+        console.log("✅ Processing PUNCH_OUT approval");
+        
+        setIsPunchedIn(false);
+        setPunchOutTime(new Date(data.punchTime));
+        setIsOnBreak(true);
+        setBreakStartTime(new Date());
+        setLocationStatus("✅ Punch-out approved");
+
+        stopLocationTracking();
+        
+        setTimeout(() => {
+          loadTodayAttendance();
+        }, 500);
       }
     });
 
-    // Handle punch-out approval
-    newSocket.on('punchOutApproved', (data) => {
-      console.log('✅ Punch-out approved:', data);
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const decoded = JSON.parse(atob(token.split('.')[1]));
-          if (data.type === 'PUNCH_OUT' && data.studentId.toString() === decoded.id) {
-            setPendingRequestId(null);
-            setPendingAction(null);
-            setLocationStatus("✅ Punch-out approved - Break started");
-            loadTodayAttendance();
-          }
-        } catch (error) {
-          console.error('Error decoding token:', error);
-        }
-      }
+    newSocket.on("autoPunchOut", (data) => {
+      console.log("⚠️ Auto punch-out received:", data);
+
+      setIsPunchedIn(false);
+      setPunchOutTime(new Date());
+      setIsOnBreak(true);
+      setBreakStartTime(new Date());
+      setLocationStatus(`⚠️ Auto punch-out: ${Math.round(data.distance)}m from institution`);
+
+      stopLocationTracking();
+      
+      setTimeout(() => {
+        loadTodayAttendance();
+      }, 500);
     });
 
     setSocket(newSocket);
 
-    return () => newSocket.disconnect();
-  }, [pendingRequestId]);
+    return () => {
+      console.log("🔌 Disconnecting socket");
+      newSocket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     loadTodayAttendance();
@@ -379,11 +409,12 @@ function Studentsdashboard() {
   const loadTodayAttendance = async () => {
     try {
       const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role")
+      const role = localStorage.getItem("role");
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { Authorization: `Bearer ${token}`,
-        Role:role,
-       },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
       });
 
       const att = res.data.attendance;
@@ -403,15 +434,9 @@ function Studentsdashboard() {
       setBreakTime(att.totalBreakSeconds || 0);
       setLiveBreakTime(formatTimeFromSeconds(att.totalBreakSeconds || 0));
 
-      // Handle both old format (punchInTime) and new format (punchRecords)
       let lastRecord = null;
       if (att.punchRecords && att.punchRecords.length > 0) {
         lastRecord = att.punchRecords[att.punchRecords.length - 1];
-      } else if (att.punchInTime) {
-        lastRecord = {
-          punchIn: new Date(att.punchInTime),
-          punchOut: att.punchOutTime ? new Date(att.punchOutTime) : null
-        };
       }
 
       if (lastRecord && !lastRecord.punchOut) {
@@ -447,7 +472,6 @@ function Studentsdashboard() {
     setTotalWorkingTime(0);
   };
 
-  // Live timers
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
@@ -496,6 +520,89 @@ function Studentsdashboard() {
     return R * c;
   };
 
+  const startLocationTracking = () => {
+    if (!navigator.geolocation) {
+      console.error("Geolocation not supported");
+      return;
+    }
+
+    console.log("🌍 Starting GPS tracking for auto punch-out...");
+    setIsTrackingLocation(true);
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const distance = calculateDistance(latitude, longitude, INSTITUTION_LAT, INSTITUTION_LNG);
+        
+        console.log(`📍 Current distance: ${Math.round(distance)}m`);
+
+        if (distance > MAX_DISTANCE && isPunchedIn) {
+          console.warn(`⚠️ Distance exceeded: ${Math.round(distance)}m > ${MAX_DISTANCE}m`);
+          handleAutoPunchOut(latitude, longitude, distance);
+        }
+      },
+      (error) => {
+        console.error("GPS tracking error:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+        distanceFilter: 10,
+      }
+    );
+
+    setGpsWatchId(watchId);
+  };
+
+  const stopLocationTracking = () => {
+    if (gpsWatchId !== null) {
+      navigator.geolocation.clearWatch(gpsWatchId);
+      setGpsWatchId(null);
+      setIsTrackingLocation(false);
+      console.log("🛑 GPS tracking stopped");
+    }
+  };
+
+  const handleAutoPunchOut = async (latitude, longitude, distance) => {
+    try {
+      console.log("⚠️ Triggering auto punch-out...");
+      
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        "http://localhost:3001/student/auto-punch-out",
+        { latitude, longitude, distance },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        setIsPunchedIn(false);
+        setPunchOutTime(new Date());
+        setIsOnBreak(true);
+        setBreakStartTime(new Date());
+        setLocationStatus(`⚠️ Auto punch-out: Distance exceeded (${Math.round(distance)}m)`);
+        stopLocationTracking();
+        loadTodayAttendance();
+      }
+    } catch (error) {
+      console.error("Auto punch-out error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isPunchedIn && !isTrackingLocation) {
+      startLocationTracking();
+    } else if (!isPunchedIn && isTrackingLocation) {
+      stopLocationTracking();
+    }
+
+    return () => {
+      if (isTrackingLocation) {
+        stopLocationTracking();
+      }
+    };
+  }, [isPunchedIn]);
+
   const handlePunchInClick = async () => {
     if (isPunchedIn || loading) return;
 
@@ -510,10 +617,13 @@ function Studentsdashboard() {
         setCurrentDistance(dist);
         setPendingAction('punchIn');
         setShowMap(true);
-      } else {
+        setLoading(false);
+      } 
+      else {
         const res = await axios.post("http://localhost:3001/student/punch-in", {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+        
         if (res.data.success) {
           setIsPunchedIn(true);
           setPunchInTime(new Date());
@@ -522,25 +632,19 @@ function Studentsdashboard() {
           setBreakStartTime(null);
           setBreakTime(res.data.attendance.totalBreakSeconds);
           setTotalWorkingTime(res.data.attendance.totalWorkingSeconds);
-          setLocationStatus("✅ Punched in");
-          loadTodayAttendance(); // Reload to sync
+          setLocationStatus("✅ Punched in - GPS tracking active");
+          startLocationTracking();
+          loadTodayAttendance();
         }
+        setLoading(false);
       }
     } catch (error) {
       setLocationStatus("❌ Error: " + (error.response?.data?.message || error.message));
-    } finally {
       setLoading(false);
     }
   };
 
   const confirmPunchIn = async () => {
-    if (hasLocationCheckedToday) {
-      setIsPunchedIn(true);
-      setIsOnBreak(false);
-      setLocationStatus("ℹ️ Already punched in today");
-      return;
-    }
-
     if (!currentLocation?.latitude || !currentLocation?.longitude) {
       alert("📍 Fetching location, please wait...");
       return;
@@ -566,8 +670,9 @@ function Studentsdashboard() {
       if (res.data.message === 'Punch-in request submitted successfully') {
         setPendingRequestId(res.data.requestId);
         setPendingAction('punchIn');
-        setLocationStatus("⏳ Punch-in request submitted");
+        setLocationStatus("⏳ First punch-in request submitted - Waiting for admin approval");
         setShowMap(false);
+        setHasLocationCheckedToday(true);
       }
     } catch (err) {
       console.error("Punch-in request error:", err.response?.data);
@@ -593,16 +698,12 @@ function Studentsdashboard() {
         }
       );
 
-      console.log("✅ Punch-out response:", res.data);
-
       if (res.data.success) {
-        // Update local state immediately
         setIsPunchedIn(false);
         setPunchOutTime(new Date());
         setIsOnBreak(true);
         setBreakStartTime(new Date());
         
-        // Update from server response
         if (res.data.attendance) {
           setBreakTime(res.data.attendance.totalBreakSeconds || 0);
           setTotalWorkingTime(res.data.attendance.totalWorkingSeconds || 0);
@@ -610,8 +711,8 @@ function Studentsdashboard() {
         }
         
         setLocationStatus("✅ Punched out - Break started");
+        stopLocationTracking();
         
-        // Reload attendance to sync with DB
         setTimeout(() => {
           loadTodayAttendance();
         }, 500);
@@ -651,7 +752,7 @@ function Studentsdashboard() {
       />
 
       <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-center items-center mb-10">
           <StudentTopbar />
         </div>
 
@@ -660,6 +761,7 @@ function Studentsdashboard() {
             className={`mb-4 p-3 rounded-lg text-center font-semibold ${
               locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
               locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
+              locationStatus.includes("⚠️") ? "bg-orange-100 text-orange-700" :
               locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
               "bg-blue-100 text-blue-700"
             }`}
@@ -749,12 +851,14 @@ function Studentsdashboard() {
                 }`}
               >
                 {pendingRequestId && pendingAction === 'punchIn'
-                  ? "Waiting Approval..."
+                  ? "⏳ Waiting Admin Approval..."
                   : loading
                   ? "Getting Location..."
                   : isPunchedIn
                   ? "Already Punched In"
-                  : "Punch In"}
+                  : hasLocationCheckedToday
+                  ? "Punch In"
+                  : "First Punch In (Approval Required)"}
               </button>
 
               <button
@@ -768,8 +872,6 @@ function Studentsdashboard() {
               >
                 {pendingRequestId && pendingAction === 'punchIn'
                   ? "⏳ Approve Punch-in First"
-                  : pendingRequestId && pendingAction === 'punchOut'
-                  ? "Waiting Approval..."
                   : loading
                   ? "Processing..."
                   : !isPunchedIn

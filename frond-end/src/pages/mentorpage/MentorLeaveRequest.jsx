@@ -9,12 +9,13 @@ import {
   XCircle,
   AlertCircle,
   BookOpen,
+  ChevronRight,
   Search,
   Filter,
   X,
 } from "lucide-react";
 
-function AdminLeaveRequest() {
+function MentorLeaveRequest() {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +28,13 @@ function AdminLeaveRequest() {
 
   const token = localStorage.getItem("token");
 
-  // Fetch all pending leave requests
+  // Fetch mentor leave requests
   const fetchLeaves = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("http://localhost:3001/admin/leave-requests", {
+      const res = await fetch("http://localhost:3001/mentor/leave-requests", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -42,20 +43,18 @@ function AdminLeaveRequest() {
       }
 
       const data = await res.json();
-      console.log("📋 Admin - Leave requests received:", data);
+      console.log("📋 Mentor - Leave requests:", data);
 
-      const requests = data.leaves || [];
-      
       // Extract unique leave types from data
       const types = [
-        ...new Set(requests.map((leave) => leave.type).filter(Boolean)),
+        ...new Set(data.map((leave) => leave.leaveType).filter(Boolean)),
       ];
       setAvailableTypes(types);
 
-      setLeaveRequests(requests);
-      setFilteredRequests(requests);
+      setLeaveRequests(data || []);
+      setFilteredRequests(data || []);
     } catch (err) {
-      console.error("❌ Error fetching leave requests:", err);
+      console.error("❌ Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -75,54 +74,48 @@ function AdminLeaveRequest() {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         (leave) =>
-          leave.studentId?.name?.toLowerCase().includes(term) ||
-          leave.studentId?.email?.toLowerCase().includes(term) ||
-          leave.type?.toLowerCase().includes(term) ||
+          leave.studentName?.toLowerCase().includes(term) ||
+          leave.studentEmail?.toLowerCase().includes(term) ||
+          leave.leaveType?.toLowerCase().includes(term) ||
           leave.reason?.toLowerCase().includes(term) ||
-          leave.studentId?.batch?.toLowerCase().includes(term)
+          leave.batch?.toLowerCase().includes(term),
       );
     }
 
     // Apply leave type filter
     if (leaveTypeFilter !== "all") {
       result = result.filter(
-        (leave) => leave.type?.toLowerCase() === leaveTypeFilter.toLowerCase()
+        (leave) =>
+          leave.leaveType?.toLowerCase() === leaveTypeFilter.toLowerCase(),
       );
     }
 
     setFilteredRequests(result);
   }, [leaveRequests, searchTerm, leaveTypeFilter]);
 
-  // Approve / Reject leave
-  const handleStatusChange = async (id, status) => {
+  // Approve / Reject
+  const handleStatusChange = async (id, action) => {
     try {
-      console.log(`📝 Admin ${status} leave request:`, id);
-
       const res = await fetch(
-        `http://localhost:3001/admin/leave-status/${id}`,
+        `http://localhost:3001/mentor/leave-requests/${id}/${action}`,
         {
-          method: "PUT",
+          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ status }),
-        }
+        },
       );
 
       const data = await res.json();
 
       if (res.ok) {
-        console.log("✅ Leave status updated successfully");
-        // Remove approved/rejected leave from UI
-        setLeaveRequests((prev) => prev.filter((l) => l._id !== id));
-        alert(`Leave ${status.toLowerCase()} successfully!`);
+        setLeaveRequests((prev) => prev.filter((leave) => leave._id !== id));
+        alert(`Leave ${action} successfully!`);
       } else {
-        console.error("❌ Failed to update leave:", data.message);
-        alert(data.message || "Failed to update leave status");
+        alert(data.message || "Failed to update leave");
       }
     } catch (err) {
-      console.error("❌ Error updating leave status:", err);
+      console.error(err);
       alert("Something went wrong!");
     }
   };
@@ -158,12 +151,12 @@ function AdminLeaveRequest() {
               <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
                 Leave Requests
               </h1>
-              <p className="text-gray-600">
-                Admin Leave Approval - Review and manage all student leave requests
-              </p>
+            
             </div>
 
             <div className="flex items-center gap-4">
+             
+
               <button
                 onClick={fetchLeaves}
                 className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
@@ -176,7 +169,7 @@ function AdminLeaveRequest() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-6 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-6 sticky top-0  backdrop-blur-sm py-4 z-10 rounded-xl">
           {/* Search Bar */}
           <div className="group relative w-full sm:w-72">
             <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
@@ -314,18 +307,16 @@ function AdminLeaveRequest() {
                       </div>
                       <div>
                         <h3 className="font-bold text-lg text-[#0a2540]">
-                          {leave.studentId?.name || "Unknown Student"}
+                          {leave.studentName}
                         </h3>
                         <div className="flex items-center gap-4 mt-1">
                           <span
-                            className={`px-3 py-1 text-xs font-medium rounded-full border ${getLeaveTypeColor(
-                              leave.type
-                            )}`}
+                            className={`px-3 py-1 text-xs font-medium rounded-full border ${getLeaveTypeColor(leave.leaveType)}`}
                           >
-                            {leave.type}
+                            {leave.leaveType}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {leave.studentId?.batch || "Batch A"}
+                            {leave.batch || "Batch A"}
                           </span>
                         </div>
                       </div>
@@ -337,7 +328,7 @@ function AdminLeaveRequest() {
 
                   <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
                     <Mail className="w-4 h-4" />
-                    <span>{leave.studentId?.email || "No email"}</span>
+                    <span>{leave.studentEmail}</span>
                   </div>
                 </div>
 
@@ -350,7 +341,7 @@ function AdminLeaveRequest() {
                         <span>From</span>
                       </div>
                       <p className="font-medium text-gray-900">
-                        {new Date(leave.from).toLocaleDateString("en-US", {
+                        {new Date(leave.fromDate).toLocaleDateString("en-US", {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
@@ -365,7 +356,7 @@ function AdminLeaveRequest() {
                         <span>To</span>
                       </div>
                       <p className="font-medium text-gray-900">
-                        {new Date(leave.to).toLocaleDateString("en-US", {
+                        {new Date(leave.toDate).toLocaleDateString("en-US", {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
@@ -375,34 +366,35 @@ function AdminLeaveRequest() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                    <Clock className="w-4 h-4" />
-                    <span>Reason</span>
-                  </div>
+                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                        <Clock className="w-4 h-4" />
+                        <span>Reason</span>
+                      </div>
 
-                  <div className="relative bg-gray-50 rounded-lg h-25 p-3">
-                    <div className="max-h-20 overflow-y-auto pr-2">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-                        {leave.reason}
-                      </p>
-                    </div>
-                    {/* Bottom fade effect for long content */}
-                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none"></div>
-                  </div>
+              <div className="relative bg-gray-50 rounded-lg h-25 p-3">
+                
+  <div className="max-h-20 overflow-y-auto pr-2">
+    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+      {leave.reason}
+    </p>
+  </div>
+  {/* Bottom fade effect for long content */}
+  <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none"></div>
+</div>
                 </div>
 
                 {/* Actions */}
                 <div className="p-6 border-t border-gray-100 bg-gray-50">
                   <div className="flex justify-end gap-3">
                     <button
-                      onClick={() => handleStatusChange(leave._id, "Rejected")}
+                      onClick={() => handleStatusChange(leave._id, "rejected")}
                       className="px-5 py-2.5 text-sm font-medium rounded-lg border border-red-600 text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                     >
                       <XCircle className="w-4 h-4" />
                       Reject
                     </button>
                     <button
-                      onClick={() => handleStatusChange(leave._id, "Approved")}
+                      onClick={() => handleStatusChange(leave._id, "approved")}
                       className="px-5 py-2.5 text-sm font-medium rounded-lg bg-[#0a2540] text-white hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -495,4 +487,4 @@ const RefreshCw = ({ className }) => (
   </svg>
 );
 
-export default AdminLeaveRequest;
+export default MentorLeaveRequest;

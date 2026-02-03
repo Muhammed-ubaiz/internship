@@ -19,23 +19,19 @@ function Punchinrequest() {
     try {
       const token = localStorage.getItem("token");
       
-      // ✅ Fetch ALL requests (pending, approved, rejected)
       const res = await axios.get(
         "http://localhost:3001/mentor/punch-requests",
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: { includeAll: true } // Get all requests regardless of status
+          params: { includeAll: true } 
         }
       );
       
-      console.log('📋 Raw response:', res.data);
-      console.log('📋 Total requests fetched:', res.data.length);
       
-      // Separate pending from history
+      
       const pendings = res.data.filter(r => r.status === 'PENDING');
       const history = res.data.filter(r => r.status !== 'PENDING');
       
-      // Sort history by most recent first (updatedAt or createdAt)
       const sortedHistory = history.sort((a, b) => 
         new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)
       );
@@ -50,75 +46,99 @@ function Punchinrequest() {
         total: res.data.length
       });
     } catch (error) {
-      console.error("❌ Error fetching requests:", error);
+      console.error(" Error fetching requests:", error);
       console.error("❌ Error details:", error.response?.data);
     }
   };
 
-  const accept = async (id) => {
-    try {
-      setLoading(true);
-      setProcessingId(id);
+ // In Punchinrequest.jsx - line 61
+const accept = async (id) => {
+  try {
+    setLoading(true);
+    setProcessingId(id);
 
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    
+    // ✅ Changed to match the route parameter name
+    const response = await axios.post(
+      `http://localhost:3001/mentor/punch-requests/${id}/accept`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('✅ Accept response:', response.data);
+    await fetchRequests();
+    alert("✅ Request accepted successfully!");
+    setActiveTab('accepted');
+  } catch (error) {
+    console.error("❌ Error accepting:", error);
+    console.error("❌ Error details:", error.response?.data);
+    alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setProcessingId(null);
+    setLoading(false);
+  }
+};
+
+const reject = async (id) => {
+  try {
+    setLoading(true);
+    setProcessingId(id);
+
+    const token = localStorage.getItem("token");
+
+    // ✅ Fixed to match new route
+    const response = await axios.post(
+      `http://localhost:3001/mentor/punch-requests/${id}/reject`,
+      { reason: "Invalid punch" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("✅ Reject response:", response.data);
+    await fetchRequests();
+    alert("✅ Request rejected successfully!");
+    setActiveTab('rejected'); 
+  } catch (error) {
+    console.error("❌ Error rejecting:", error);
+    console.error("❌ Error details:", error.response?.data);
+    alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setProcessingId(null);
+    setLoading(false);
+  }
+};
+
+  // const reject = async (id) => {
+  //   try {
+  //     setLoading(true);
+  //     setProcessingId(id);
+
+  //     const token = localStorage.getItem("token");
+
+  //     const response = await axios.put(
+  //       `http://localhost:3001/mentor/reject-punch/${id}`,
+  //       { reason: "Invalid punch" },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     console.log("✅ Reject response:", response.data);
+
+  //     await fetchRequests();
       
-      const response = await axios.post(
-        `http://localhost:3001/mentor/punch-requests/${id}/accept`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  //     alert("✅ Request rejected successfully!");
+  //     setActiveTab('rejected'); 
+  //   } catch (error) {
+  //     console.error("❌ Error rejecting:", error);
+  //     console.error("❌ Error details:", error.response?.data);
+  //     alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  //   } finally {
+  //     setProcessingId(null);
+  //     setLoading(false);
+  //   }
+  // };
 
-      console.log('✅ Accept response:', response.data);
-
-      // Refetch all requests to get updated data
-      await fetchRequests();
-      
-      alert("✅ Request accepted successfully!");
-      setActiveTab('accepted'); // Switch to accepted tab
-    } catch (error) {
-      console.error("❌ Error accepting:", error);
-      console.error("❌ Error details:", error.response?.data);
-      alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setProcessingId(null);
-      setLoading(false);
-    }
-  };
-
-  const reject = async (id) => {
-    try {
-      setLoading(true);
-      setProcessingId(id);
-
-      const token = localStorage.getItem("token");
-
-      const response = await axios.put(
-        `http://localhost:3001/mentor/reject-punch/${id}`,
-        { reason: "Invalid punch" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log("✅ Reject response:", response.data);
-
-      // Refetch all requests to get updated data
-      await fetchRequests();
-      
-      alert("✅ Request rejected successfully!");
-      setActiveTab('rejected'); // Switch to rejected tab
-    } catch (error) {
-      console.error("❌ Error rejecting:", error);
-      console.error("❌ Error details:", error.response?.data);
-      alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setProcessingId(null);
-      setLoading(false);
-    }
-  };
-
-  // Combine for "all" tab
   const allRequests = [...pendingRequests, ...historyRequests];
 
-  // Filter based on active tab
   const filteredRequests = (() => {
     const today = new Date().toDateString();
     switch (activeTab) {
@@ -145,7 +165,6 @@ function Punchinrequest() {
     }
   })();
 
-  // Stats
   const pendingCount = pendingRequests.length;
   const acceptedCount = historyRequests.filter(r => r.status === 'APPROVED').length;
   const rejectedCount = historyRequests.filter(r => r.status === 'REJECTED').length;
@@ -161,7 +180,6 @@ function Punchinrequest() {
   ).length;
   const totalRequests = allRequests.length;
 
-  // Tab totals for footer
   const totals = {
     pending: pendingCount,
     accepted: acceptedCount,
@@ -177,7 +195,6 @@ function Punchinrequest() {
         <Sidebar />
         <div className="flex-1 p-4 md:p-6 ml-0 lg:ml-64">
 
-          {/* Header */}
           <div className="bg-[#141E46]/90 text-white rounded-xl shadow-lg p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
               <div className="flex items-center mb-4 md:mb-0">
@@ -208,7 +225,6 @@ function Punchinrequest() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {[
               { icon: "⏰", value: pendingCount, label: "Pending Requests", color: "yellow", bg: "bg-yellow-100" },
@@ -230,7 +246,6 @@ function Punchinrequest() {
             ))}
           </div>
 
-          {/* Tabs Container */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -251,7 +266,6 @@ function Punchinrequest() {
               </div>
             </div>
 
-            {/* Tabs Navigation */}
             <div className="border-b border-gray-200">
               <nav className="flex flex-wrap px-6 -mb-px">
                 {[
@@ -280,7 +294,6 @@ function Punchinrequest() {
               </nav>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -339,18 +352,20 @@ function Punchinrequest() {
                             {req.studentId?.course || 'N/A'}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="font-medium text-gray-900">
-                            {new Date(req.punchTime).toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {new Date(req.punchTime).toLocaleDateString('en-IN')}
-                          </div>
-                        </td>
+     <td className="py-4 px-6">
+  <div className="font-medium text-gray-900">
+    {new Date(req.requestTime || req.createdAt).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })}
+  </div>
+  <div className="text-sm text-gray-500">
+    {new Date(req.requestTime || req.createdAt).toLocaleDateString("en-IN")}
+  </div>
+</td>
+
+
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             <svg className="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,7 +456,6 @@ function Punchinrequest() {
               </table>
             </div>
 
-            {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center">
               <div className="text-gray-600 mb-3 md:mb-0">
                 Showing <span className="font-medium">{filteredRequests.length}</span> of <span className="font-medium">{totals[activeTab] || 0}</span> requests

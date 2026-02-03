@@ -7,6 +7,10 @@ import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import Location from "../Model/Locationmodel.js";
 import Mentor from "../Model/Mentormodel.js";
+import Attendancemodel from "../Model/Attendancemodel.js";
+import Leave from "../Model/LeaveModel.js";
+import Notification from "../Model/NotificationModel.js";
+
 
 
 
@@ -21,7 +25,7 @@ const Login = (req, res) => {
     const token = jwt.sign(
       { email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "1d" } //  expiry
+      { expiresIn: "1h" } //  expiry
     );
 
     return res.json({
@@ -463,6 +467,133 @@ export const toggleMentorStatus = async (req, res) => {
   } catch (error) {
     console.error("Toggle mentor status error:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const getDailyAttendance = async (req, res) => {
+  try {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: "Date parameter is required (format: YYYY-MM-DD)"
+      });
+    }
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    const records = await Attendancemodel.aggregate([
+      {
+        $match: {
+          date: { $gte: start, $lt: end }
+        }
+      },
+      {
+        $lookup: {
+          from: "students",
+          localField: "studentId",
+          foreignField: "_id",
+          as: "student"
+        }
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          studentName: { $ifNull: ["$student.name", "Unknown"] },
+          course: { $ifNull: ["$student.course", "—"] },
+          batch: { $ifNull: ["$student.batch", "—"] },
+          attendance: "$$ROOT"
+        }
+      },
+      { $sort: { studentName: 1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      attendanceData: records,
+      count: records.length
+    });
+
+  } catch (error) {
+    console.error("getDailyAttendance error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching daily attendance",
+      error: error.message
+    });
+  }
+};
+
+export const getAllPendingLeaves = async (req, res) => {
+  try {
+    const leaves = await Leave.find({ status: "Pending" })
+      .populate("studentId", "name email course batch");
+
+    res.json({ success: true, leaves });
+  } catch (error) {
+    console.error("Get all pending leaves error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Update leave status (approve/reject)
+export const updateLeaveStatusAdmin = async (req, res) => {
+  try {
+    const { id } = req.params; // leave id
+    const { status } = req.body; // Approved / Rejected
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
+    }
+
+    const leave = await Leave.findById(id);
+    if (!leave) return res.status(404).json({ success: false, message: "Leave not found" });
+
+    leave.status = status;
+    await leave.save();
+
+    res.json({ success: true, leave });
+  } catch (error) {
+    console.error("Update leave status admin error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const sendInformation = async (req, res) => {
+  try {
+
+    const { title, message, audience } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "Title and message required",
+      });
+    }
+
+    const notification = new Notification({
+      title,
+      message,
+      audience,
+    });
+
+    await notification.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Information sent successfully",
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Server Error",
+    });
   }
 };
 

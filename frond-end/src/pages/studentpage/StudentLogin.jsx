@@ -23,7 +23,7 @@ function StudentLogin() {
 
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
   e.preventDefault();
   setLoading(true);
 
@@ -34,21 +34,25 @@ function StudentLogin() {
     );
 
     if (!res.data.success) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Email or password is incorrect!",
-      });
+      Swal.fire("Error", "Email or password incorrect", "error");
       return;
     }
+
 
     const { token} = res.data;
     localStorage.setItem("token", token);
     localStorage.setItem("role", "student");
 
+    const { token, student } = res.data;
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", student.role);
+    localStorage.setItem("studentId", student.id);
+
+
     const decoded = jwtDecode(token);
-    const expiry = decoded.exp * 1000;
-    const timeout = expiry - Date.now();
+    const timeout = decoded.exp * 1000 - Date.now();
+
 
     setTimeout(()=>{
       localStorage.removeItem("token");
@@ -56,26 +60,32 @@ function StudentLogin() {
       window.location.href = "/";
     },timeout);
 
+    if (timeout > 0) {
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = "/studentlogin";
+      }, timeout);
+    }
+
+
     Swal.fire({
-      
       title: "Login Successful!",
       icon: "success",
-      draggable: true,
       timer: 1000,
       showConfirmButton: false,
     }).then(() => navigate("/studentsdashboard"));
 
   } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Oops...",
-      text: error.response?.data?.message || "Something went wrong!",
-     
-    });
+    Swal.fire(
+      "Error",
+      error.response?.data?.message || "Something went wrong",
+      "error"
+    );
   } finally {
     setLoading(false);
   }
 };
+
 
 
   const sendOtp = async () => {

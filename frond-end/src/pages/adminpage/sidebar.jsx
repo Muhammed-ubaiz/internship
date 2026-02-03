@@ -46,7 +46,7 @@ function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
+        className="lg:hidden fixed top-1 left-1 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
       >
         {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
@@ -179,6 +179,14 @@ function Sidebar() {
               </div>
             </div>
           )}
+
+             {/* information */}
+          <div className={menuItem} onClick={() => handleNavigation("/information")}>
+            <div className="flex items-center gap-3">
+              <FaUsers />
+              <span>informaition</span>
+            </div>
+          </div>
 
           {/* Logout */}
           <div className="mt-auto border-t border-gray-700 pt-2">

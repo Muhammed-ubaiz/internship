@@ -23,7 +23,11 @@ function SideBarStudent() {
     window.location.replace("/");
   };
 
-  const closeSidebar = () => setSidebarOpen(false);
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -41,12 +45,14 @@ function SideBarStudent() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
+
+        className="lg:hidden fixed top-2 left-2 z-50 bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2858] transition-all"
+
       >
         {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
       </button>
 
-      {/* Overlay */}
+
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-30"
@@ -57,18 +63,22 @@ function SideBarStudent() {
       {/* Sidebar */}
       <div
         className={`
-        fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/95 backdrop-blur-sm flex flex-col z-40
-        transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0
-      `}
+
+          fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/95 backdrop-blur-sm flex flex-col z-40
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+        `}
       >
-        {/* Logo */}
+        {/* Logo/Title */}
+
         <div className="text-white font-bold text-lg border-b border-gray-700 p-2">
           <img
             src="https://res.cloudinary.com/daadrhhk9/image/upload/v1768208933/36F737FD-D312-4078-9846-4B9C9B266231_1_201_a_1_kuzwta.png"
             alt="Student Panel Logo"
-            className="w-full object-contain"
+
+            className="w-full h-auto"
+
           />
         </div>
 
@@ -106,7 +116,9 @@ function SideBarStudent() {
             <div className="mb-1">
               <div
                 className={subItem}
+
                 onClick={() => handleNavigation("/DailyAttendance")}
+
               >
                 Daily Attendance
               </div>

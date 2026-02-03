@@ -1,55 +1,79 @@
+// models/PunchRequest.js - FIXED
+
 import mongoose from 'mongoose';
 
-const punchingRequestSchema = new mongoose.Schema({
+const punchRequestSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',
-    required: true
+    required: true,
+    index: true,
   },
   type: {
     type: String,
     enum: ['PUNCH_IN', 'PUNCH_OUT'],
-    required: true
-  },
-  punchTime: {
-    type: Date,
-    default: Date.now
+    default: 'PUNCH_IN',
   },
   latitude: {
     type: Number,
-    required: true
+    required: true,
   },
   longitude: {
     type: Number,
-    required: true
+    required: true,
   },
   distance: {
     type: Number,
-    required: true
+    required: true,
   },
   status: {
-  type: String,
-  enum: ["PENDING", "APPROVED", "REJECTED"],
-  default: "PENDING"
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    default: 'PENDING',
+    index: true,
   },
-  mentorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Mentor'
+  requestTime: {
+    type: Date,
+    default: Date.now,
+    index: true,
   },
-  processedAt: {
-    type: Date
+  approvedAt: {
+    type: Date,
+    default: null,
+  },
+  rejectedAt: {
+    type: Date,
+    default: null,
   },
   rejectionReason: {
-    type: String
-  }
+    type: String,
+    default: null,
+  },
+  processedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Mentor',
+    default: null,
+  },
+  processedAt: {
+    type: Date,
+    default: null,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
-// Index for faster queries
-punchingRequestSchema.index({ studentId: 1, status: 1 });
-punchingRequestSchema.index({ createdAt: -1 });
+// Indexes for faster queries
+punchRequestSchema.index({ studentId: 1, status: 1 });
+punchRequestSchema.index({ requestTime: -1 });
+punchRequestSchema.index({ processedBy: 1 });
 
-const PunchingRequest = mongoose.model('PunchingRequest', punchingRequestSchema);
+// FIXED: Remove next callback - just update the field directly
+punchRequestSchema.pre('save', function() {
+  if (this.isModified('status') && this.status !== 'PENDING') {
+    this.processedAt = new Date();
+  }
+});
 
-export default PunchingRequest;
+const PunchRequest = mongoose.model('PunchRequest', punchRequestSchema);
+
+export default PunchRequest;

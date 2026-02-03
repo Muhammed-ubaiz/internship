@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaBell, FaSearch, FaMapMarkerAlt, FaTimes } from "react-icons/fa";
 
 function StudentTopbar({ onLocationSave }) {
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false); // Added state for map modal
+  const navigate = useNavigate(); // For bell icon navigation
 
   // Institution coordinates - Aviv Digital Academy
   const INSTITUTION_LAT = 11.278746549272379;
@@ -49,18 +51,21 @@ function StudentTopbar({ onLocationSave }) {
         );
 
         console.log("Current Location:", { latitude, longitude });
-        console.log("Institution Location:", { lat: INSTITUTION_LAT, lng: INSTITUTION_LNG });
+        console.log(
+          "Institution Location:",
+          { lat: INSTITUTION_LAT, lng: INSTITUTION_LNG }
+        );
         console.log("Distance:", distance, "meters");
         console.log("GPS Accuracy:", accuracy, "meters");
 
         // Check if within 5 meters
         if (distance > MAX_DISTANCE) {
-          const distanceInKm = (distance / 5).toFixed(2);
+          const distanceInKm = (distance / 1000).toFixed(2);
           alert(
             `❌ Location Save Denied\n\n` +
-            `You are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\n` +
-            `You must be within ${MAX_DISTANCE} meters of the institution to save location.\n\n` +
-            `Please come closer to the institution premises.`
+              `You are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\n` +
+              `You must be within ${MAX_DISTANCE} meters of the institution to save location.\n\n` +
+              `Please come closer to the institution premises.`
           );
           setIsSavingLocation(false);
           return;
@@ -72,19 +77,19 @@ function StudentTopbar({ onLocationSave }) {
 
           const res = await fetch("http://localhost:3001/student/location", {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-              "role": role
+              Authorization: `Bearer ${token}`,
+              role: role,
             },
-            body: JSON.stringify({ 
-              latitude, 
+            body: JSON.stringify({
+              latitude,
               longitude,
               distance,
-              accuracy
+              accuracy,
             }),
           });
-          
+
           const data = await res.json();
 
           if (!res.ok) {
@@ -95,12 +100,12 @@ function StudentTopbar({ onLocationSave }) {
 
           alert(
             `✅ Location saved successfully!\n\n` +
-            `Latitude: ${latitude.toFixed(6)}\n` +
-            `Longitude: ${longitude.toFixed(6)}\n` +
-            `Distance from institution: ${Math.round(distance)}m\n` +
-            `GPS Accuracy: ±${Math.round(accuracy)}m`
+              `Latitude: ${latitude.toFixed(6)}\n` +
+              `Longitude: ${longitude.toFixed(6)}\n` +
+              `Distance from institution: ${Math.round(distance)}m\n` +
+              `GPS Accuracy: ±${Math.round(accuracy)}m`
           );
-          
+
           if (onLocationSave) onLocationSave();
         } catch (err) {
           alert("Error saving location: " + err.message);
@@ -110,28 +115,31 @@ function StudentTopbar({ onLocationSave }) {
       },
       (error) => {
         setIsSavingLocation(false);
-        
+
         let errorMessage = "Location permission denied";
-        switch(error.code) {
+        switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Location permission denied. Please enable location access in your browser settings.";
+            errorMessage =
+              "Location permission denied. Please enable location access in your browser settings.";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location information unavailable. Try moving outdoors or near a window.";
+            errorMessage =
+              "Location information unavailable. Try moving outdoors or near a window.";
             break;
           case error.TIMEOUT:
             errorMessage = "Location request timed out. Please try again.";
             break;
           default:
-            errorMessage = "An unknown error occurred while getting location.";
+            errorMessage =
+              "An unknown error occurred while getting location.";
         }
-        
+
         alert(errorMessage);
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       }
     );
   };
@@ -148,8 +156,6 @@ function StudentTopbar({ onLocationSave }) {
     Dashboard
   </h2>
 
-      
-
         <div className="flex items-center gap-6">
           {/* 📍 Location - Opens Map Modal */}
           <div
@@ -160,7 +166,11 @@ function StudentTopbar({ onLocationSave }) {
             <FaMapMarkerAlt size={20} />
           </div>
 
-          <div className="relative cursor-pointer">
+          {/* 🔔 Bell Icon - Navigate to notifications */}
+          <div
+            className="relative cursor-pointer"
+            onClick={() => navigate("/Studentsnotification")}
+          >
             <FaBell className="text-[#1679AB]" size={20} />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </div>
@@ -192,7 +202,10 @@ function StudentTopbar({ onLocationSave }) {
 
             {/* Modal Body - Google Maps Iframe */}
             <div className="p-4">
-              <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <div
+                className="relative w-full"
+                style={{ paddingBottom: "56.25%" }}
+              >
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d488.8253478741679!2d75.77882836155267!3d11.278746549272383!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMTHCsDE2JzQzLjUiTiA3NcKwNDYnNDQuNyJF!5e0!3m2!1sen!2sin!4v1737029715743!5m2!1sen!2sin"
                   className="absolute top-0 left-0 w-full h-full rounded-lg"
@@ -205,10 +218,9 @@ function StudentTopbar({ onLocationSave }) {
               </div>
             </div>
 
-           
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <a
-                href="https://maps.app.goo.gl/uCAETrGA2yTEmEDz9?g_st=aw"  // Updated to the new link
+                href="https://maps.app.goo.gl/uCAETrGA2yTEmEDz9?g_st=aw"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#1679AB] hover:text-[#141E46] font-semibold underline"
@@ -225,8 +237,6 @@ function StudentTopbar({ onLocationSave }) {
           </div>
         </div>
       )}
-
-     
     </>
   );
 }
