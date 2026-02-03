@@ -80,48 +80,50 @@ function StudentsNotification() {
     <div className="flex bg-gray-100 min-h-screen">
       <Sidebar />
 
-      <div className="flex-1 p-8 ml-[220px]">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+      {/* MAIN CONTENT */}
+      <div className="flex-1 px-4 sm:px-6 md:px-8 pt-6 md:ml-[220px]">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center md:text-left">
           Notifications
         </h1>
 
         {notifications.length === 0 ? (
-          <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
+          <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md max-w-xl mx-auto">
             <p className="text-gray-500 text-lg">No notifications yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {notifications.map((msg) => (
-              <div
-                key={msg._id}
-                className="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500 hover:shadow-lg transition relative"
-              >
-                {/* DELETE BUTTON (always visible like MentorNotifications) */}
-                <MdDelete
-                  size={22}
-                  className="absolute top-4 right-4 text-red-500 cursor-pointer hover:scale-110"
-                  onClick={() => handleDelete(msg._id)}
-                />
+          <div className="flex justify-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+              {notifications.map((msg) => (
+                <div
+                  key={msg._id}
+                  className="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500 hover:shadow-lg transition relative"
+                >
+                  {/* DELETE BUTTON */}
+                  <MdDelete
+                    size={22}
+                    className="absolute top-4 right-4 text-red-500 cursor-pointer hover:scale-110"
+                    onClick={() => handleDelete(msg._id)}
+                  />
 
-                <h2 className="font-semibold text-xl text-gray-800 mb-2">
-                  {msg.title}
-                </h2>
+                  <h2 className="font-semibold text-xl text-gray-800 mb-2">
+                    {msg.title}
+                  </h2>
 
-                <p className="text-gray-600 mb-2">{msg.message}</p>
+                  <p className="text-gray-600 mb-2">{msg.message}</p>
 
-                <p className="text-sm text-gray-400 mb-2">
-                  Sent by:{" "}
-                  <span className="font-medium text-gray-700">
-                    {msg.sender || "Admin"}
+                  <p className="text-sm text-gray-400 mb-2">
+                    Sent by:{" "}
+                    <span className="font-medium text-gray-700">
+                      {msg.sender || "Admin"}
+                    </span>
+                  </p>
+
+                  <span className="text-xs text-gray-400 block">
+                    {new Date(msg.createdAt).toLocaleString()}
                   </span>
-                </p>
-
-                <span className="text-xs text-gray-400 block mb-3">
-                  {new Date(msg.createdAt).toLocaleString()}
-                </span>
-                
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
