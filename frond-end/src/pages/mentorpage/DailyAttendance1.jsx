@@ -26,15 +26,41 @@ function DailyAttendance1() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liveTime, setLiveTime] = useState(Date.now());
+  const [mentorCourse, setMentorCourse] = useState(""); // NEW: Store mentor's course
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
   const [search, setSearch] = useState("");
-  const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
   const [status, setStatus] = useState("All");
   const [sortBy, setSortBy] = useState("name");
+
+  // -------------------- FETCH MENTOR INFO --------------------
+  const fetchMentorInfo = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      // Decode JWT to get mentor ID
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const mentorId = decoded.id;
+
+      // Fetch mentor details to get their course
+      const res = await axios.get(
+        `http://localhost:3001/mentor/profile/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const course = res.data?.course || res.data?.data?.course;
+      setMentorCourse(course);
+      console.log(`👨‍🏫 Mentor's course: ${course}`);
+    } catch (err) {
+      console.error("❌ Error fetching mentor info:", err);
+    }
+  }, []);
 
   // -------------------- FETCH ATTENDANCE --------------------
   const fetchAttendance = useCallback(async () => {
@@ -62,7 +88,15 @@ function DailyAttendance1() {
       }
 
       console.log("✅ Fetched attendance:", dataArray);
-      setAttendanceData(dataArray);
+      
+      // FILTER BY MENTOR'S COURSE AUTOMATICALLY
+      const filteredByCourse = dataArray.filter((student) => {
+        const studentCourse = student?.studentId?.course || student?.course || "";
+        return !mentorCourse || studentCourse === mentorCourse;
+      });
+
+      console.log(`📊 Showing ${filteredByCourse.length} students from course: ${mentorCourse}`);
+      setAttendanceData(filteredByCourse);
     } catch (err) {
       console.error("❌ Fetch error:", err);
       setError(
@@ -74,14 +108,20 @@ function DailyAttendance1() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mentorCourse]);
 
-  // -------------------- AUTO FETCH --------------------
+  // -------------------- INITIAL LOAD --------------------
   useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 30000);
-    return () => clearInterval(interval);
-  }, [fetchAttendance]);
+    fetchMentorInfo();
+  }, [fetchMentorInfo]);
+
+  useEffect(() => {
+    if (mentorCourse) {
+      fetchAttendance();
+      const interval = setInterval(fetchAttendance, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchAttendance, mentorCourse]);
 
   // -------------------- LIVE CLOCK --------------------
   useEffect(() => {
@@ -182,17 +222,15 @@ function DailyAttendance1() {
   const filteredData = attendanceData
     .filter((student) => {
       const studentName = student?.studentId?.name || student?.name || "";
-      const studentCourse = student?.studentId?.course || student?.course || "";
       const studentBatch = student?.studentId?.batch || student?.batch || "";
       
       const nameMatch = studentName.toLowerCase().includes(search.toLowerCase());
-      const courseMatch = course === "All" || studentCourse === course;
       const batchMatch = batch === "All" || studentBatch === batch;
       const statusMatch =
         status === "All" ||
         getStudentStatus(student?.attendance || student) === status;
 
-      return nameMatch && courseMatch && batchMatch && statusMatch;
+      return nameMatch && batchMatch && statusMatch;
     })
     .sort((a, b) => {
       if (sortBy === "name") {
@@ -210,14 +248,6 @@ function DailyAttendance1() {
       return 0;
     });
 
-  const uniqueCourses = [
-    "All",
-    ...new Set(
-      attendanceData
-        .map((s) => s?.studentId?.course || s?.course)
-        .filter(Boolean)
-    ),
-  ];
   const uniqueBatches = [
     "All",
     ...new Set(
@@ -271,7 +301,40 @@ function DailyAttendance1() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
       <Sidebar />
-
+      <div className="lg:ml-52 p-6 max-w-7xl mx-auto">
+        {/* Header with Course Info */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#0a2540] mb-1">
+              Daily Attendance
+            </h2>
+            <p className="text-sm text-gray-500">
+              {new Date(selectedDate).toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            {mentorCourse && (
+              <p className="text-sm font-medium text-blue-600 mt-1">
+                📚 Course: {mentorCourse}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-4">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border px-4 py-2 rounded-lg"
+            />
+            <button
+              onClick={fetchAttendance}
+              disabled={loading}
+              className="bg-[#0077b6] text-white px-6 py-2 rounded-lg hover:bg-[#005f8f] disabled:opacity-50"
+            >
+              {loading ? "Loading..." : "Refresh"}
+            </button>
       <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -315,6 +378,10 @@ function DailyAttendance1() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <p className="text-sm text-gray-600">Total Students</p>
+            <p className="text-3xl font-bold">{attendanceData.length}</p>
+            {mentorCourse && (
+              <p className="text-xs text-gray-500 mt-1">in {mentorCourse}</p>
+            )}
             <p className="text-2xl font-bold">{attendanceData.length}</p>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
@@ -348,6 +415,108 @@ function DailyAttendance1() {
             </p>
           </div>
         </div>
+
+        {/* Filters - REMOVED COURSE FILTER */}
+        <div className="bg-white p-5 rounded-xl shadow mb-8 flex flex-wrap gap-4">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border rounded-lg px-4 py-2 w-64"
+          />
+          <select
+            value={batch}
+            onChange={(e) => setBatch(e.target.value)}
+            className="border rounded-lg px-4 py-2"
+          >
+            {uniqueBatches.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="border rounded-lg px-4 py-2"
+          >
+            <option value="All">All Status</option>
+            <option value="Absent">Absent</option>
+            <option value="Present">Present</option>
+            <option value="Working">Working</option>
+            <option value="On Break">On Break</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border rounded-lg px-4 py-2"
+          >
+            <option value="name">Sort: Name</option>
+            <option value="punchIn">Sort: Punch In</option>
+          </select>
+        </div>
+
+        {/* Main Table */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 overflow-hidden">
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <div className="animate-spin h-12 w-12 border-4 border-[#0077b6] border-t-transparent rounded-full"></div>
+            </div>
+          ) : filteredData.length === 0 ? (
+            <div className="text-center py-16 text-gray-600">
+              {attendanceData.length === 0
+                ? isToday
+                  ? `No students from ${mentorCourse || 'your course'} have marked attendance today yet.`
+                  : "No records found for selected date."
+                : "No matching records with current filters."}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-max">
+                <thead>
+                  <tr className="bg-[#f0f9ff] text-[#0077b6] font-semibold">
+                    <th className="px-6 py-4 text-left rounded-tl-lg">Name</th>
+                    <th className="px-6 py-4 text-left">Batch</th>
+                    <th className="px-6 py-4 text-left">Punch In</th>
+                    <th className="px-6 py-4 text-left">Punch Out</th>
+                    <th className="px-6 py-4 text-left">Working Time</th>
+                    <th className="px-6 py-4 text-left">Break Time</th>
+                    <th className="px-6 py-4 text-left rounded-tr-lg">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((student) => {
+                    const attendance = student?.attendance || student;
+                    const studentInfo = student?.studentId || student;
+
+                    const status = getStudentStatus(attendance);
+                    const lastPunchIn = getLastPunchIn(attendance);
+                    const lastPunchOut = getLastPunchOut(attendance);
+                    const workingTime = calculateLiveWorkingTime(attendance);
+                    const breakTime = calculateLiveBreakTime(attendance);
+
+                    const statusClasses = {
+                      Present: "bg-green-100 text-green-800",
+                      Working: "bg-blue-100 text-blue-800",
+                      "On Break": "bg-orange-100 text-orange-800",
+                      Absent: "bg-red-100 text-red-800",
+                    };
+
+                    return (
+                      <tr
+                        key={student._id}
+                        className="border-b hover:bg-blue-50/50 transition"
+                      >
+                        {/* NAME */}
+                        <td className="px-6 py-4 font-medium" scope="row">
+                          {studentInfo?.name || "—"}
+                        </td>
+
+                        {/* BATCH */}
+                        <td className="px-6 py-4">{studentInfo?.batch || "—"}</td>
 
         {/* Search and Filter Section */}
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-6 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">

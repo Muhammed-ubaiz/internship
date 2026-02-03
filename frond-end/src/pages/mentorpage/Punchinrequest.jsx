@@ -51,63 +51,91 @@ function Punchinrequest() {
     }
   };
 
-  const accept = async (id) => {
-    try {
-      setLoading(true);
-      setProcessingId(id);
+ // In Punchinrequest.jsx - line 61
+const accept = async (id) => {
+  try {
+    setLoading(true);
+    setProcessingId(id);
 
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    
+    // ✅ Changed to match the route parameter name
+    const response = await axios.post(
+      `http://localhost:3001/mentor/punch-requests/${id}/accept`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('✅ Accept response:', response.data);
+    await fetchRequests();
+    alert("✅ Request accepted successfully!");
+    setActiveTab('accepted');
+  } catch (error) {
+    console.error("❌ Error accepting:", error);
+    console.error("❌ Error details:", error.response?.data);
+    alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setProcessingId(null);
+    setLoading(false);
+  }
+};
+
+const reject = async (id) => {
+  try {
+    setLoading(true);
+    setProcessingId(id);
+
+    const token = localStorage.getItem("token");
+
+    // ✅ Fixed to match new route
+    const response = await axios.post(
+      `http://localhost:3001/mentor/punch-requests/${id}/reject`,
+      { reason: "Invalid punch" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log("✅ Reject response:", response.data);
+    await fetchRequests();
+    alert("✅ Request rejected successfully!");
+    setActiveTab('rejected'); 
+  } catch (error) {
+    console.error("❌ Error rejecting:", error);
+    console.error("❌ Error details:", error.response?.data);
+    alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  } finally {
+    setProcessingId(null);
+    setLoading(false);
+  }
+};
+
+  // const reject = async (id) => {
+  //   try {
+  //     setLoading(true);
+  //     setProcessingId(id);
+
+  //     const token = localStorage.getItem("token");
+
+  //     const response = await axios.put(
+  //       `http://localhost:3001/mentor/reject-punch/${id}`,
+  //       { reason: "Invalid punch" },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     console.log("✅ Reject response:", response.data);
+
+  //     await fetchRequests();
       
-      const response = await axios.post(
-        `http://localhost:3001/mentor/punch-requests/${id}/accept`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log('✅ Accept response:', response.data);
-
-      await fetchRequests();
-      
-      alert("✅ Request accepted successfully!");
-      setActiveTab('accepted');
-    } catch (error) {
-      console.error("❌ Error accepting:", error);
-      console.error("❌ Error details:", error.response?.data);
-      alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setProcessingId(null);
-      setLoading(false);
-    }
-  };
-
-  const reject = async (id) => {
-    try {
-      setLoading(true);
-      setProcessingId(id);
-
-      const token = localStorage.getItem("token");
-
-      const response = await axios.put(
-        `http://localhost:3001/mentor/reject-punch/${id}`,
-        { reason: "Invalid punch" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log("✅ Reject response:", response.data);
-
-      await fetchRequests();
-      
-      alert("✅ Request rejected successfully!");
-      setActiveTab('rejected'); 
-    } catch (error) {
-      console.error("❌ Error rejecting:", error);
-      console.error("❌ Error details:", error.response?.data);
-      alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setProcessingId(null);
-      setLoading(false);
-    }
-  };
+  //     alert("✅ Request rejected successfully!");
+  //     setActiveTab('rejected'); 
+  //   } catch (error) {
+  //     console.error("❌ Error rejecting:", error);
+  //     console.error("❌ Error details:", error.response?.data);
+  //     alert(`❌ Failed: ${error.response?.data?.message || error.message}`);
+  //   } finally {
+  //     setProcessingId(null);
+  //     setLoading(false);
+  //   }
+  // };
 
   const allRequests = [...pendingRequests, ...historyRequests];
 

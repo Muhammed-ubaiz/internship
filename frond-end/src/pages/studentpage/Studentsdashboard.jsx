@@ -290,7 +290,6 @@ function Studentsdashboard() {
   const [hasLocationCheckedToday, setHasLocationCheckedToday] = useState(false);
   const [attendance, setAttendance] = useState(null);
   
-  // GPS tracking state for auto punch-out
   const [gpsWatchId, setGpsWatchId] = useState(null);
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
 
@@ -298,99 +297,110 @@ function Studentsdashboard() {
   const INSTITUTION_LNG = 75.77045696982046;
   const MAX_DISTANCE = 50;
 
-  // Socket connection
+  // ✅ SOCKET CONNECTION
   useEffect(() => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (!token) {
-    console.error("❌ No token found");
-    return;
-  }
-
-  // Decode student id
-  const decoded = JSON.parse(atob(token.split(".")[1]));
-  const studentId = decoded.id;
-
-  const newSocket = io("http://localhost:3001", {
-    auth: { token },
-    transports: ["websocket"], // better than polling
-  });
-
-  // ===== CONNECT =====
-  newSocket.on("connect", () => {
-    console.log("✅ Socket connected");
-
-    // ⭐ JOIN ROOM (VERY IMPORTANT)
-    newSocket.emit("joinStudentRoom", studentId);
-    console.log("👨‍🎓 Joined room:", studentId);
-
-    setLocationStatus("");
-  });
-
-  // ===== ERROR =====
-  newSocket.on("connect_error", (err) => {
-    console.error("❌ Socket error:", err.message);
-    setLocationStatus("❌ Connection failed");
-  });
-
-  // ===== APPROVAL EVENT =====
-  newSocket.on("requestApproved", (data) => {
-    console.log("🔥 Approval received:", data);
-
-    if (data.studentId !== studentId) return;
-
-    if (data.type === "PUNCH_IN") {
-      setPendingRequestId(null);
-      setPendingAction(null);
-
-      setIsPunchedIn(true);
-      setPunchInTime(new Date(data.punchTime));
-
-      setIsOnBreak(false);
-      setBreakStartTime(null);
-
-      setHasLocationCheckedToday(true);
-
-      setLocationStatus("✅ Punch-in approved");
-
-      loadTodayAttendance();
-      startLocationTracking();
+    if (!token) {
+      console.error("❌ No token found");
+      return;
     }
 
-    if (data.type === "PUNCH_OUT") {
-      setIsPunchedIn(false);
-      setPunchOutTime(new Date(data.punchTime));
+    const decoded = JSON.parse(atob(token.split(".")[1]));
+    const studentId = decoded.id;
+    console.log("👤 Student ID:", studentId);
 
-      setLocationStatus("✅ Punch-out approved");
+    const newSocket = io("http://localhost:3001", {
+      auth: { token },
+      transports: ["websocket"],
+    });
+
+    newSocket.on("connect", () => {
+      console.log("✅ Socket connected:", newSocket.id);
+      newSocket.emit("joinStudentRoom", studentId);
+      console.log("👨‍🎓 Joined student room:", studentId);
+      setLocationStatus("");
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("❌ Socket error:", err.message);
+      setLocationStatus("❌ Connection failed");
+    });
+
+    // ✅ APPROVAL EVENT
+    newSocket.on("requestApproved", (data) => {
+      console.log("🔥 Approval received:", data);
+      console.log("📍 Comparing IDs:", {
+        received: data.studentId,
+        current: studentId,
+        match: String(data.studentId) === String(studentId)
+      });
+
+      if (String(data.studentId) !== String(studentId)) {
+        console.log("⚠️ Not for this student, ignoring");
+        return;
+      }
+
+      if (data.type === "PUNCH_IN") {
+        console.log("✅ Processing PUNCH_IN approval");
+        
+        setPendingRequestId(null);
+        setPendingAction(null);
+        setIsPunchedIn(true);
+        setPunchInTime(new Date(data.punchTime));
+        setPunchOutTime(null);
+        setIsOnBreak(false);
+        setBreakStartTime(null);
+        setHasLocationCheckedToday(true);
+        setLocationStatus("✅ Punch-in approved - GPS tracking active");
+
+        startLocationTracking();
+        
+        setTimeout(() => {
+          loadTodayAttendance();
+        }, 500);
+      }
+
+      if (data.type === "PUNCH_OUT") {
+        console.log("✅ Processing PUNCH_OUT approval");
+        
+        setIsPunchedIn(false);
+        setPunchOutTime(new Date(data.punchTime));
+        setIsOnBreak(true);
+        setBreakStartTime(new Date());
+        setLocationStatus("✅ Punch-out approved");
+
+        stopLocationTracking();
+        
+        setTimeout(() => {
+          loadTodayAttendance();
+        }, 500);
+      }
+    });
+
+    newSocket.on("autoPunchOut", (data) => {
+      console.log("⚠️ Auto punch-out received:", data);
+
+      setIsPunchedIn(false);
+      setPunchOutTime(new Date());
+      setIsOnBreak(true);
+      setBreakStartTime(new Date());
+      setLocationStatus(`⚠️ Auto punch-out: ${Math.round(data.distance)}m from institution`);
 
       stopLocationTracking();
-      loadTodayAttendance();
-    }
-  });
+      
+      setTimeout(() => {
+        loadTodayAttendance();
+      }, 500);
+    });
 
-  // ===== AUTO PUNCH OUT =====
-  newSocket.on("autoPunchOut", (data) => {
-    console.log("⚠️ Auto punch-out:", data);
+    setSocket(newSocket);
 
-    setIsPunchedIn(false);
-    setPunchOutTime(new Date());
-
-    setIsOnBreak(true);
-    setBreakStartTime(new Date());
-
-    setLocationStatus(
-      `⚠️ Auto punch-out: ${Math.round(data.distance)}m`
-    );
-
-    loadTodayAttendance();
-    stopLocationTracking();
-  });
-
-  setSocket(newSocket);
-
-  return () => newSocket.disconnect();
-}, []);
-
+    return () => {
+      console.log("🔌 Disconnecting socket");
+      newSocket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     loadTodayAttendance();
@@ -399,11 +409,12 @@ function Studentsdashboard() {
   const loadTodayAttendance = async () => {
     try {
       const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role")
+      const role = localStorage.getItem("role");
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { Authorization: `Bearer ${token}`,
-        Role:role,
-       },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Role: role,
+        },
       });
 
       const att = res.data.attendance;
@@ -461,7 +472,6 @@ function Studentsdashboard() {
     setTotalWorkingTime(0);
   };
 
-  // Live timers
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
@@ -510,7 +520,6 @@ function Studentsdashboard() {
     return R * c;
   };
 
-  // Start GPS tracking for auto punch-out
   const startLocationTracking = () => {
     if (!navigator.geolocation) {
       console.error("Geolocation not supported");
@@ -527,7 +536,6 @@ function Studentsdashboard() {
         
         console.log(`📍 Current distance: ${Math.round(distance)}m`);
 
-        // Auto punch-out if distance exceeded
         if (distance > MAX_DISTANCE && isPunchedIn) {
           console.warn(`⚠️ Distance exceeded: ${Math.round(distance)}m > ${MAX_DISTANCE}m`);
           handleAutoPunchOut(latitude, longitude, distance);
@@ -547,7 +555,6 @@ function Studentsdashboard() {
     setGpsWatchId(watchId);
   };
 
-  // Stop GPS tracking
   const stopLocationTracking = () => {
     if (gpsWatchId !== null) {
       navigator.geolocation.clearWatch(gpsWatchId);
@@ -557,7 +564,6 @@ function Studentsdashboard() {
     }
   };
 
-  // Handle automatic punch-out
   const handleAutoPunchOut = async (latitude, longitude, distance) => {
     try {
       console.log("⚠️ Triggering auto punch-out...");
@@ -583,7 +589,6 @@ function Studentsdashboard() {
     }
   };
 
-  // Auto-start/stop tracking based on punch status
   useEffect(() => {
     if (isPunchedIn && !isTrackingLocation) {
       startLocationTracking();
@@ -605,7 +610,6 @@ function Studentsdashboard() {
       setLoading(true);
       setLocationStatus("Getting your location...");
 
-      // FIRST PUNCH OF THE DAY - Show map and request approval
       if (!hasLocationCheckedToday) {
         const loc = await getCurrentLocation();
         const dist = calculateDistance(loc.latitude, loc.longitude, INSTITUTION_LAT, INSTITUTION_LNG);
@@ -615,7 +619,6 @@ function Studentsdashboard() {
         setShowMap(true);
         setLoading(false);
       } 
-      // SUBSEQUENT PUNCHES - Direct punch-in without approval
       else {
         const res = await axios.post("http://localhost:3001/student/punch-in", {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -630,7 +633,7 @@ function Studentsdashboard() {
           setBreakTime(res.data.attendance.totalBreakSeconds);
           setTotalWorkingTime(res.data.attendance.totalWorkingSeconds);
           setLocationStatus("✅ Punched in - GPS tracking active");
-          startLocationTracking(); // Start GPS tracking
+          startLocationTracking();
           loadTodayAttendance();
         }
         setLoading(false);
@@ -669,7 +672,7 @@ function Studentsdashboard() {
         setPendingAction('punchIn');
         setLocationStatus("⏳ First punch-in request submitted - Waiting for admin approval");
         setShowMap(false);
-        setHasLocationCheckedToday(true); // Mark as checked after submission
+        setHasLocationCheckedToday(true);
       }
     } catch (err) {
       console.error("Punch-in request error:", err.response?.data);
@@ -708,7 +711,7 @@ function Studentsdashboard() {
         }
         
         setLocationStatus("✅ Punched out - Break started");
-        stopLocationTracking(); // Stop GPS tracking
+        stopLocationTracking();
         
         setTimeout(() => {
           loadTodayAttendance();
@@ -748,16 +751,10 @@ function Studentsdashboard() {
         isLoading={loading}
       />
 
-
-        {/* GPS Tracking Indicator */}
-        {isTrackingLocation && (
-          <div className="mb-4 p-3 rounded-lg bg-blue-100 border border-blue-300 flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-            <span className="text-blue-800 font-semibold text-sm">
-              🌍 GPS Tracking Active - Auto punch-out enabled (50m range)
-            </span>
-          </div>
-        )}
+      <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
+        <div className="flex justify-center items-center mb-10">
+          <StudentTopbar />
+        </div>
 
         {locationStatus && (
           <div
@@ -772,24 +769,6 @@ function Studentsdashboard() {
             {locationStatus}
           </div>
         )}
-          <div className="ml-0 lg:ml-56 max-w-6xl mx-auto">
-            <div className="flex justify-center items-center mb-10">
-              <StudentTopbar />
-            </div>
-
-            {locationStatus && (
-              <div
-                className={`mb-4 p-3 rounded-lg text-center mb-10 font-semibold ${
-                  locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
-                  locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
-                  locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
-                  "bg-blue-100 text-blue-700"
-                }`}
-              >
-                {locationStatus}
-              </div>
-            )}
-
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow-2xl p-5">

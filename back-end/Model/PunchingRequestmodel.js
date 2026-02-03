@@ -1,4 +1,4 @@
-// models/PunchRequest.js - Schema for punch-in approval requests
+// models/PunchRequest.js - FIXED
 
 import mongoose from 'mongoose';
 
@@ -49,13 +49,30 @@ const punchRequestSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  processedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Mentor',
+    default: null,
+  },
+  processedAt: {
+    type: Date,
+    default: null,
+  },
 }, {
   timestamps: true,
 });
 
-// Index for faster queries
+// Indexes for faster queries
 punchRequestSchema.index({ studentId: 1, status: 1 });
 punchRequestSchema.index({ requestTime: -1 });
+punchRequestSchema.index({ processedBy: 1 });
+
+// FIXED: Remove next callback - just update the field directly
+punchRequestSchema.pre('save', function() {
+  if (this.isModified('status') && this.status !== 'PENDING') {
+    this.processedAt = new Date();
+  }
+});
 
 const PunchRequest = mongoose.model('PunchRequest', punchRequestSchema);
 
