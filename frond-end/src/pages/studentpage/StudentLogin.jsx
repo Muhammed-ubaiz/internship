@@ -39,9 +39,8 @@ const handleLogin = async (e) => {
     }
 
 
-    const { token} = res.data;
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", "student");
+   
+    
 
     const { token, student } = res.data;
 

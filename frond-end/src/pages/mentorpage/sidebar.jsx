@@ -7,13 +7,9 @@ import {
   FaPowerOff,
   FaChevronDown,
   FaUsers,
-
   FaMicrophone,
- 
-
   FaBars,
   FaTimes,
-
 } from "react-icons/fa";
 
 function Sidebar() {
@@ -37,7 +33,7 @@ function Sidebar() {
 
   const handleNavigation = (path) => {
     navigate(path);
-    setSidebarOpen(false); // close sidebar on mobile
+    setSidebarOpen(false);
   };
 
   return (
@@ -45,12 +41,12 @@ function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-1 left-1 z-50 lg:hidden bg-[#141E46] text-white p-3 rounded-lg shadow-lg hover:bg-[#1a2557] transition-all"
+        className="fixed top-2 left-2 z-50 lg:hidden bg-[#141E46] text-white p-3 rounded-lg shadow"
       >
-        {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+        {sidebarOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
       </button>
 
-      {/* Mobile Overlay */}
+      {/* Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -60,21 +56,20 @@ function Sidebar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-screen w-[220px] bg-[#141E46]/90 flex flex-col z-40 transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        lg:translate-x-0`}
+        className={`fixed top-0 left-0 h-screen w-[220px] bg-[#141E46] z-40 flex flex-col transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         {/* Logo */}
         <div className="border-b border-gray-700 p-4">
           <img
             src="https://res.cloudinary.com/daadrhhk9/image/upload/v1768208933/36F737FD-D312-4078-9846-4B9C9B266231_1_201_a_1_kuzwta.png"
             alt="logo"
-            className="w-full h-auto"
+            className="w-full"
           />
         </div>
 
         {/* Menu */}
-        <div className="flex flex-col flex-1 mt-2 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto mt-2">
           {/* Dashboard */}
           <div
             className={menuItem}
@@ -97,7 +92,7 @@ function Sidebar() {
             </div>
           </div>
 
-          {/* Attendance Dropdown */}
+          {/* Attendance */}
           <div
             className={menuItem}
             onClick={() => {
@@ -116,32 +111,13 @@ function Sidebar() {
             />
           </div>
 
-
-        {/* Leave History */}
-        <div
-          className={menuItem}
-          onClick={() => navigate("/announcement")}
-        >
-          <div className="flex items-center gap-3">
-          <FaMicrophone />
-            <span>Announcement</span>
-          </div>
-        </div>
-        <div
-          className={menuItem}
-          onClick={() => navigate("/leavehistory1")}
-        >
-          <div className="flex items-center gap-3">
-            <FaUmbrellaBeach />
-            <span>Leave History</span>
-
           {attendanceOpen && (
             <div>
               <div
                 className={subItem}
                 onClick={() => handleNavigation("/punchinrequest")}
               >
-                Punch in request
+                Punch In Request
               </div>
               <div
                 className={subItem}
@@ -158,7 +134,18 @@ function Sidebar() {
             </div>
           )}
 
-          {/* Leave Dropdown */}
+          {/* Announcement */}
+          <div
+            className={menuItem}
+            onClick={() => handleNavigation("/announcement")}
+          >
+            <div className="flex items-center gap-3">
+              <FaMicrophone />
+              <span>Announcement</span>
+            </div>
+          </div>
+
+          {/* Leave */}
           <div
             className={menuItem}
             onClick={() => {
@@ -175,37 +162,32 @@ function Sidebar() {
                 leaveOpen ? "rotate-180" : ""
               }`}
             />
-
           </div>
 
           {leaveOpen && (
             <div>
               <div
                 className={subItem}
-                onClick={() =>
-                  handleNavigation("/mentorleaverequest")
-                }
+                onClick={() => handleNavigation("/mentorleaverequest")}
               >
-                Leave Request's
+                Leave Requests
               </div>
               <div
                 className={subItem}
-                onClick={() =>
-                  handleNavigation("/leavehistory1")
-                }
+                onClick={() => handleNavigation("/leavehistory1")}
               >
                 Leave History
               </div>
             </div>
           )}
+        </div>
 
-          {/* Logout */}
-          <div className="mt-auto border-t border-gray-700">
-            <div className={menuItem} onClick={handleLogout}>
-              <div className="flex items-center gap-3">
-                <FaPowerOff />
-                <span>Logout</span>
-              </div>
+        {/* Logout */}
+        <div className="border-t border-gray-700">
+          <div className={menuItem} onClick={handleLogout}>
+            <div className="flex items-center gap-3">
+              <FaPowerOff />
+              <span>Logout</span>
             </div>
           </div>
         </div>
