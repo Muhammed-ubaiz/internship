@@ -17,33 +17,46 @@ import Batch from "../Model/Batchmodel.js";
 
 export const getbatch = async (req, res) => {
   try {
-    const mentorEmail = req.user?.email;
+    const mentorId = req.user?.id;
 
-    if (!mentorEmail) {
+    if (!mentorId) {
       return res.status(401).json({
         success: false,
-        message: "Authentication failed - mentor email missing",
+        message: "Authentication failed - mentor ID missing",
       });
     }
 
-    // ⚠️ IMPORTANT: field name must match Course schema
-    const courses = await Course.find({ mentorEmail });
+    // Find the mentor to get their course
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
 
-    if (!courses.length) {
+    const mentorCourse = mentor.course;
+    console.log("📚 Mentor course:", mentorCourse);
+
+    // Find batches for this course using the Batch model
+    const batches = await Batch.find({ courseName: mentorCourse }).select("name");
+    
+    console.log("📋 Found batches:", batches);
+
+    if (!batches.length) {
       return res.json({
         success: true,
         batches: [],
-        message: "No batches assigned",
+        message: "No batches assigned for this course",
       });
     }
 
-    const batches = [
-      ...new Set(courses.map(c => c.batch).filter(Boolean))
-    ];
+    // Extract batch names
+    const batchNames = batches.map(b => b.name);
 
     res.json({
       success: true,
-      batches,
+      batches: batchNames,
     });
 
   } catch (error) {
@@ -96,12 +109,13 @@ export const announcementsend = async (req, res) => {
       });
     }
 
-    // Validate batch if not "All"
+    // Validate batch if not "All" - mentor.course is a string (course name)
     if (batch != "All") {
-      const mentorBatches = mentor.course?.map(course => 
-        typeof course === 'string' ? course : (course.batch || course.batchName || course.name)
-      ).filter(Boolean) || [];
-      if (!mentorBatches.includes(batch)) {
+      // Get valid batches from Batch model
+      const validBatches = await Batch.find({ courseName: mentor.course }).select("name");
+      const validBatchNames = validBatches.map(b => b.name);
+      
+      if (!validBatchNames.includes(batch)) {
         return res.status(400).json({
           success: false,
           message: `Invalid batch: ${batch}`,
@@ -692,6 +706,85 @@ export const getMentorProfile = async (req, res) => {
   } catch (error) {
     console.error("❌ Error:", error);
     res.status(500).json({ success: false });
+  }
+};
+
+// ✅ GET MY ANNOUNCEMENTS - Get all announcements sent by this mentor
+export const getMyAnnouncements = async (req, res) => {
+  try {
+    const mentorEmail = req.user?.email || req.user?.userEmail;
+    const mentorId = req.user?.id || req.user?._id;
+
+    if (!mentorEmail && !mentorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed",
+      });
+    }
+
+    let query = {};
+    if (mentorEmail) {
+      query.mentorEmail = mentorEmail;
+    } else if (mentorId) {
+      query.mentorId = mentorId;
+    }
+
+    const announcements = await Announcement.find(query)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      announcements,
+    });
+  } catch (error) {
+    console.error("❌ getMyAnnouncements error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch announcements",
+    });
+  }
+};
+
+// ✅ DELETE ANNOUNCEMENT - Mentor can delete their own announcement
+export const deleteAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mentorEmail = req.user?.email || req.user?.userEmail;
+    const mentorId = req.user?.id || req.user?._id;
+
+    const announcement = await Announcement.findById(id);
+
+    if (!announcement) {
+      return res.status(404).json({
+        success: false,
+        message: "Announcement not found",
+      });
+    }
+
+    // Check if the mentor owns this announcement
+    const isOwner = 
+      (mentorEmail && announcement.mentorEmail === mentorEmail) ||
+      (mentorId && announcement.mentorId?.toString() === mentorId.toString());
+
+    if (!isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own announcements",
+      });
+    }
+
+    await Announcement.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: "Announcement deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ deleteAnnouncement error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete announcement",
+    });
   }
 };
 
