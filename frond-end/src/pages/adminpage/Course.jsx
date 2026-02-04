@@ -78,6 +78,12 @@ function Course() {
 
     } catch (error) {
       console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Failed to add course",
+        draggable: true,
+      });
     }
   };
 
@@ -132,47 +138,61 @@ function Course() {
 
     } catch (err) {
       console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: err.response?.data?.message || "Failed to add batch",
+        draggable: true,
+      });
     }
   };
 
   const handleDeleteBatch = async (id) => {
-    Swal.fire({
+    const result = await Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-
-        try {
-          await axios.delete(
-            `http://localhost:3001/admin/deleteBatch/${id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Role: role,
-              },
-            }
-          );
-
-          setBatches(batches.filter((b) => b._id !== id));
-
-          Swal.fire({
-            title: "Deleted!",
-            text: "Batch has been deleted.",
-            icon: "success"
-          });
-
-        } catch (error) {
-          console.error(error);
-        }
-      }
+      confirmButtonText: "Yes, delete it!",
+      draggable: true,
     });
+
+    if (result.isConfirmed) {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      try {
+        await axios.delete(
+          `http://localhost:3001/admin/deleteBatch/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Role: role,
+            },
+          }
+        );
+
+        setBatches(batches.filter((b) => b._id !== id));
+
+        Swal.fire({
+          title: "Deleted!",
+          text: "Batch has been deleted.",
+          icon: "success",
+          draggable: true,
+        });
+
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to delete batch",
+          draggable: true,
+        });
+      }
+    }
   };
 
   const handleEditClick = (course) => {
@@ -183,66 +203,91 @@ function Course() {
   };
 
   const handleEditCourse = async () => {
-    Swal.fire({
+    const result = await Swal.fire({
       title: "Do you want to save the changes?",
       showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: "Save",
-      denyButtonText: `Don't save`
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-
-        try {
-          const res = await axios.post(
-            `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
-            { editCourseName, editDuration },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Role: role,
-              },
-            }
-          );
-
-          setCourses(
-            courses.map((c) =>
-              c._id === selectedCourse._id ? res.data.course : c
-            )
-          );
-
-          setShowEditCourseModal(false);
-
-          Swal.fire("Saved!", "", "success");
-        } catch (error) {
-          console.error(error);
-        }
-      } else if (result.isDenied) {
-        Swal.fire("Changes are not saved", "", "info");
-      }
+      denyButtonText: `Don't save`,
+      draggable: true,
     });
+
+    if (result.isConfirmed) {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+
+      try {
+        const res = await axios.post(
+          `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+          { editCourseName, editDuration },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Role: role,
+            },
+          }
+        );
+
+        setCourses(
+          courses.map((c) =>
+            c._id === selectedCourse._id ? res.data.course : c
+          )
+        );
+
+        setShowEditCourseModal(false);
+        Swal.fire("Saved!", "Course updated successfully.", "success");
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: error.response?.data?.message || "Failed to update course",
+          draggable: true,
+        });
+      }
+    } else if (result.isDenied) {
+      Swal.fire("Changes are not saved", "", "info");
+    }
   };
 
   const handleToggleStatus = async (course) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
     try {
       const res = await axios.put(
-        `http://localhost:3001/admin/course/status/${course._id}`
+        `http://localhost:3001/admin/course/status/${course._id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Role: role,
+          },
+        }
       );
 
       setCourses(
         courses.map((c) => (c._id === course._id ? res.data.data : c))
       );
 
+      const newStatus = course.status === "active" ? "Inactive" : "Active";
+
       Swal.fire({
         icon: "success",
-        title: "Course status updated",
+        title: `Course is now ${newStatus}`,
         showConfirmButton: false,
-        timer: 1500
+        timer: 1500,
+        draggable: true,
       });
 
     } catch (error) {
       console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Failed to update status",
+        draggable: true,
+      });
     }
   };
 
@@ -269,10 +314,7 @@ function Course() {
 
       <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-6 
-sticky top-0 bg-[#EEF6FB] py-2">
-
-
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-7 mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
             Courses Management
           </h1>
@@ -285,9 +327,9 @@ sticky top-0 bg-[#EEF6FB] py-2">
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 max-h-[640px] overflow-y-auto">
+        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl max-h-[640px] overflow-y-auto">
           {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-4 sticky top-0 bg-white py-4 z-10">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
             {/* Search */}
             <div className="group relative w-full sm:w-80">
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
@@ -318,7 +360,7 @@ sticky top-0 bg-[#EEF6FB] py-2">
             </div>
 
             {/* Status Filter */}
-            <div className="relative w-full sm:w-72 group">
+            <div className="relative w-full sm:max-w-[280px] group">
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <select
                   value={statusFilter}
@@ -355,7 +397,7 @@ sticky top-0 bg-[#EEF6FB] py-2">
                       <p className="text-sm text-gray-600">{course.duration}</p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs ${
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
                         course.status === "active"
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
@@ -367,19 +409,19 @@ sticky top-0 bg-[#EEF6FB] py-2">
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => handleViewBatch(course)}
-                      className="flex-1 min-w-[80px] px-3 py-2 text-xs rounded-lg bg-blue-600 text-white"
+                      className="flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       Batches
                     </button>
                     <button
                       onClick={() => handleEditClick(course)}
-                      className="flex-1 min-w-[80px] px-3 py-2 text-xs rounded-lg bg-yellow-500 text-white"
+                      className="flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleToggleStatus(course)}
-                      className={`flex-1 min-w-[80px] px-3 py-2 text-xs rounded-lg text-white ${
+                      className={`flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg text-white ${
                         course.status === "active"
                           ? "bg-red-600 hover:bg-red-700"
                           : "bg-green-600 hover:bg-green-700"
@@ -395,14 +437,14 @@ sticky top-0 bg-[#EEF6FB] py-2">
 
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-sm border-separate border-spacing-y-3">
-              <thead className="h-15 sticky top-18 bg-white">
-                <tr className="text-[#1679AB]">
-                  <th className="px-2">#</th>
-                  <th className="px-2">Course Name</th>
-                  <th className="px-2">Duration</th>
-                  <th className="px-2">Status</th>
-                  <th className="px-2">Actions</th>
+            <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
+              <thead className="top-18 bg-white">
+                <tr className="text-[#1679AB] text-left">
+                  <th className="p-3 text-center">#</th>
+                  <th className="p-3 text-center">Course Name</th>
+                  <th className="p-3 text-center">Duration</th>
+                  <th className="p-3 text-center">Status</th>
+                  <th className="p-3 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -418,7 +460,7 @@ sticky top-0 bg-[#EEF6FB] py-2">
                       key={course._id}
                       className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transform transition-all duration-300 hover:scale-98"
                     >
-                      <td className="p-3 text-center">{index + 1}</td>
+                      <td className="px-3 py-3 text-center">{index + 1}</td>
                       <td className="px-4 py-3 text-center break-words">
                         {course.name}
                       </td>
@@ -440,13 +482,13 @@ sticky top-0 bg-[#EEF6FB] py-2">
                         <div className="flex flex-wrap gap-2 justify-center">
                           <button
                             onClick={() => handleViewBatch(course)}
-                            className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white"
+                            className="px-3 py-1 text-xs rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                           >
                             Batches
                           </button>
                           <button
                             onClick={() => handleEditClick(course)}
-                            className="px-3 py-1 text-xs rounded-lg bg-yellow-500 text-white"
+                            className="px-3 py-1 text-xs rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white"
                           >
                             Edit
                           </button>
@@ -469,181 +511,201 @@ sticky top-0 bg-[#EEF6FB] py-2">
             </table>
           </div>
         </div>
+      </div>
 
-        {/* Add Course Modal */}
-        {showCourseModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md relative">
-              <button
-                onClick={() => setShowCourseModal(false)}
-                className="absolute top-3 right-3 text-xl"
-              >
-                ✕
-              </button>
- <h2 className="text-lg font-semibold mb-4 mt-2 sm:mt-3 md:mt-0">
-  Add Course
-</h2>
+      {/* ================= ADD COURSE MODAL ================= */}
+      {showCourseModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowCourseModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
 
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
+              Add Course
+            </h2>
 
+            <form onSubmit={handleAddCourse} className="space-y-3">
               <input
+                type="text"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
                 placeholder="Course Name"
-                className="w-full border p-2 rounded mb-3"
+                className="w-full border p-2 rounded"
+                required
               />
               <input
+                type="text"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="Duration"
-                className="w-full border p-2 rounded mb-4"
+                className="w-full border p-2 rounded"
+                required
               />
               <button
-                onClick={handleAddCourse}
-                className="w-full bg-[#141E46] text-white py-2 rounded"
+                type="submit"
+                className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
               >
                 Add Course
               </button>
-            </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Batch Modal */}
-        {showBatchModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md relative max-h-[80vh] overflow-y-auto">
-              <button
-                onClick={() => setShowBatchModal(false)}
-                className="absolute top-3 right-3 text-xl"
-              >
-                ✕
-              </button>
+      {/* ================= BATCH MODAL ================= */}
+      {showBatchModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[80vh] overflow-y-auto">
+            <button
+              onClick={() => setShowBatchModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
 
-              <h2 className="text-lg font-semibold mb-4">
-                Batches for {selectedCourse?.name}
-              </h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
+              Batches for {selectedCourse?.name}
+            </h2>
 
-              <div className="group relative mb-5">
-                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                  <input
-                    type="text"
-                    placeholder="Search batch..."
-                    value={batchSearch}
-                    onChange={(e) => setBatchSearch(e.target.value)}
-                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-                  />
-                  <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#141E46] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
-                      />
-                    </svg>
-                  </button>
-                </div>
+            {/* Search Batch */}
+            <div className="group relative mb-5">
+              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
+                <input
+                  type="text"
+                  placeholder="Search batch..."
+                  value={batchSearch}
+                  onChange={(e) => setBatchSearch(e.target.value)}
+                  className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
+                />
+                <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#141E46] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                    />
+                  </svg>
+                </button>
               </div>
-
-              {filteredBatches.length === 0 ? (
-                <p className="text-gray-500 mb-4">No batches found</p>
-              ) : (
-                <ul className="space-y-2 mb-4">
-                  {filteredBatches.map((b) => (
-                    <li
-                      key={b._id}
-                      className="flex justify-between items-center bg-gray-200 p-3 rounded transform transition-all duration-300 hover:scale-98"
-                    >
-                      <span className="break-all pr-2">{b.name}</span>
-                      <button
-                        onClick={() => handleDeleteBatch(b._id)}
-                        className="hover:text-red-500 transform transition-all duration-300 hover:scale-150 flex-shrink-0"
-                      >
-                        <MdDelete />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <button
-                onClick={() => setShowAddBatchModal(true)}
-                className="w-full bg-[#141E46] text-white py-2 rounded"
-              >
-                Add Batch
-              </button>
             </div>
-          </div>
-        )}
 
-        {/* Add Batch Modal */}
-        {showAddBatchModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md relative">
-              <button
-                onClick={() => setShowAddBatchModal(false)}
-                className="absolute top-3 right-3 text-xl"
-              >
-                ✕
-              </button>
-              <h2 className="text-lg font-semibold mb-4">Add Batch</h2>
+            {filteredBatches.length === 0 ? (
+              <p className="text-gray-500 text-center mb-4">No batches found</p>
+            ) : (
+              <ul className="space-y-2 mb-4">
+                {filteredBatches.map((b) => (
+                  <li
+                    key={b._id}
+                    className="flex justify-between items-center bg-[#EEF6FB] hover:bg-[#D1E8FF] p-3 rounded-lg transform transition-all duration-300"
+                  >
+                    <span className="break-all pr-2 text-sm">{b.name}</span>
+                    <button
+                      onClick={() => handleDeleteBatch(b._id)}
+                      className="text-red-600 hover:text-red-700 transform transition-all duration-300 hover:scale-110 flex-shrink-0"
+                    >
+                      <MdDelete size={20} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <button
+              onClick={() => setShowAddBatchModal(true)}
+              className="w-full bg-[#141E46] text-white py-2 rounded-lg hover:bg-[#0f2040]"
+            >
+              + Add Batch
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= ADD BATCH MODAL ================= */}
+      {showAddBatchModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative">
+            <button
+              onClick={() => setShowAddBatchModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
+              Add Batch
+            </h2>
+
+            <div className="space-y-3">
               <input
                 type="date"
                 value={batchName}
                 onChange={(e) => setBatchName(e.target.value)}
-                className="w-full border p-2 rounded mb-4"
+                className="w-full border p-2 rounded"
               />
               <button
                 onClick={handleAddBatch}
-                className="w-full bg-[#141E46] text-white py-2 rounded"
+                className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
               >
                 Add Batch
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Edit Course Modal */}
-        {showEditCourseModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-white p-4 sm:p-6 rounded-lg w-full max-w-md relative">
-              <button
-                onClick={() => setShowEditCourseModal(false)}
-                className="absolute top-3 right-3 text-xl"
-              >
-                ✕
-              </button>
-              <h2 className="text-lg font-semibold mb-4">Edit Course</h2>
+      {/* ================= EDIT COURSE MODAL ================= */}
+      {showEditCourseModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowEditCourseModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-lg sm:text-xl font-semibold text-center mb-5">
+              Edit Course
+            </h2>
+
+            <div className="space-y-3">
               <input
+                type="text"
                 value={editCourseName}
                 onChange={(e) => setEditCourseName(e.target.value)}
-                className="w-full border p-2 rounded mb-3"
+                className="w-full border p-2 rounded"
                 placeholder="Course Name"
               />
               <input
+                type="text"
                 value={editDuration}
                 onChange={(e) => setEditDuration(e.target.value)}
-                className="w-full border p-2 rounded mb-4"
+                className="w-full border p-2 rounded"
                 placeholder="Duration"
               />
               <button
                 onClick={handleEditCourse}
-                className="w-full bg-[#141E46] text-white py-2 rounded"
+                className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
               >
                 Save Changes
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
-
 
 export default Course;

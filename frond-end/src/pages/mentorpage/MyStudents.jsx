@@ -189,7 +189,59 @@ function MyStudents() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-6 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
+        
+
+        {/* Main Content */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#0a2540] border-t-transparent mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading students data...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-red-700 mb-2">
+              Error Loading Data
+            </h3>
+            <p className="text-red-600">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-[#0a2540]" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              {students.length === 0
+                ? "No Students Found"
+                : "No Matching Students"}
+            </h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+              {students.length === 0
+                ? "No students have been assigned to you yet."
+                : "No students match your current filters. Try adjusting your search criteria."}
+            </p>
+            {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
+              <button
+                onClick={clearAllFilters}
+                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          
+<div className="hidden lg:block overflow-x-auto">
+  <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
           {/* Search Bar */}
           <div className="group relative w-full sm:w-72">
             <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
@@ -268,61 +320,9 @@ function MyStudents() {
             </button>
           )}
         </div>
-
-        {/* Main Content */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#0a2540] border-t-transparent mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading students data...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-red-700 mb-2">
-              Error Loading Data
-            </h3>
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : filteredStudents.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="w-10 h-10 text-[#0a2540]" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {students.length === 0
-                ? "No Students Found"
-                : "No Matching Students"}
-            </h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">
-              {students.length === 0
-                ? "No students have been assigned to you yet."
-                : "No students match your current filters. Try adjusting your search criteria."}
-            </p>
-            {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
-              <button
-                onClick={clearAllFilters}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors"
-              >
-                Clear All Filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            {/* Table */}
-            {/* ================= DESKTOP VIEW ================= */}
-<div className="hidden lg:block overflow-x-auto">
-  <table className="w-full text-sm border-separate border-spacing-y-3">
+  <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
     <thead className="bg-white">
-      <tr className="text-[#0a2540] text-left">
+      <tr className="text-[#1679AB] text-left">
         <th className="p-3 text-center">#</th>
         <th className="p-3 text-center">Name</th>
         <th className="p-3 text-center">Email</th>
@@ -334,8 +334,8 @@ function MyStudents() {
 
     <tbody>
       {filteredStudents.length === 0 ? (
-        <tr className="bg-blue-50">
-          <td colSpan="6" className="text-center p-4 rounded-xl">
+        <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+          <td colSpan="6" className="text-center p-4 rounded-2xl">
             No students found
           </td>
         </tr>
@@ -343,20 +343,29 @@ function MyStudents() {
         filteredStudents.map((student, index) => (
           <tr
             key={student._id}
-            className="bg-blue-50 hover:bg-blue-100 transition-all"
+            className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
           >
-            <td className="p-3 text-center">{index + 1}</td>
-            <td className="p-3 text-center">{student.name}</td>
-            <td className="p-3 text-center break-all">{student.email}</td>
-            <td className="p-3 text-center">
+            <td className="px-3 py-3 text-center">{index + 1}</td>
+
+            <td className="px-4 py-3 text-center break-words">
+              {student.name}
+            </td>
+
+            <td className="px-4 py-3 text-center break-words">
+              {student.email}
+            </td>
+
+            <td className="px-4 py-3 text-center break-words">
               {student.course || "N/A"}
             </td>
-            <td className="p-3 text-center">
+
+            <td className="px-4 py-3 text-center break-words">
               {student.batch || "N/A"}
             </td>
-            <td className="p-3 text-center">
+
+            <td className="px-4 py-3 text-center">
               <span
-                className={`px-3 py-1 rounded-full text-xs ${
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
                   student.status === "Active"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
@@ -371,6 +380,7 @@ function MyStudents() {
     </tbody>
   </table>
 </div>
+
 
 
             {/* Footer */}
