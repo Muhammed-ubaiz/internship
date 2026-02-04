@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Sidebar from "./sidebar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { io } from "socket.io-client";
 import {
   Clock,
@@ -42,15 +42,8 @@ function DailyAttendance1() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found. Please login again.");
-
-      const res = await axios.get(
-        "http://localhost:3001/mentor/today-attendance",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // Backend now filters by mentor's course automatically
+      const res = await api.get("/mentor/today-attendance");
 
       const rawAttendance = res.data?.data || [];
 
@@ -61,7 +54,7 @@ function DailyAttendance1() {
         dataArray = [rawAttendance];
       }
 
-      console.log("✅ Fetched attendance:", dataArray);
+      console.log("✅ Fetched attendance (filtered by mentor's course):", dataArray.length);
       setAttendanceData(dataArray);
     } catch (err) {
       console.error("❌ Fetch error:", err);
@@ -92,8 +85,9 @@ function DailyAttendance1() {
   // -------------------- SOCKET.IO --------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-    const socket = io("http://localhost:3001", {
+    const socket = io(API_BASE, {
       auth: { token },
       transports: ["websocket"],
     });

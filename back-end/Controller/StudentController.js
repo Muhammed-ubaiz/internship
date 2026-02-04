@@ -757,6 +757,245 @@ export const getStudentDailyAttendance = async (req, res) => {
   }
 };
 
+// Get monthly attendance summary
+export const getMonthlySummary = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { month, year } = req.query;
+
+    // Default to current month and year
+    const targetMonth = month ? parseInt(month) : new Date().getMonth();
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
+    // Get start and end of the target month
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    // Calculate total working days in the month (excluding weekends)
+    let totalWorkingDays = 0;
+    const today = new Date();
+    const lastDayToCount = endOfMonth > today ? today : endOfMonth;
+
+    for (let d = new Date(startOfMonth); d <= lastDayToCount; d.setDate(d.getDate() + 1)) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) { // Exclude Sunday (0) and Saturday (6)
+        totalWorkingDays++;
+      }
+    }
+
+    // Get attendance records for the month
+    const attendanceRecords = await Attendance.find({
+      studentId,
+      date: { $gte: startOfMonth, $lte: endOfMonth }
+    });
+
+    const presentDays = attendanceRecords.length;
+
+    // Get approved leaves for the month
+    const approvedLeaves = await Leave.find({
+      studentId,
+      status: "Approved",
+      $or: [
+        { from: { $gte: startOfMonth, $lte: endOfMonth } },
+        { to: { $gte: startOfMonth, $lte: endOfMonth } }
+      ]
+    });
+
+    // Calculate leave days
+    let leaveDays = 0;
+    approvedLeaves.forEach(leave => {
+      const leaveStart = new Date(leave.from) < startOfMonth ? startOfMonth : new Date(leave.from);
+      const leaveEnd = new Date(leave.to) > endOfMonth ? endOfMonth : new Date(leave.to);
+      const diffTime = Math.abs(leaveEnd - leaveStart);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      leaveDays += diffDays;
+    });
+
+    // Calculate absent days (working days - present - leaves)
+    const absentDays = Math.max(0, totalWorkingDays - presentDays - leaveDays);
+
+    // Get monthly data for the past 6 months (for graph)
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(targetYear, targetMonth - i, 1);
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const monthAttendance = await Attendance.countDocuments({
+        studentId,
+        date: { $gte: monthStart, $lte: monthEnd }
+      });
+
+      // Calculate working days for this month
+      let workingDays = 0;
+      const lastDay = monthEnd > today ? today : monthEnd;
+      if (monthStart <= today) {
+        for (let d = new Date(monthStart); d <= lastDay; d.setDate(d.getDate() + 1)) {
+          const day = d.getDay();
+          if (day !== 0 && day !== 6) {
+            workingDays++;
+          }
+        }
+      }
+
+      const percentage = workingDays > 0 ? Math.round((monthAttendance / workingDays) * 100) : 0;
+
+      monthlyData.push({
+        month: monthDate.toLocaleString('default', { month: 'long' }),
+        year: monthDate.getFullYear(),
+        presentDays: monthAttendance,
+        workingDays,
+        percentage
+      });
+    }
+
+    res.json({
+      success: true,
+      summary: {
+        totalDays: totalWorkingDays,
+        presentDays,
+        absentDays,
+        leaveDays,
+        month: startOfMonth.toLocaleString('default', { month: 'long' }),
+        year: targetYear
+      },
+      monthlyData
+    });
+
+  } catch (error) {
+    console.error("Get monthly summary error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+// ✅ AUTO PUNCH-OUT - Called when student moves 50m away from initial location
+export const autoPunchOut = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { latitude, longitude, distance } = req.body;
+    const { today, tomorrow } = getTodayRange();
+
+    console.log(`📍 Auto punch-out triggered for student ${studentId}, distance: ${distance}m`);
+
+    // Find today's attendance
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: { $gte: today, $lt: tomorrow }
+    });
+
+    if (!attendance) {
+      return res.status(400).json({
+        success: false,
+        message: 'No attendance record for today'
+      });
+    }
+
+    // Check if there's an active session (punched in but not out)
+    const lastRecordIndex = attendance.punchRecords.length - 1;
+    const lastRecord = attendance.punchRecords[lastRecordIndex];
+
+    if (!lastRecord || lastRecord.punchOut) {
+      return res.status(400).json({
+        success: false,
+        message: 'Not currently punched in'
+      });
+    }
+
+    // Verify student has moved more than 50m
+    if (distance <= 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student is still within 50m of initial location'
+      });
+    }
+
+    const now = new Date();
+    const sessionSeconds = Math.floor((now - new Date(lastRecord.punchIn)) / 1000);
+
+    // Update the last record with punch-out
+    attendance.punchRecords[lastRecordIndex].punchOut = now;
+    attendance.punchRecords[lastRecordIndex].sessionWorkingSeconds = sessionSeconds;
+    attendance.punchRecords[lastRecordIndex].autoPunchOut = true; // Mark as auto punch-out
+    attendance.punchRecords[lastRecordIndex].autoPunchOutReason = `Moved ${Math.round(distance)}m from initial location`;
+
+    // Add to total working time
+    attendance.totalWorkingSeconds += sessionSeconds;
+
+    // Set status to indicate auto punch-out
+    attendance.status = "PRESENT";
+    attendance.lastAutoPunchOutDistance = distance;
+    attendance.lastAutoPunchOutTime = now;
+
+    await attendance.save();
+
+    console.log(`✅ Auto punch-out completed for student ${studentId}`);
+
+    // Emit socket event if available
+    const io = req.app.get("socketio");
+    if (io) {
+      io.to(studentId.toString()).emit("autoPunchOut", {
+        message: `Auto punch-out: You moved ${Math.round(distance)}m from your initial location`,
+        time: now,
+        distance
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Auto punch-out successful. You moved ${Math.round(distance)}m from initial location.`,
+      attendance
+    });
+
+  } catch (error) {
+    console.error('❌ Error in autoPunchOut:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// ✅ CHECK LOCATION - Returns initial location for distance calculation
+export const getInitialLocation = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const { today, tomorrow } = getTodayRange();
+
+    const attendance = await Attendance.findOne({
+      studentId,
+      date: { $gte: today, $lt: tomorrow },
+      initialLocationChecked: true
+    });
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: 'No initial location found for today'
+      });
+    }
+
+    // Check if there's an active session
+    const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
+    const isActive = lastRecord && !lastRecord.punchOut;
+
+    res.status(200).json({
+      success: true,
+      initialLocation: {
+        latitude: attendance.initialLatitude,
+        longitude: attendance.initialLongitude
+      },
+      isActive
+    });
+
+  } catch (error) {
+    console.error('Error in getInitialLocation:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // ✅ GET STUDENT ANNOUNCEMENTS - Get announcements sent to this student
 export const getStudentAnnouncements = async (req, res) => {
   try {

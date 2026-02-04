@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState, useRef } from "react";
+import api from "../../utils/axiosConfig";
 import SideBarStudent from "./SideBarStudent";
 
 function DailyAttendance() {
@@ -8,29 +8,87 @@ function DailyAttendance() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Live timer states
+  const [liveWorkingSeconds, setLiveWorkingSeconds] = useState(0);
+  const [liveBreakSeconds, setLiveBreakSeconds] = useState(0);
+  const timerRef = useRef(null);
+
   useEffect(() => {
     fetchAttendance();
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, []);
+
+  // Start live timer when we have an active session
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    if (attendance) {
+      // Calculate initial live seconds
+      updateLiveTime();
+
+      // Update every second if there's an active session
+      const hasActiveSession = punchRecords.some(r => !r.punchOut);
+      const isOnBreak = attendance.currentBreakStart;
+
+      if (hasActiveSession || isOnBreak) {
+        timerRef.current = setInterval(() => {
+          updateLiveTime();
+        }, 1000);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [attendance, punchRecords]);
+
+  const updateLiveTime = () => {
+    if (!attendance) return;
+
+    let baseWorking = attendance.totalWorkingSeconds || 0;
+    let baseBreak = attendance.totalBreakSeconds || 0;
+
+    // Find active session and calculate live working time
+    const activeRecord = punchRecords.find(r => !r.punchOut);
+    if (activeRecord && !attendance.currentBreakStart) {
+      const now = new Date();
+      const punchInTime = new Date(activeRecord.punchIn);
+      const additionalSeconds = Math.floor((now - punchInTime) / 1000);
+
+      // Calculate already counted working time for this session from totalWorkingSeconds
+      // We need to add only the time since the last update
+      setLiveWorkingSeconds(baseWorking + additionalSeconds);
+    } else {
+      setLiveWorkingSeconds(baseWorking);
+    }
+
+    // Calculate live break time
+    if (attendance.currentBreakStart) {
+      const now = new Date();
+      const breakStart = new Date(attendance.currentBreakStart);
+      const additionalBreakSeconds = Math.floor((now - breakStart) / 1000);
+      setLiveBreakSeconds(baseBreak + additionalBreakSeconds);
+    } else {
+      setLiveBreakSeconds(baseBreak);
+    }
+  };
 
   const fetchAttendance = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
+      const res = await api.get("/student/today-attendance");
 
-      const res = await axios.get(
-        "http://localhost:3001/student/today-attendance",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
-
-      console.log("✅ Attendance response:", res.data);
+      console.log("Attendance response:", res.data);
 
       const attendanceData = res.data.attendance;
 
@@ -52,14 +110,20 @@ function DailyAttendance() {
         } else {
           setPunchRecords([]);
         }
+
+        // Initialize live time
+        setLiveWorkingSeconds(attendanceData.totalWorkingSeconds || 0);
+        setLiveBreakSeconds(attendanceData.totalBreakSeconds || 0);
       } else {
         setAttendance(null);
         setPunchRecords([]);
+        setLiveWorkingSeconds(0);
+        setLiveBreakSeconds(0);
       }
 
       setLoading(false);
     } catch (err) {
-      console.error("❌ Fetch error:", err);
+      console.error("Fetch error:", err);
       setError(err.response?.data?.message || "Failed to fetch attendance");
       setAttendance(null);
       setPunchRecords([]);
@@ -87,10 +151,10 @@ function DailyAttendance() {
   };
 
   const formatDuration = (seconds) => {
-    if (!seconds) return "00:00:00";
+    if (!seconds || seconds < 0) return "00:00:00";
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
       2,
       "0"
@@ -107,6 +171,10 @@ function DailyAttendance() {
 
     return formatDuration(diffSeconds);
   };
+
+  // Check if there's an active session
+  const hasActiveSession = punchRecords.some(r => !r.punchOut);
+  const isOnBreak = attendance?.currentBreakStart;
 
   return (
     <div className="flex min-h-screen bg-[#eef5f9] p-5">
@@ -125,7 +193,7 @@ function DailyAttendance() {
     onClick={fetchAttendance}
     className="w-full sm:w-auto px-4 py-2 bg-[#1679AB] text-white rounded-lg hover:bg-[#0d5a87] transition-colors flex items-center justify-center gap-2"
   >
-    🔄 Refresh
+    Refresh
   </button>
 </div>
 
@@ -133,42 +201,54 @@ function DailyAttendance() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start sm:items-center gap-2">
-              <span className="text-red-600 text-lg flex-shrink-0">⚠️</span>
+              <span className="text-red-600 text-lg flex-shrink-0">Warning</span>
               <p className="text-red-700 font-medium text-sm md:text-base">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Summary Cards */}
+        {/* Summary Cards with Live Timer */}
         {attendance && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
             <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
-              <p className="text-xs md:text-sm text-[#1679AB] mb-2">📅 Date</p>
+              <p className="text-xs md:text-sm text-[#1679AB] mb-2">Date</p>
               <h3 className="text-lg md:text-xl font-bold text-[#141E46]">
                 {formatDate(attendance.date)}
               </h3>
             </div>
 
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
-              <p className="text-xs md:text-sm text-[#1679AB] mb-2">
-                ⏰ Total Working Time
+            <div className={`bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 ${hasActiveSession && !isOnBreak ? 'ring-2 ring-green-400' : ''}`}>
+              <p className="text-xs md:text-sm text-[#1679AB] mb-2 flex items-center gap-2">
+                Total Working Time
+                {hasActiveSession && !isOnBreak && (
+                  <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                )}
               </p>
-              <h3 className="text-lg md:text-xl font-bold text-green-600">
-                {formatDuration(attendance.totalWorkingSeconds || 0)}
+              <h3 className="text-lg md:text-xl font-bold text-green-600 font-mono">
+                {formatDuration(liveWorkingSeconds)}
               </h3>
+              {hasActiveSession && !isOnBreak && (
+                <p className="text-xs text-green-500 mt-1">Live updating...</p>
+              )}
+            </div>
+
+            <div className={`bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6 ${isOnBreak ? 'ring-2 ring-orange-400' : ''}`}>
+              <p className="text-xs md:text-sm text-[#1679AB] mb-2 flex items-center gap-2">
+                Total Break Time
+                {isOnBreak && (
+                  <span className="inline-flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+                )}
+              </p>
+              <h3 className="text-lg md:text-xl font-bold text-orange-600 font-mono">
+                {formatDuration(liveBreakSeconds)}
+              </h3>
+              {isOnBreak && (
+                <p className="text-xs text-orange-500 mt-1">On break...</p>
+              )}
             </div>
 
             <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
-              <p className="text-xs md:text-sm text-[#1679AB] mb-2">
-                ☕ Total Break Time
-              </p>
-              <h3 className="text-lg md:text-xl font-bold text-orange-600">
-                {formatDuration(attendance.totalBreakSeconds || 0)}
-              </h3>
-            </div>
-
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg p-4 md:p-6">
-              <p className="text-xs md:text-sm text-[#1679AB] mb-2">📊 Status</p>
+              <p className="text-xs md:text-sm text-[#1679AB] mb-2">Status</p>
               <h3
                 className={`text-lg md:text-xl font-bold ${
                   attendance.status === "WORKING"
@@ -203,7 +283,7 @@ function DailyAttendance() {
               <div className="block md:hidden space-y-4">
                 {punchRecords.length === 0 ? (
                   <div className="text-center py-8">
-                    <span className="text-4xl mb-2">📋</span>
+                    <span className="text-4xl mb-2">Clipboard</span>
                     <p className="text-gray-500 font-medium">No punch records today</p>
                     <p className="text-sm text-gray-400 mt-1">
                       Punch in to start tracking
@@ -233,7 +313,7 @@ function DailyAttendance() {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Punch In</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-green-600 font-bold">✓</span>
+                          <span className="text-green-600 font-bold">Check</span>
                           <span className="text-green-700 font-semibold text-sm">
                             {formatTime(record.punchIn)}
                           </span>
@@ -245,14 +325,14 @@ function DailyAttendance() {
                         <span className="text-sm text-gray-600">Punch Out</span>
                         {record.punchOut ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-red-600 font-bold">✗</span>
+                            <span className="text-red-600 font-bold">X</span>
                             <span className="text-red-700 font-semibold text-sm">
                               {formatTime(record.punchOut)}
                             </span>
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                            <span className="animate-pulse">⏱️</span>
+                            <span className="animate-pulse">Timer</span>
                             Working...
                           </span>
                         )}
@@ -288,7 +368,7 @@ function DailyAttendance() {
                       <tr>
                         <td colSpan="5" className="text-center py-8">
                           <div className="flex flex-col items-center justify-center">
-                            <span className="text-4xl mb-2">📋</span>
+                            <span className="text-4xl mb-2">Clipboard</span>
                             <p className="text-gray-500 font-medium">
                               No punch records today
                             </p>
@@ -310,7 +390,7 @@ function DailyAttendance() {
 
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-green-600 font-bold">✓</span>
+                              <span className="text-green-600 font-bold">Check</span>
                               <span className="text-green-700 font-semibold">
                                 {formatTime(record.punchIn)}
                               </span>
@@ -320,14 +400,14 @@ function DailyAttendance() {
                           <td className="px-4 py-3">
                             {record.punchOut ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-red-600 font-bold">✗</span>
+                                <span className="text-red-600 font-bold">X</span>
                                 <span className="text-red-700 font-semibold">
                                   {formatTime(record.punchOut)}
                                 </span>
                               </div>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                                <span className="animate-pulse">⏱️</span>
+                                <span className="animate-pulse">Timer</span>
                                 Working...
                               </span>
                             )}

@@ -1,16 +1,16 @@
 import express from "express";
 import { verifyToken } from "../AuthMiddleware.js";
 
-import { 
-  acceptPunchRequest,  
-  getPunchRequests, 
-  getstudent, 
-  getStudentLeavesForMentor, 
-  mentorlogin, 
+import {
+  acceptPunchRequest,
+  getPunchRequests,
+  getstudent,
+  getStudentLeavesForMentor,
+  mentorlogin,
   rejectPunchRequest,
-  resetPassword, 
-  sendOtp,  
-  updateStudentLeaveStatus, 
+  resetPassword,
+  sendOtp,
+  updateStudentLeaveStatus,
   verifyOtp,
   getMentorNotifications,
   getTodayAttendance,
@@ -19,50 +19,51 @@ import {
   getbatch,
   announcementsend,
   getMyAnnouncements,
-  deleteAnnouncement
+  deleteAnnouncement,
+  getMonthlySummaryForMentor,
+  getLeaveHistoryForMentor
 
 } from "../Controller/MentorContriller.js";
 
 const mentorroutes = express.Router();
 
-// Auth routes
+// Auth routes (NO verifyToken)
 mentorroutes.post("/mentorlogin", mentorlogin);
 mentorroutes.post("/forgot-password", sendOtp);
 mentorroutes.post("/verify-otp", verifyOtp);
 mentorroutes.post("/reset-password", resetPassword);
 
-// Student routes
-mentorroutes.get("/getStudents", verifyToken, getstudent);
-
-// Leave request routes
-mentorroutes.get("/leave-requests", verifyToken, getStudentLeavesForMentor);
-mentorroutes.post("/leave-requests/:id/:action", verifyToken, updateStudentLeaveStatus);
-
-// ✅ FIXED: Punch request routes - removed duplicates and fixed parameter names
-mentorroutes.get("/punch-requests", verifyToken, getPunchRequests);
-
-mentorroutes.post("/punch-requests/:id/accept",verifyToken,acceptPunchRequest);
-mentorroutes.put("/reject-punch/:id", rejectPunchRequest);
-
-mentorroutes.post("/announcementsend",verifyToken,announcementsend)
-
-mentorroutes.post("/punch-requests/:requestId/accept", verifyToken, acceptPunchRequest);
-mentorroutes.post("/punch-requests/:requestId/reject", verifyToken, rejectPunchRequest);
-
-// Attendance routes
-mentorroutes.get("/today-attendance", getTodayAttendance);
-
-// Notification routes
-mentorroutes.get("/notifications", getMentorNotifications);
-mentorroutes.delete("/notifications/:id", deleteMentorNotification);
+// All routes below require verifyToken
 
 // Profile routes
 mentorroutes.get("/profile", verifyToken, getMentorProfile);
 
+// Student routes
+mentorroutes.get("/getStudents", verifyToken, getstudent);
+mentorroutes.get("/getbatch", verifyToken, getbatch);
 
-mentorroutes.get("/getbatch",verifyToken, getbatch) // ✅ verifyToken, NOT verifyOtp
+// Leave request routes
+mentorroutes.get("/leave-requests", verifyToken, getStudentLeavesForMentor);
+mentorroutes.get("/leave-history", verifyToken, getLeaveHistoryForMentor);
+mentorroutes.post("/leave-requests/:id/:action", verifyToken, updateStudentLeaveStatus);
+
+// Punch request routes
+mentorroutes.get("/punch-requests", verifyToken, getPunchRequests);
+mentorroutes.post("/punch-requests/:id/accept", verifyToken, acceptPunchRequest);
+mentorroutes.post("/punch-requests/:requestId/accept", verifyToken, acceptPunchRequest);
+mentorroutes.post("/punch-requests/:requestId/reject", verifyToken, rejectPunchRequest);
+mentorroutes.put("/reject-punch/:id", verifyToken, rejectPunchRequest);
+
+// Attendance routes
+mentorroutes.get("/today-attendance", verifyToken, getTodayAttendance);
+mentorroutes.get("/monthly-summary", verifyToken, getMonthlySummaryForMentor);
+
+// Notification routes
+mentorroutes.get("/notifications", verifyToken, getMentorNotifications);
+mentorroutes.delete("/notifications/:id", verifyToken, deleteMentorNotification);
 
 // Announcement routes
+mentorroutes.post("/announcementsend", verifyToken, announcementsend);
 mentorroutes.get("/my-announcements", verifyToken, getMyAnnouncements);
 mentorroutes.delete("/announcements/:id", verifyToken, deleteAnnouncement);
 
