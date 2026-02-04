@@ -12,6 +12,7 @@ function StudentsNotification() {
   const [announcementLoading, setAnnouncementLoading] = useState(true);
   const [role, setRole] = useState("");
 
+
   useEffect(() => {
     setRole(localStorage.getItem("role") || "");
     fetchNotifications();
@@ -31,7 +32,7 @@ function StudentsNotification() {
         }
       );
 
-      // Only show messages for students or all
+      
       const studentMessages = (res.data.notifications || res.data).filter(
         (msg) => msg.audience === "students" || msg.audience === "all"
       );
@@ -50,7 +51,7 @@ function StudentsNotification() {
     }
   };
 
-  // Fetch announcements from mentors
+  
   const fetchAnnouncements = async () => {
     try {
       setAnnouncementLoading(true);
@@ -67,13 +68,13 @@ function StudentsNotification() {
       setAnnouncements(res.data.announcements || []);
     } catch (error) {
       console.error("Error fetching announcements:", error);
-      // Don't show error alert, just log it - empty state will be shown
+   
     } finally {
       setAnnouncementLoading(false);
     }
   };
 
-  // Like toggle for notifications
+
   const handleLike = (id) => {
     setNotifications((prev) =>
       prev.map((msg) =>
@@ -113,7 +114,7 @@ function StudentsNotification() {
       {/* MAIN CONTENT */}
       <div className="flex-1 px-4 sm:px-6 md:px-8 pt-6 md:ml-[220px]">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center md:text-left">
-          Notifications & Announcements
+          Notifications 
         </h1>
 
         {/* ==================== ANNOUNCEMENTS FROM MENTORS SECTION ==================== */}
@@ -123,7 +124,7 @@ function StudentsNotification() {
               <FaBullhorn className="text-green-600 text-xl" />
             </div>
             <h2 className="text-xl font-bold text-gray-800">
-              Announcements from Mentors
+              Notification from Mentors
             </h2>
           </div>
 
@@ -133,7 +134,7 @@ function StudentsNotification() {
             </div>
           ) : announcements.length === 0 ? (
             <div className="flex justify-center items-center h-32 bg-white rounded-lg shadow-md max-w-xl mx-auto">
-              <p className="text-gray-500">No announcements from mentors.</p>
+              <p className="text-gray-500">No message from mentors.</p>
             </div>
           ) : (
             <div className="flex justify-center">

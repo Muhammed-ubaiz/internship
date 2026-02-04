@@ -12,7 +12,7 @@ function Announcement() {
   const [fetchingBatches, setFetchingBatches] = useState(true);
   const [error, setError] = useState(null);
 
-  // 📦 FETCH BATCHES
+
   const fetchBatches = async () => {
     try {
       setFetchingBatches(true);
@@ -63,7 +63,7 @@ function Announcement() {
   // 🔁 USE EFFECT
   useEffect(() => {
     fetchBatches();
-    // eslint-disable-next-line
+    
   }, []);
 
   // 📤 SEND ANNOUNCEMENT
@@ -120,18 +120,18 @@ function Announcement() {
 
   // 🖥️ UI
   return (
-    <div className="min-h-screen bg-[#EEF6FB] flex">
+    <div className="min-h-screen bg-[#EEF6FB] flex flex-col md:flex-row">
       <Sidebar />
 
-      <div className="flex-1 p-4 sm:p-6 md:ml-56">
-        <div className="bg-white max-w-xl mx-auto p-6 rounded-xl shadow">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-6 text-center">
+      <div className="flex-1 p-4 sm:p-6 md:ml-56 w-full">
+        <div className="bg-white max-w-xl mx-auto p-4 sm:p-6 rounded-xl shadow w-full">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-center">
             📢 Send Announcement
           </h2>
 
           {/* ERROR */}
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-2 rounded">
+            <div className="mb-4 bg-red-50 border border-red-400 text-red-700 px-4 py-2 rounded text-sm sm:text-base">
               {error}
             </div>
           )}
@@ -146,7 +146,7 @@ function Announcement() {
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
                 disabled={fetchingBatches}
-                className="w-full border p-3 rounded-lg"
+                className="w-full border p-2 sm:p-3 rounded-lg text-sm sm:text-base"
               >
                 <option value="All">All</option>
 
@@ -176,7 +176,7 @@ function Announcement() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full border p-3 rounded-lg"
+                className="w-full border p-2 sm:p-3 rounded-lg text-sm sm:text-base"
                 placeholder="Announcement title"
                 maxLength={100}
                 required
@@ -191,8 +191,8 @@ function Announcement() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full border p-3 rounded-lg resize-none"
-                rows={5}
+                className="w-full border p-2 sm:p-3 rounded-lg resize-none text-sm sm:text-base"
+                rows={4}
                 placeholder="Write announcement..."
                 maxLength={500}
                 required
@@ -203,7 +203,7 @@ function Announcement() {
             <button
               type="submit"
               disabled={loading || fetchingBatches}
-              className="w-full bg-[#141E46] text-white py-3 rounded-lg hover:bg-[#1c285f] transition disabled:opacity-50"
+              className="w-full bg-[#141E46] text-white py-2 sm:py-3 rounded-lg hover:bg-[#1c285f] transition disabled:opacity-50 text-sm sm:text-base"
             >
               {loading ? "Sending..." : "Send Announcement"}
             </button>

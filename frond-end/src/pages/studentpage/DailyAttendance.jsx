@@ -37,11 +37,11 @@ function DailyAttendance() {
       if (attendanceData) {
         setAttendance(attendanceData);
 
-        // Extract punch records - support both new and old format
+        
         if (attendanceData.punchRecords && Array.isArray(attendanceData.punchRecords)) {
           setPunchRecords(attendanceData.punchRecords);
         } else if (attendanceData.punchInTime) {
-          // Legacy format - create single record
+        
           setPunchRecords([
             {
               punchIn: attendanceData.punchInTime,
@@ -115,8 +115,7 @@ function DailyAttendance() {
 
       {/* Main Content */}
       <div className="md:ml-60 w-full pt-14 md:pt-0 px-4 md:px-6 lg:px-8 py-6">
-        {/* Header */}
-       {/* Header */}
+     
 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
   <h2 className="text-xl md:text-2xl font-bold text-[#0a2540] text-center sm:text-left w-full sm:w-auto">
     Today's Attendance Records
