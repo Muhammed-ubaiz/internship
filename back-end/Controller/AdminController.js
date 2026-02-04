@@ -16,16 +16,16 @@ import Notification from "../Model/NotificationModel.js";
 
 const adminemail = "admin@gmail.com";
 const adminpass = "admin123";
-const JWT_SECRET = "key321";
+const JWT_SECRET = process.env.JWT_SECRET || "key321";
 
 const Login = (req, res) => {
   const { email, password } = req.body;
 
   if (email === adminemail && password === adminpass) {
     const token = jwt.sign(
-      { email, role: "admin" },
+      { id: "admin", email, role: "admin" },
       JWT_SECRET,
-      { expiresIn: "1h" } //  expiry
+      { expiresIn: "1d" } // Same as mentor/student
     );
 
     return res.json({
@@ -541,6 +541,71 @@ export const getAllPendingLeaves = async (req, res) => {
   }
 };
 
+// Get all leaves (all statuses) for admin leave history
+export const getAllLeaves = async (req, res) => {
+  try {
+    const { status, search } = req.query;
+
+    let query = {};
+    if (status && status !== "All") {
+      query.status = status;
+    }
+
+    const leaves = await Leave.find(query)
+      .populate({
+        path: "studentId",
+        select: "name email course batch",
+        populate: {
+          path: "course",
+          select: "name"
+        }
+      })
+      .sort({ createdAt: -1 });
+
+    // Format the response with course name
+    const formattedLeaves = leaves.map(leave => {
+      // Get course name - could be a populated object or a string
+      let courseName = "N/A";
+      if (leave.studentId?.course) {
+        if (typeof leave.studentId.course === 'object' && leave.studentId.course.name) {
+          courseName = leave.studentId.course.name;
+        } else if (typeof leave.studentId.course === 'string') {
+          courseName = leave.studentId.course;
+        }
+      }
+
+      return {
+        _id: leave._id,
+        studentName: leave.studentId?.name || "Unknown",
+        studentEmail: leave.studentId?.email || "",
+        course: courseName,
+        batch: leave.studentId?.batch || "N/A",
+        type: leave.type,
+        from: new Date(leave.from).toLocaleDateString("en-CA"),
+        to: new Date(leave.to).toLocaleDateString("en-CA"),
+        reason: leave.reason,
+        status: leave.status,
+        createdAt: leave.createdAt
+      };
+    });
+
+    // Apply search filter if provided
+    let filteredLeaves = formattedLeaves;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredLeaves = formattedLeaves.filter(leave =>
+        leave.studentName.toLowerCase().includes(searchLower) ||
+        leave.reason.toLowerCase().includes(searchLower)
+      );
+    }
+
+    res.json({ success: true, leaves: filteredLeaves });
+  } catch (error) {
+    console.error("Get all leaves error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 // Update leave status (approve/reject)
 export const updateLeaveStatusAdmin = async (req, res) => {
   try {
@@ -598,6 +663,115 @@ export const sendInformation = async (req, res) => {
 
 
 
+
+// ✅ GET MONTHLY SUMMARY FOR ADMIN - Get attendance summary for all students
+export const getMonthlySummaryForAdmin = async (req, res) => {
+  try {
+    const { month, year, course, batch } = req.query;
+
+    // Default to current month and year
+    const targetMonth = month ? parseInt(month) : new Date().getMonth();
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
+    // Get start and end of the target month
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    // Calculate total working days in the month (excluding weekends)
+    let totalWorkingDays = 0;
+    const today = new Date();
+    const lastDayToCount = endOfMonth > today ? today : endOfMonth;
+
+    for (let d = new Date(startOfMonth); d <= lastDayToCount; d.setDate(d.getDate() + 1)) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) {
+        totalWorkingDays++;
+      }
+    }
+
+    // Build student query based on filters
+    let studentQuery = {};
+    if (course) studentQuery.course = course;
+    if (batch) studentQuery.batch = batch;
+
+    // Get all students with course populated
+    const students = await Student.find(studentQuery)
+      .select('_id name batch course')
+      .populate('course', 'name');
+
+    // Get attendance and leave data for each student
+    const summaryData = await Promise.all(
+      students.map(async (student) => {
+        // Get attendance records for the month
+        const attendanceCount = await Attendancemodel.countDocuments({
+          studentId: student._id,
+          date: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+
+        // Get approved leaves for the month
+        const approvedLeaves = await Leave.find({
+          studentId: student._id,
+          status: "Approved",
+          $or: [
+            { from: { $gte: startOfMonth, $lte: endOfMonth } },
+            { to: { $gte: startOfMonth, $lte: endOfMonth } }
+          ]
+        });
+
+        // Calculate leave days
+        let leaveDays = 0;
+        approvedLeaves.forEach(leave => {
+          const leaveStart = new Date(leave.from) < startOfMonth ? startOfMonth : new Date(leave.from);
+          const leaveEnd = new Date(leave.to) > endOfMonth ? endOfMonth : new Date(leave.to);
+          const diffTime = Math.abs(leaveEnd - leaveStart);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          leaveDays += diffDays;
+        });
+
+        // Get course name - handle both populated object and string
+        let courseName = "N/A";
+        if (student.course) {
+          if (typeof student.course === 'object' && student.course.name) {
+            courseName = student.course.name;
+          } else if (typeof student.course === 'string') {
+            courseName = student.course;
+          } else {
+            // If it's an ObjectId that wasn't populated, fetch it
+            const courseDoc = await Course.findById(student.course);
+            courseName = courseDoc?.name || 'Unknown';
+          }
+        }
+
+        return {
+          studentId: student._id,
+          name: student.name,
+          batch: student.batch,
+          course: courseName,
+          totalDays: totalWorkingDays,
+          presentDays: attendanceCount,
+          leaveDays: leaveDays,
+          absentDays: Math.max(0, totalWorkingDays - attendanceCount - leaveDays)
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      month: startOfMonth.toLocaleString('default', { month: 'long' }),
+      year: targetYear,
+      totalWorkingDays,
+      students: summaryData
+    });
+
+  } catch (error) {
+    console.error("❌ getMonthlySummaryForAdmin error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch monthly summary",
+      error: error.message
+    });
+  }
+};
 
 export{Login,toggleStudentStatus, toggleCourseStatus}
 

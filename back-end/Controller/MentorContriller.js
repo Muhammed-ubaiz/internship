@@ -12,6 +12,155 @@ import Leave from "../Model/LeaveModel.js";
 import Notification from "../Model/NotificationModel.js";
 import PunchRequest from "../Model/PunchingRequestmodel.js";
 
+import Announcement from "../Model/Announcementmodel.js";
+import Batch from "../Model/Batchmodel.js";
+
+export const getbatch = async (req, res) => {
+  try {
+    const mentorId = req.user?.id;
+
+    if (!mentorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed - mentor ID missing",
+      });
+    }
+
+    // Find the mentor to get their course
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
+
+    const mentorCourse = mentor.course;
+    console.log("📚 Mentor course:", mentorCourse);
+
+    // Find batches for this course using the Batch model
+    const batches = await Batch.find({ courseName: mentorCourse }).select("name");
+    
+    console.log("📋 Found batches:", batches);
+
+    if (!batches.length) {
+      return res.json({
+        success: true,
+        batches: [],
+        message: "No batches assigned for this course",
+      });
+    }
+
+    // Extract batch names
+    const batchNames = batches.map(b => b.name);
+
+    res.json({
+      success: true,
+      batches: batchNames,
+    });
+
+  } catch (error) {
+    console.error("❌ getbatch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch batches",
+    });
+  }
+};
+
+
+
+// POST /mentor/announcementsend
+export const announcementsend = async (req, res) => {
+  try {
+    const { title, message, batch } = req.body;
+    
+    // Try to get email from different possible fields
+    const mentorEmail = req.user?.email || req.user?.userEmail || req.user?.emailId;
+    const mentorId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!mentorEmail && !mentorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed - no user info",
+      });
+    }
+
+    if (!title || !message || !batch) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, message, and batch are required",
+      });
+    }
+
+    // Try to find mentor by email first, then by ID
+    let mentor = null;
+    if (mentorEmail) {
+      mentor = await Mentor.findOne({ email: mentorEmail });
+    }
+    if (!mentor && mentorId) {
+      mentor = await Mentor.findById(mentorId);
+    }
+
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
+
+    // Validate batch if not "All" - mentor.course is a string (course name)
+    if (batch != "All") {
+      // Get valid batches from Batch model
+      const validBatches = await Batch.find({ courseName: mentor.course }).select("name");
+      const validBatchNames = validBatches.map(b => b.name);
+      
+      if (!validBatchNames.includes(batch)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid batch: ${batch}`,
+        });
+      }
+    }
+
+    const announcement = await Announcement.create({
+      title,
+      message,
+      batch,
+      mentorEmail: mentor.email,
+      mentorId: mentor._id,
+    });
+
+    // Count recipients
+    let recipientCount = 0;
+    if (batch === "All") {
+      recipientCount = await Student.countDocuments({ mentorId: mentor._id });
+    } else {
+      recipientCount = await Student.countDocuments({
+        mentorId: mentor._id,
+        batch,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Announcement sent successfully",
+      recipientCount,
+      announcement,
+    });
+    
+
+  } catch (error) {
+    console.error("[announcementsend] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create announcement",
+      error: error.message,
+    });
+  }
+};
+
+
 
 export const getMentorNotifications = async (req, res) => {
   try {
@@ -43,9 +192,10 @@ export const mentorlogin = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid password" });
     }
 
+    const JWT_SECRET = process.env.JWT_SECRET || "key321";
     const token = jwt.sign(
       { id: mentor._id, role: "mentor" },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: "1d" }
     );
 
@@ -60,6 +210,7 @@ export const mentorlogin = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const sendOtp = async (req, res) => {
   try {
@@ -100,6 +251,7 @@ export const sendOtp = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const verifyOtp = async (req, res) => {
   try {
@@ -144,20 +296,30 @@ export const resetPassword = async (req, res) => {
 
 export const getstudent = async (req, res) => {
   try {
-    const mentorEmail = req.user.id; 
-    console.log(mentorEmail);
-  
-    const mentor = await Mentor.findOne({ _id: mentorEmail })
+    const mentorId = req.user.id;
+    console.log("Mentor ID:", mentorId);
+
+    const mentor = await Mentor.findOne({ _id: mentorId });
 
     if (!mentor) {
       return res.status(404).json({ message: "Mentor not found" });
     }
-     const course=await Course.findOne({name:mentor.course})
-    
-    const students = await Student.find({course:course._id}, { password: 0 });
 
+    const course = await Course.findOne({ name: mentor.course });
 
-    return res.status(200).json(students);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    const students = await Student.find({ course: course._id }, { password: 0 });
+
+    // Add course name to each student instead of course ID
+    const studentsWithCourseName = students.map(student => ({
+      ...student.toObject(),
+      course: mentor.course // Replace course ID with course name
+    }));
+
+    return res.status(200).json(studentsWithCourseName);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -166,23 +328,49 @@ export const getstudent = async (req, res) => {
 
 export const getPunchRequests = async (req, res) => {
   try {
+    const mentorId = req.user.id;
     const { status, includeAll } = req.query;
-    
-    let query = {};
-    
-    
+
+    // Get mentor's course
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ message: 'Mentor not found' });
+    }
+
+    // Get course ID from course name
+    const course = await Course.findOne({ name: mentor.course });
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Get all students in mentor's course
+    const studentsInCourse = await Student.find({ course: course._id }).select('_id');
+    const studentIds = studentsInCourse.map(s => s._id);
+
+    let query = {
+      studentId: { $in: studentIds }
+    };
+
     if (!includeAll && status) {
       query.status = status;
     } else if (!includeAll) {
       query.status = 'PENDING';
     }
-        
+
     const requests = await PunchingRequest.find(query)
       .populate('studentId', 'name email batch course')
-      .sort({ updatedAt: -1, createdAt: -1 }); 
+      .sort({ updatedAt: -1, createdAt: -1 });
 
-    
-    res.json(requests);
+    // Replace course ID with course name for frontend
+    const formattedRequests = requests.map(req => ({
+      ...req.toObject(),
+      studentId: {
+        ...req.studentId.toObject(),
+        course: mentor.course
+      }
+    }));
+
+    res.json(formattedRequests);
   } catch (error) {
     console.error('❌ Error fetching punch requests:', error);
     res.status(500).json({ message: 'Failed to fetch requests' });
@@ -215,12 +403,14 @@ export const getPunchRequestHistory = async (req, res) => {
 
 export const acceptPunchRequest = async (req, res) => {
   try {
-    const { requestId } = req.params;
+    // Handle both :id and :requestId parameter names from different routes
+    const { id, requestId } = req.params;
+    const punchId = id || requestId;
     const mentorId = req.userId;
 
-    console.log("📝 Accept request - ID:", requestId, "Mentor:", mentorId);
+    console.log("📝 Accept request - ID:", punchId, "Mentor:", mentorId);
 
-    const punchRequest = await PunchRequest.findById(requestId);
+    const punchRequest = await PunchRequest.findById(punchId);
     
     if (!punchRequest) {
       console.log("❌ Punch request not found");
@@ -347,12 +537,14 @@ export const acceptPunchRequest = async (req, res) => {
 
 export const rejectPunchRequest = async (req, res) => {
   try {
-    const { id } = req.params;
+    // Handle both :id and :requestId parameter names from different routes
+    const { id, requestId } = req.params;
+    const punchId = id || requestId;
     const { reason } = req.body;
 
-    console.log('❌ Rejecting punch request:', id);
+    console.log('❌ Rejecting punch request:', punchId);
 
-    const punchRequest = await PunchingRequest.findById(id);
+    const punchRequest = await PunchingRequest.findById(punchId);
     if (!punchRequest) {
       return res.status(404).json({ message: "Punch request not found" });
     }
@@ -396,10 +588,29 @@ export const rejectPunchRequest = async (req, res) => {
 
 export const getTodayAttendance = async (req, res) => {
   try {
+    const mentorId = req.user.id;
+
+    // Get mentor's course
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor not found' });
+    }
+
+    // Get course ID from course name
+    const course = await Course.findOne({ name: mentor.course });
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    // Get all students in mentor's course
+    const studentsInCourse = await Student.find({ course: course._id }).select('_id');
+    const studentIds = studentsInCourse.map(s => s._id);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const attendance = await Attendancemodel.find({
+      studentId: { $in: studentIds },
       date: { $gte: today }
     })
       .populate({
@@ -407,9 +618,18 @@ export const getTodayAttendance = async (req, res) => {
         select: "name rollNo course batch email"
       });
 
+    // Replace course ID with course name for frontend
+    const formattedAttendance = attendance.map(att => ({
+      ...att.toObject(),
+      studentId: {
+        ...att.studentId.toObject(),
+        course: mentor.course
+      }
+    }));
+
     res.status(200).json({
       success: true,
-      data: attendance
+      data: formattedAttendance
     });
 
   } catch (error) {
@@ -500,7 +720,7 @@ export const getStudentLeavesForMentor = async (req, res) => {
 export const updateStudentLeaveStatus = async (req, res) => {
   try {
     const { id, action } = req.params; // id = leave id, action = "approved" or "rejected"
-    
+
     console.log("📝 Updating leave:", id, "Action:", action);
 
     // Map action to status
@@ -532,6 +752,71 @@ export const updateStudentLeaveStatus = async (req, res) => {
   }
 };
 
+// ✅ GET LEAVE HISTORY FOR MENTOR - Get all leaves (all statuses) for mentor's students
+export const getLeaveHistoryForMentor = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { status, search } = req.query;
+
+    // Find the mentor
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    // Find the course by name
+    const course = await Course.findOne({ name: mentor.course });
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    // Find all students in this course
+    const studentsInCourse = await Student.find({ course: course._id }).select("_id");
+    const studentIds = studentsInCourse.map(s => s._id);
+
+    // Build query
+    let query = { studentId: { $in: studentIds } };
+    if (status && status !== "All") {
+      query.status = status;
+    }
+
+    // Find all leaves for these students
+    const leaves = await Leave.find(query)
+      .populate("studentId", "name email batch")
+      .sort({ createdAt: -1 });
+
+    // Format the response
+    const formattedLeaves = leaves.map(leave => ({
+      _id: leave._id,
+      studentName: leave.studentId?.name || "Unknown",
+      studentEmail: leave.studentId?.email || "",
+      course: mentor.course,
+      batch: leave.studentId?.batch || "N/A",
+      type: leave.type,
+      from: new Date(leave.from).toLocaleDateString("en-CA"),
+      to: new Date(leave.to).toLocaleDateString("en-CA"),
+      reason: leave.reason,
+      status: leave.status,
+      createdAt: leave.createdAt
+    }));
+
+    // Apply search filter if provided
+    let filteredLeaves = formattedLeaves;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredLeaves = formattedLeaves.filter(leave =>
+        leave.studentName.toLowerCase().includes(searchLower) ||
+        leave.reason.toLowerCase().includes(searchLower)
+      );
+    }
+
+    res.json({ success: true, leaves: filteredLeaves });
+  } catch (error) {
+    console.error("❌ Get leave history error:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
 
 export const getMentorProfile = async (req, res) => {
   try {
@@ -555,6 +840,186 @@ export const getMentorProfile = async (req, res) => {
   } catch (error) {
     console.error("❌ Error:", error);
     res.status(500).json({ success: false });
+  }
+};
+
+// ✅ GET MY ANNOUNCEMENTS - Get all announcements sent by this mentor
+export const getMyAnnouncements = async (req, res) => {
+  try {
+    const mentorEmail = req.user?.email || req.user?.userEmail;
+    const mentorId = req.user?.id || req.user?._id;
+
+    if (!mentorEmail && !mentorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication failed",
+      });
+    }
+
+    let query = {};
+    if (mentorEmail) {
+      query.mentorEmail = mentorEmail;
+    } else if (mentorId) {
+      query.mentorId = mentorId;
+    }
+
+    const announcements = await Announcement.find(query)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      announcements,
+    });
+  } catch (error) {
+    console.error("❌ getMyAnnouncements error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch announcements",
+    });
+  }
+};
+
+// ✅ DELETE ANNOUNCEMENT - Mentor can delete their own announcement
+export const deleteAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mentorEmail = req.user?.email || req.user?.userEmail;
+    const mentorId = req.user?.id || req.user?._id;
+
+    const announcement = await Announcement.findById(id);
+
+    if (!announcement) {
+      return res.status(404).json({
+        success: false,
+        message: "Announcement not found",
+      });
+    }
+
+    // Check if the mentor owns this announcement
+    const isOwner =
+      (mentorEmail && announcement.mentorEmail === mentorEmail) ||
+      (mentorId && announcement.mentorId?.toString() === mentorId.toString());
+
+    if (!isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own announcements",
+      });
+    }
+
+    await Announcement.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: "Announcement deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ deleteAnnouncement error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete announcement",
+    });
+  }
+};
+
+// ✅ GET MONTHLY SUMMARY FOR MENTOR - Get attendance summary for mentor's students
+export const getMonthlySummaryForMentor = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { month, year } = req.query;
+
+    // Get mentor's course
+    const mentor = await Mentor.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor not found' });
+    }
+
+    // Get course ID from course name
+    const course = await Course.findOne({ name: mentor.course });
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    // Get all students in mentor's course
+    const studentsInCourse = await Student.find({ course: course._id }).select('_id name batch');
+
+    // Default to current month and year
+    const targetMonth = month ? parseInt(month) : new Date().getMonth();
+    const targetYear = year ? parseInt(year) : new Date().getFullYear();
+
+    // Get start and end of the target month
+    const startOfMonth = new Date(targetYear, targetMonth, 1);
+    const endOfMonth = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59, 999);
+
+    // Calculate total working days in the month (excluding weekends)
+    let totalWorkingDays = 0;
+    const today = new Date();
+    const lastDayToCount = endOfMonth > today ? today : endOfMonth;
+
+    for (let d = new Date(startOfMonth); d <= lastDayToCount; d.setDate(d.getDate() + 1)) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) {
+        totalWorkingDays++;
+      }
+    }
+
+    // Get attendance and leave data for each student
+    const summaryData = await Promise.all(
+      studentsInCourse.map(async (student) => {
+        // Get attendance records for the month
+        const attendanceCount = await Attendancemodel.countDocuments({
+          studentId: student._id,
+          date: { $gte: startOfMonth, $lte: endOfMonth }
+        });
+
+        // Get approved leaves for the month
+        const approvedLeaves = await Leave.find({
+          studentId: student._id,
+          status: "Approved",
+          $or: [
+            { from: { $gte: startOfMonth, $lte: endOfMonth } },
+            { to: { $gte: startOfMonth, $lte: endOfMonth } }
+          ]
+        });
+
+        // Calculate leave days
+        let leaveDays = 0;
+        approvedLeaves.forEach(leave => {
+          const leaveStart = new Date(leave.from) < startOfMonth ? startOfMonth : new Date(leave.from);
+          const leaveEnd = new Date(leave.to) > endOfMonth ? endOfMonth : new Date(leave.to);
+          const diffTime = Math.abs(leaveEnd - leaveStart);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          leaveDays += diffDays;
+        });
+
+        return {
+          studentId: student._id,
+          name: student.name,
+          batch: student.batch,
+          totalDays: totalWorkingDays,
+          presentDays: attendanceCount,
+          leaveDays: leaveDays,
+          absentDays: Math.max(0, totalWorkingDays - attendanceCount - leaveDays)
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      month: startOfMonth.toLocaleString('default', { month: 'long' }),
+      year: targetYear,
+      course: mentor.course,
+      totalWorkingDays,
+      students: summaryData
+    });
+
+  } catch (error) {
+    console.error("❌ getMonthlySummaryForMentor error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch monthly summary",
+      error: error.message
+    });
   }
 };
 

@@ -1,51 +1,83 @@
 import express from "express";
-import { Login,addCourse,getCourse,deleteCourse, getBatches, addBatch, updateCourse, deleteBatch,addStudent,getStudents,toggleStudentStatus, updateStudent, toggleCourseStatus, sendOtp, verifyOtp, saveLocation, addMentor, getMentors, toggleMentorStatus, updateMentor,  getAllPendingLeaves, updateLeaveStatusAdmin, sendInformation, getDailyAttendance } from "../Controller/AdminController.js";
+import {
+  Login,
+  addCourse,
+  getCourse,
+  deleteCourse,
+  getBatches,
+  addBatch,
+  updateCourse,
+  deleteBatch,
+  addStudent,
+  getStudents,
+  toggleStudentStatus,
+  updateStudent,
+  toggleCourseStatus,
+  sendOtp,
+  verifyOtp,
+  saveLocation,
+  addMentor,
+  getMentors,
+  toggleMentorStatus,
+  updateMentor,
+  getAllPendingLeaves,
+  updateLeaveStatusAdmin,
+  sendInformation,
+  getDailyAttendance,
+  getAllLeaves,
+  getMonthlySummaryForAdmin
+} from "../Controller/AdminController.js";
 
 import { verifyToken } from "../AuthMiddleware.js";
 
 const adminRoutes = express.Router();
 
-
+// Auth routes (NO verifyToken)
 adminRoutes.post("/login", Login);
 
+// All routes below require verifyToken
 
-adminRoutes.post("/addCourse",verifyToken, addCourse);
-adminRoutes.get("/getCourse",verifyToken, getCourse);
-adminRoutes.delete("/deleteCourse/:id",verifyToken, deleteCourse);
-adminRoutes.post("/updateCourse/:_id",verifyToken, updateCourse);
+// Course routes
+adminRoutes.post("/addCourse", verifyToken, addCourse);
+adminRoutes.get("/getCourse", verifyToken, getCourse);
+adminRoutes.delete("/deleteCourse/:id", verifyToken, deleteCourse);
+adminRoutes.post("/updateCourse/:_id", verifyToken, updateCourse);
+adminRoutes.put("/course/status/:id", verifyToken, toggleCourseStatus);
 
+// Batch routes
+adminRoutes.get("/getBatches/:courseName", verifyToken, getBatches);
+adminRoutes.post("/addBatch/:courseName", verifyToken, addBatch);
+adminRoutes.delete("/deleteBatch/:batchId", verifyToken, deleteBatch);
 
+// Student routes
+adminRoutes.post("/addStudent", verifyToken, addStudent);
+adminRoutes.get("/getStudents", verifyToken, getStudents);
+adminRoutes.put("/student/status/:id", verifyToken, toggleStudentStatus);
+adminRoutes.put("/updateStudent/:id", verifyToken, updateStudent);
 
-adminRoutes.get("/getBatches/:courseName",verifyToken ,getBatches);
-adminRoutes.post("/addBatch/:courseName",verifyToken, addBatch);
-adminRoutes.delete("/deleteBatch/:batchId",verifyToken, deleteBatch);
+// OTP routes
+adminRoutes.post("/send-otp", verifyToken, sendOtp);
+adminRoutes.post("/verify-otp", verifyToken, verifyOtp);
 
-adminRoutes.post("/addStudent",verifyToken, addStudent);
-adminRoutes.get("/getStudents",verifyToken, getStudents);
+// Location routes
+adminRoutes.post("/location", verifyToken, saveLocation);
 
-adminRoutes.put("/student/status/:id",verifyToken ,toggleStudentStatus);
-adminRoutes.put("/course/status/:id", toggleCourseStatus);
-
-adminRoutes.put("/updateStudent/:id",verifyToken, updateStudent);
-
-adminRoutes.post("/send-otp",verifyToken,sendOtp);
-adminRoutes.post("/verify-otp",verifyToken, verifyOtp);
-
-adminRoutes.post("/location", saveLocation);;
-
-adminRoutes.post("/addMentor",verifyToken, addMentor);
-adminRoutes.get("/getMentors",verifyToken, getMentors);
+// Mentor routes
+adminRoutes.post("/addMentor", verifyToken, addMentor);
+adminRoutes.get("/getMentors", verifyToken, getMentors);
 adminRoutes.put("/updateMentor/:id", verifyToken, updateMentor);
+adminRoutes.put("/mentor/status/:id", verifyToken, toggleMentorStatus);
 
-adminRoutes.put("/mentor/status/:id",verifyToken, toggleMentorStatus);
+// Attendance routes
+adminRoutes.get("/daily-attendance", verifyToken, getDailyAttendance);
+adminRoutes.get("/monthly-summary", verifyToken, getMonthlySummaryForAdmin);
 
-adminRoutes.get('/daily-attendance', getDailyAttendance);
-
+// Leave routes
 adminRoutes.get("/leave-requests", verifyToken, getAllPendingLeaves);
+adminRoutes.get("/leave-history", verifyToken, getAllLeaves);
 adminRoutes.put("/leave-status/:id", verifyToken, updateLeaveStatusAdmin);
 
-adminRoutes.post("/send-information", sendInformation);
-
-
+// Notification routes
+adminRoutes.post("/send-information", verifyToken, sendInformation);
 
 export default adminRoutes;
