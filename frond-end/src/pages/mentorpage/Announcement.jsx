@@ -148,7 +148,7 @@ function Announcement() {
                 disabled={fetchingBatches}
                 className="w-full border p-2 sm:p-3 rounded-lg text-sm sm:text-base"
               >
-                <option value="All">All</option>
+                <option >setect batch</option>
 
                 {!fetchingBatches &&
                   batches.map((b, i) => (
