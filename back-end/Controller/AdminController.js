@@ -111,7 +111,7 @@ export const addStudent = async (req, res) => {
     const student = await Student.create({
       name,
       email,
-     password: hashedPassword, // store hashed password
+     password: hashedPassword, 
       course,
       batch,
       status: "Active",
@@ -217,7 +217,7 @@ export const deleteBatch = async (req, res) => {
       return res.status(404).json({ message: "Batch not found" });
     }
 
-    await batch.deleteOne(); // safely delete the batch
+    await batch.deleteOne(); 
     res.json({ message: "Batch deleted successfully" });
   } catch (error) {
     console.error("Delete batch error:", error);
@@ -228,14 +228,14 @@ export const deleteBatch = async (req, res) => {
 
 const toggleStudentStatus = async (req, res) => {
     try {
-      const { id } = req.params; // student id
+      const { id } = req.params; 
       const student = await Student.findById(id);
   
       if (!student) {
         return res.status(404).json({ msg: "Student not found" });
       }
   
-      // toggle status
+      
       student.status = student.status === "Active" ? "Inactive" : "Active";
       await student.save();
   
@@ -311,18 +311,17 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 
-let otpStore = {}; // temporary in-memory store
+let otpStore = {}; 
 
 export const sendOtp = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, message: "Email required" });
 
-  // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000);
 
   otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // expires in 5 min
 
-  // Nodemailer transporter (Gmail)
+ 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {

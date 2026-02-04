@@ -16,7 +16,7 @@ export const getStudentNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({
       audience: { $in: ["students", "all"] },
-      deletedBy: { $ne: "student" }, // ⭐ student deleted ones hidden
+      deletedBy: { $ne: "student" }, 
     }).sort({ createdAt: -1 });
 
     res.json({
@@ -28,13 +28,13 @@ export const getStudentNotifications = async (req, res) => {
   }
 };
 
-// ✅ DELETE only for student (soft delete)
+
 export const deleteStudentNotification = async (req, res) => {
   try {
     const { id } = req.params;
 
     await Notification.findByIdAndUpdate(id, {
-      $addToSet: { deletedBy: "student" }, // ⭐ student only
+      $addToSet: { deletedBy: "student" }, 
     });
 
     res.json({ success: true });
@@ -51,7 +51,7 @@ export const deleteStudentNotification = async (req, res) => {
 
 
 
-// config/jwt.js
+
  const JWT_SECRET = process.env.JWT_SECRET || "key321";
 
 
@@ -129,7 +129,7 @@ const getTodayRange = () => {
   return { today, tomorrow };
 };
 
-// GET /student/today-attendance
+// G
 export const getTodayAttendance = async (req, res) => {
   try {
     const studentId = req.user.id;
