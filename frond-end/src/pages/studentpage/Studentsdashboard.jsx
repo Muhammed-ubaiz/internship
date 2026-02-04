@@ -292,10 +292,11 @@ function Studentsdashboard() {
   
   const [gpsWatchId, setGpsWatchId] = useState(null);
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
+  const [initialLocation, setInitialLocation] = useState(null);
 
   const INSTITUTION_LAT = 11.280610467307952;
   const INSTITUTION_LNG = 75.77045696982046;
-  const MAX_DISTANCE = 50;
+  const MAX_DISTANCE = 50; // Auto punch-out if student moves 50m from initial location
 
   // ✅ SOCKET CONNECTION
   useEffect(() => {
@@ -427,6 +428,14 @@ function Studentsdashboard() {
       setAttendance(att);
       setHasLocationCheckedToday(att.initialLocationChecked);
 
+      // Store initial location for auto punch-out tracking
+      if (att.initialLatitude && att.initialLongitude) {
+        setInitialLocation({
+          latitude: att.initialLatitude,
+          longitude: att.initialLongitude
+        });
+      }
+
       setTotalWorkingTime(att.totalWorkingSeconds || 0);
       setWorkingHours(formatTimeFromSeconds(att.totalWorkingSeconds || 0));
       setLiveWorkingTime(formatTimeFromSeconds(att.totalWorkingSeconds || 0));
@@ -526,18 +535,23 @@ function Studentsdashboard() {
       return;
     }
 
+    // Use initial punch-in location if available, otherwise use institution location
+    const trackingLat = initialLocation?.latitude || attendance?.initialLatitude || INSTITUTION_LAT;
+    const trackingLng = initialLocation?.longitude || attendance?.initialLongitude || INSTITUTION_LNG;
+
     console.log("🌍 Starting GPS tracking for auto punch-out...");
+    console.log(`📍 Tracking from: ${trackingLat}, ${trackingLng}`);
     setIsTrackingLocation(true);
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        const distance = calculateDistance(latitude, longitude, INSTITUTION_LAT, INSTITUTION_LNG);
-        
-        console.log(`📍 Current distance: ${Math.round(distance)}m`);
+        const distance = calculateDistance(latitude, longitude, trackingLat, trackingLng);
+
+        console.log(`📍 Current distance from initial location: ${Math.round(distance)}m`);
 
         if (distance > MAX_DISTANCE && isPunchedIn) {
-          console.warn(`⚠️ Distance exceeded: ${Math.round(distance)}m > ${MAX_DISTANCE}m`);
+          console.warn(`⚠️ Distance exceeded: ${Math.round(distance)}m > ${MAX_DISTANCE}m - Triggering auto punch-out`);
           handleAutoPunchOut(latitude, longitude, distance);
         }
       },
@@ -548,7 +562,6 @@ function Studentsdashboard() {
         enableHighAccuracy: true,
         maximumAge: 0,
         timeout: 10000,
-        distanceFilter: 10,
       }
     );
 
@@ -590,7 +603,7 @@ function Studentsdashboard() {
   };
 
   useEffect(() => {
-    if (isPunchedIn && !isTrackingLocation) {
+    if (isPunchedIn && !isTrackingLocation && (initialLocation || attendance?.initialLatitude)) {
       startLocationTracking();
     } else if (!isPunchedIn && isTrackingLocation) {
       stopLocationTracking();
@@ -601,7 +614,7 @@ function Studentsdashboard() {
         stopLocationTracking();
       }
     };
-  }, [isPunchedIn]);
+  }, [isPunchedIn, initialLocation]);
 
   const handlePunchInClick = async () => {
     if (isPunchedIn || loading) return;
