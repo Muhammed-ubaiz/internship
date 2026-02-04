@@ -379,9 +379,9 @@ function StudentCreate() {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 max-h-[640px] overflow-y-auto">
+        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl   max-h-[640px] overflow-y-auto">
           {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-4 sticky top-0 bg-white py-4 z-10">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5  sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
             {/* Search */}
             <div className="group relative w-full sm:w-80">
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
@@ -487,7 +487,7 @@ function StudentCreate() {
 
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-sm border-separate border-spacing-y-3">
+            <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
               <thead className=" top-18 bg-white">
                 <tr className="text-[#1679AB] text-left">
                   <th className="p-3 text-center">#</th>

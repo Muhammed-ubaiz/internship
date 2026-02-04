@@ -1,462 +1,423 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
 import { io } from "socket.io-client";
+import {
+  Search,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  AlertCircle,
+  RefreshCw,
+  Filter,
+  GraduationCap,
+  CheckCircle,
+} from "lucide-react";
 
 function AdminDailyAttendance() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
   const [status, setStatus] = useState("All");
-  const [sortBy, setSortBy] = useState("name");
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(
+
+  const [date, setDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [socket, setSocket] = useState(null);
-  const [liveTime, setLiveTime] = useState(Date.now());
+  const [now, setNow] = useState(Date.now());
 
-  // Live clock for real-time working time
+  /* ================= CLOCK ================= */
   useEffect(() => {
-    const timer = setInterval(() => setLiveTime(Date.now()), 1000);
-    return () => clearInterval(timer);
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
   }, []);
 
-  // Socket connection
+  /* ================= SOCKET ================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const newSocket = io("http://localhost:3001", {
+    const socket = io("http://localhost:3001", {
       auth: { token },
-      transports: ["polling", "websocket"],
     });
 
-    newSocket.on("connect", () => {
-      console.log("✅ Admin socket connected");
-    });
+    socket.on("requestApproved", fetchData);
+    socket.on("punchOutApproved", fetchData);
 
-    newSocket.on("requestApproved", (approvalData) => {
-      console.log("🔔 Student punched in:", approvalData);
-      if (selectedDate === new Date().toISOString().split("T")[0]) {
-        fetchDailyAttendance();
-      }
-    });
+    return () => socket.disconnect();
+  }, [date]);
 
-    newSocket.on("punchOutApproved", (punchOutData) => {
-      console.log("🔔 Student punched out:", punchOutData);
-      if (selectedDate === new Date().toISOString().split("T")[0]) {
-        fetchDailyAttendance();
-      }
-    });
-
-    setSocket(newSocket);
-
-    return () => newSocket.disconnect();
-  }, [selectedDate]);
-
+  /* ================= FETCH ================= */
   useEffect(() => {
-    fetchDailyAttendance();
-  }, [selectedDate]);
+    fetchData();
+  }, [date]);
 
-  const fetchDailyAttendance = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
-      if (!token) {
-        console.warn("No token → not logged in?");
-        setLoading(false);
-        return;
-      }
-
-      if (!selectedDate || !/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
-        console.warn("Invalid selectedDate:", selectedDate);
-        setLoading(false);
-        return;
-      }
-
-      const url = `http://localhost:3001/admin/daily-attendance?date=${selectedDate}`;
-      console.log("Fetching from:", url);
-
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.data.success) {
-        console.log("✅ Received data:", res.data.attendanceData);
-        setData(res.data.attendanceData || []);
-      } else {
-        console.warn("Backend error message:", res.data.message);
-      }
-    } catch (error) {
-      console.error("Fetch failed:", error);
-      if (error.response) {
-        console.log("Status:", error.response.status);
-        console.log("Backend response:", error.response.data);
-      }
+      const res = await axios.get(
+        `http://localhost:3001/admin/daily-attendance?date=${date}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRows(res.data.attendanceData || []);
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateLiveWorkingTime = (attendance) => {
-    if (!attendance) return 0;
-    
-    let total = attendance.totalWorkingSeconds || 0;
-    
-    // If currently working, add live time
-    const lastRecord = attendance.punchRecords?.[attendance.punchRecords.length - 1];
-    if (lastRecord?.punchIn && !lastRecord?.punchOut) {
-      const punchInTime = new Date(lastRecord.punchIn).getTime();
-      const elapsedSeconds = Math.floor((liveTime - punchInTime) / 1000);
-      total += elapsedSeconds;
+  /* ================= HELPERS ================= */
+  const lastRecord = (a) => a?.punchRecords?.slice(-1)[0];
+
+  const getStatus = (a) => {
+    const r = lastRecord(a);
+    if (!r) return "Absent";
+    if (r.punchIn && !r.punchOut) return "Working";
+    return "Present";
+  };
+
+  const workingSeconds = (a) => {
+    let t = a?.totalWorkingSeconds || 0;
+    const r = lastRecord(a);
+    if (r?.punchIn && !r?.punchOut) {
+      t += Math.floor((now - new Date(r.punchIn)) / 1000);
     }
-    
-    return Math.max(0, total);
+    return t;
   };
 
-  const formatWorkingTime = (seconds) => {
-    if (!seconds || seconds === 0) return "0h 0m";
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  };
+  const fmt = (s) =>
+    `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 
-  const getStatus = (attendance) => {
-    if (!attendance || !attendance.punchRecords || attendance.punchRecords.length === 0) {
-      return "Absent";
-    }
-    const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
-    if (lastRecord.punchIn && !lastRecord.punchOut) return "Working";
-    if (lastRecord.punchIn && lastRecord.punchOut) return "Present";
-    return "Absent";
-  };
-
-  const getLastPunchIn = (punchRecords) => {
-    if (!punchRecords?.length) return "--:--";
-    const time = punchRecords[punchRecords.length - 1].punchIn;
-    return time
-      ? new Date(time).toLocaleTimeString("en-IN", { 
-          hour: "2-digit", 
-          minute: "2-digit", 
-          hour12: true 
+  const time = (t) =>
+    t
+      ? new Date(t).toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
         })
-      : "--:--";
+      : "--";
+
+  /* ================= FILTER ================= */
+  const filtered = rows.filter(
+    (r) =>
+      r.studentName?.toLowerCase().includes(search.toLowerCase()) &&
+      (course === "All" || r.course === course) &&
+      (batch === "All" || r.batch === batch) &&
+      (status === "All" || getStatus(r.attendance) === status)
+  );
+
+  const courses = ["All", ...new Set(rows.map((r) => r.course).filter(Boolean))];
+  const batches = ["All", ...new Set(rows.map((r) => r.batch).filter(Boolean))];
+
+  /* ================= STATS ================= */
+  const stats = {
+    total: rows.length,
+    present: rows.filter((r) =>
+      ["Present", "Working"].includes(getStatus(r.attendance))
+    ).length,
+    working: rows.filter(
+      (r) => getStatus(r.attendance) === "Working"
+    ).length,
+    absent: rows.filter(
+      (r) => getStatus(r.attendance) === "Absent"
+    ).length,
   };
 
-  const getLastPunchOut = (punchRecords) => {
-    if (!punchRecords?.length) return "--:--";
-    const time = punchRecords[punchRecords.length - 1].punchOut;
-    return time
-      ? new Date(time).toLocaleTimeString("en-IN", { 
-          hour: "2-digit", 
-          minute: "2-digit", 
-          hour12: true 
-        })
-      : "--:--";
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearch("");
+    setCourse("All");
+    setBatch("All");
+    setStatus("All");
   };
 
-  const filteredData = data
-    .filter(
-      (i) =>
-        i.studentName?.toLowerCase().includes(search.toLowerCase()) &&
-        (course === "All" || i.course === course) &&
-        (batch === "All" || i.batch === batch) &&
-        (status === "All" || getStatus(i.attendance) === status)
-    )
-    .sort((a, b) => {
-      if (sortBy === "name") return a.studentName.localeCompare(b.studentName);
-      if (sortBy === "punchIn") {
-        const ta = getLastPunchIn(a.attendance?.punchRecords) || "00:00";
-        const tb = getLastPunchIn(b.attendance?.punchRecords) || "00:00";
-        return ta.localeCompare(tb);
-      }
-      return 0;
-    });
-
-  const courses = ["All", ...new Set(data.map(i => i.course).filter(Boolean))];
-  const batches = ["All", ...new Set(data.map(i => i.batch).filter(Boolean))];
-
-  const totalStudents = data.length;
-  const presentCount = data.filter(d => ["Present", "Working"].includes(getStatus(d.attendance))).length;
-  const absentCount = data.filter(d => getStatus(d.attendance) === "Absent").length;
-  const workingCount = data.filter(d => getStatus(d.attendance) === "Working").length;
-
+  /* ================= UI ================= */
   return (
-    <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
       <Sidebar />
 
-      <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sticky top-0 bg-[#EEF6FB] py-2 z-10">
-          <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat]">
-            Daily Attendance
-          </h1>
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-600 whitespace-nowrap">Date:</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              className="border border-gray-300 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
+        {/* HEADER - Exact MyStudents Style */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
+                Daily Attendance
+              </h1>
+              <p className="text-gray-600">
+                Track attendance for {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <input
+                type="date"
+                value={date}
+                max={new Date().toISOString().split("T")[0]}
+                onChange={(e) => setDate(e.target.value)}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#0a2540]/40 focus:border-[#0a2540] outline-none transition-all"
+              />
+              <button
+                onClick={fetchData}
+                disabled={loading}
+                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                {loading ? "Loading..." : "Refresh"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-100">
-            <div className="text-2xl font-bold text-blue-700">{totalStudents}</div>
-            <div className="text-sm text-gray-600 mt-1">Total Students</div>
+        {/* STATS CARDS - Exact MyStudents Style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-5 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg text-center border border-green-100">
-            <div className="text-2xl font-bold text-green-700">{presentCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Present/Working</div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Present</p>
+                <p className="text-2xl font-bold text-green-600">{stats.present}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
           </div>
-          <div className="bg-yellow-50 p-4 rounded-lg text-center border border-yellow-100">
-            <div className="text-2xl font-bold text-yellow-700">{workingCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Currently Working</div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Working Now</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.working}</p>
+              </div>
+              <Clock3 className="w-8 h-8 text-blue-500" />
+            </div>
           </div>
-          <div className="bg-red-50 p-4 rounded-lg text-center border border-red-100">
-            <div className="text-2xl font-bold text-red-700">{absentCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Absent</div>
+          <div className="bg-white p-5 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Absent</p>
+                <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
           </div>
         </div>
 
-        {/* TABLE CONTAINER */}
-        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl p-3 sm:p-5 max-h-[640px] overflow-y-auto">
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-4 sticky top-0 bg-white py-4 z-10">
-            {/* Search */}
-            <div className="group relative w-full sm:w-80">
-              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                <input
-                  type="text"
-                  placeholder="Search by name..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-                />
-                <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#141E46] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+        {/* MAIN CONTENT */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#0a2540] border-t-transparent mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading attendance data...</p>
+            </div>
+          </div>
+        ) : filtered.length === 0 && rows.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-[#0a2540]" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No Attendance Records
+            </h3>
+            <p className="text-gray-500 max-w-md mx-auto mb-6">
+              No attendance data available for the selected date.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* FILTER BAR - Exact MyStudents Style */}
+            <div className="hidden lg:block overflow-x-auto max-h-[470px] overflow-y-auto">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
+                {/* Search Bar */}
+                <div className="group relative w-full sm:w-72">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
                     />
-                  </svg>
-                </button>
+                    <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
+                      <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Present">Present</option>
+                      <option value="Working">Working</option>
+                      <option value="Absent">Absent</option>
+                    </select>
+                    <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Course Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {courses.map((c, index) => (
+                        <option key={index} value={c}>
+                          {c === "All" ? "All Courses" : c}
+                        </option>
+                      ))}
+                    </select>
+                    <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Batch Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={batch}
+                      onChange={(e) => setBatch(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {batches.map((b, index) => (
+                        <option key={index} value={b}>
+                          {b === "All" ? "All Batches" : b}
+                        </option>
+                      ))}
+                    </select>
+                    <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(search || status !== "All" || batch !== "All" || course !== "All") && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
               </div>
+
+              {/* TABLE - Exact MyStudents Style */}
+              <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
+                <thead className="bg-white">
+                  <tr className="text-[#1679AB] text-left">
+                    <th className="p-3 text-center">#</th>
+                    <th className="p-3 text-center">Name</th>
+                    <th className="p-3 text-center">Course</th>
+                    <th className="p-3 text-center">Batch</th>
+                    <th className="p-3 text-center">Check In</th>
+                    <th className="p-3 text-center">Check Out</th>
+                    <th className="p-3 text-center">Hours Worked</th>
+                    <th className="p-3 text-center">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                      <td colSpan="8" className="text-center p-4 rounded-2xl">
+                        No students found
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((r, index) => (
+                      <tr
+                        key={index}
+                        className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
+                      >
+                        <td className="px-3 py-3 text-center">{index + 1}</td>
+
+                        <td className="px-4 py-3 text-center font-medium break-words">
+                          {r.studentName}
+                        </td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {r.course || "N/A"}
+                        </td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {r.batch || "N/A"}
+                        </td>
+
+                        <td className="px-4 py-3 text-center text-green-700 font-medium">
+                          {time(lastRecord(r.attendance)?.punchIn)}
+                        </td>
+
+                        <td className="px-4 py-3 text-center text-blue-700 font-medium">
+                          {time(lastRecord(r.attendance)?.punchOut)}
+                        </td>
+
+                        <td className="px-4 py-3 text-center font-mono font-medium">
+                          {fmt(workingSeconds(r.attendance))}
+                        </td>
+
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              getStatus(r.attendance) === "Present"
+                                ? "bg-green-100 text-green-700"
+                                : getStatus(r.attendance) === "Working"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {getStatus(r.attendance)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            {/* Course Filter */}
-            <div className="relative w-full sm:w-52 group">
-              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                <select
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#141E46]"
-                >
-                  {courses.map((c) => (
-                    <option key={c} value={c}>
-                      {c === "All" ? "All Courses" : c}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-5 text-[#141E46] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
-                  ▼
-                </span>
-              </div>
-            </div>
-
-            {/* Batch Filter */}
-            <div className="relative w-full sm:w-52 group">
-              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                <select
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#141E46]"
-                >
-                  {batches.map((b) => (
-                    <option key={b} value={b}>
-                      {b === "All" ? "All Batches" : b}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-5 text-[#141E46] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
-                  ▼
-                </span>
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div className="relative w-full sm:w-52 group">
-              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#141E46]"
-                >
-                  <option value="All">All Status</option>
-                  <option value="Present">Present</option>
-                  <option value="Working">Working</option>
-                  <option value="Absent">Absent</option>
-                </select>
-                <span className="absolute right-5 text-[#141E46] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
-                  ▼
-                </span>
-              </div>
-            </div>
-
-            {/* Sort Filter */}
-            <div className="relative w-full sm:w-52 group">
-              <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#141E46]"
-                >
-                  <option value="name">Sort by Name</option>
-                  <option value="punchIn">Sort by Punch In</option>
-                </select>
-                <span className="absolute right-5 text-[#141E46] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
-                  ▼
-                </span>
+            {/* Footer - Exact MyStudents Style */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+                <div className="text-gray-500">
+                  Showing{" "}
+                  <span className="font-semibold text-[#0a2540]">
+                    {filtered.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {rows.length}
+                  </span>{" "}
+                  students
+                </div>
+                
+                {(search || status !== "All" || batch !== "All" || course !== "All") && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-sm text-[#0a2540] hover:underline flex items-center gap-1"
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
             </div>
           </div>
-
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#141E46] border-t-transparent"></div>
-              <p className="mt-5 text-gray-600 font-medium">Loading attendance...</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="bg-[#EEF6FB] p-4 rounded-xl text-center">
-              <div className="text-gray-400 text-7xl mb-4">📋</div>
-              <p className="text-xl font-medium text-gray-700">No attendance records found</p>
-              <p className="text-gray-500 mt-3">Try changing filters or select different date</p>
-            </div>
-          ) : (
-            <>
-              {/* Mobile Card View */}
-              <div className="block lg:hidden space-y-3">
-                {filteredData.map((item, i) => {
-                  const workingSeconds = calculateLiveWorkingTime(item.attendance);
-                  const currentStatus = getStatus(item.attendance);
-                  
-                  return (
-                    <div
-                      key={i}
-                      className="bg-[#EEF6FB] hover:bg-[#D1E8FF] p-4 rounded-xl transform transition-all duration-300"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-[#141E46] mb-1">{item.studentName}</h3>
-                          <p className="text-sm text-gray-600">{item.course || "—"} | {item.batch || "—"}</p>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            currentStatus === "Present"
-                              ? "bg-green-100 text-green-700"
-                              : currentStatus === "Working"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {currentStatus}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">In:</span> {getLastPunchIn(item.attendance?.punchRecords)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Out:</span> {getLastPunchOut(item.attendance?.punchRecords)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Worked:</span> {formatWorkingTime(workingSeconds)}
-                          {currentStatus === "Working" && (
-                            <span className="ml-1 animate-pulse text-blue-500">●</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full text-sm border-separate border-spacing-y-3">
-                  <thead className="h-15 sticky top-18 bg-white">
-                    <tr className="text-[#1679AB]">
-                      <th className="px-2">Name</th>
-                      <th className="px-2">Course</th>
-                      <th className="px-2">Batch</th>
-                      <th className="px-2">Punch In</th>
-                      <th className="px-2">Punch Out</th>
-                      <th className="px-2">Worked Time</th>
-                      <th className="px-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((item, i) => {
-                      const workingSeconds = calculateLiveWorkingTime(item.attendance);
-                      const currentStatus = getStatus(item.attendance);
-                      
-                      return (
-                        <tr
-                          key={i}
-                          className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transform transition-all duration-300 hover:scale-98"
-                        >
-                          <td className="px-4 py-3 text-center font-medium">{item.studentName}</td>
-                          <td className="px-4 py-3 text-center">{item.course || "—"}</td>
-                          <td className="px-4 py-3 text-center">{item.batch || "—"}</td>
-                          <td className="px-4 py-3 text-center text-green-700">{getLastPunchIn(item.attendance?.punchRecords)}</td>
-                          <td className="px-4 py-3 text-center text-blue-700">{getLastPunchOut(item.attendance?.punchRecords)}</td>
-                          <td className="px-4 py-3 text-center font-mono">
-                            {formatWorkingTime(workingSeconds)}
-                            {currentStatus === "Working" && (
-                              <span className="ml-2 animate-pulse text-blue-500">●</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                currentStatus === "Present"
-                                  ? "bg-green-100 text-green-700"
-                                  : currentStatus === "Working"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {currentStatus}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Live updates • Last refresh: {new Date(liveTime).toLocaleTimeString("en-IN")}
-        </div>
+        )}
       </div>
     </div>
   );
