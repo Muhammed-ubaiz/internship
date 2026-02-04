@@ -12,7 +12,7 @@ function Announcement() {
   const [fetchingBatches, setFetchingBatches] = useState(true);
   const [error, setError] = useState(null);
 
-
+  // 📦 FETCH BATCHES
   const fetchBatches = async () => {
     try {
       setFetchingBatches(true);
@@ -63,7 +63,7 @@ function Announcement() {
   // 🔁 USE EFFECT
   useEffect(() => {
     fetchBatches();
-    
+    // eslint-disable-next-line
   }, []);
 
   // 📤 SEND ANNOUNCEMENT
@@ -148,7 +148,7 @@ function Announcement() {
                 disabled={fetchingBatches}
                 className="w-full border p-2 sm:p-3 rounded-lg text-sm sm:text-base"
               >
-                <option >setect batch</option>
+                <option value="All">All</option>
 
                 {!fetchingBatches &&
                   batches.map((b, i) => (
