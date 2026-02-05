@@ -3,78 +3,30 @@ import Sidebar from "./sidebar";
 import api from "../../utils/axiosConfig";
 import { io } from "socket.io-client";
 import {
-  Clock,
-  User,
-  CalendarDays,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Search,
-  Filter,
-  X,
-  RefreshCw,
-  BookOpen,
   Users,
-  Briefcase,
-  Coffee,
-  Home,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  AlertCircle,
+  RefreshCw,
+  Filter,
+  GraduationCap,
+  CheckCircle,
 } from "lucide-react";
 
 function DailyAttendance1() {
   // -------------------- STATE --------------------
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [liveTime, setLiveTime] = useState(Date.now());
-
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
   const [search, setSearch] = useState("");
   const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
   const [status, setStatus] = useState("All");
-  const [sortBy, setSortBy] = useState("name");
-
-  // -------------------- FETCH ATTENDANCE --------------------
-  const fetchAttendance = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Backend now filters by mentor's course automatically
-      const res = await api.get("/mentor/today-attendance");
-
-      const rawAttendance = res.data?.data || [];
-
-      let dataArray = [];
-      if (Array.isArray(rawAttendance)) {
-        dataArray = rawAttendance;
-      } else if (rawAttendance && typeof rawAttendance === "object") {
-        dataArray = [rawAttendance];
-      }
-
-      console.log("✅ Fetched attendance (filtered by mentor's course):", dataArray.length);
-      setAttendanceData(dataArray);
-    } catch (err) {
-      console.error("❌ Fetch error:", err);
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to load attendance"
-      );
-      setAttendanceData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // -------------------- AUTO FETCH --------------------
-  useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 30000);
-    return () => clearInterval(interval);
-  }, [fetchAttendance]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   // -------------------- LIVE CLOCK --------------------
   useEffect(() => {
@@ -106,6 +58,34 @@ function DailyAttendance1() {
     });
 
     return () => socket.disconnect();
+  }, []);
+
+  // -------------------- FETCH ATTENDANCE --------------------
+  const fetchAttendance = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/mentor/today-attendance");
+      const rawAttendance = res.data?.data || [];
+      
+      let dataArray = [];
+      if (Array.isArray(rawAttendance)) {
+        dataArray = rawAttendance;
+      } else if (rawAttendance && typeof rawAttendance === "object") {
+        dataArray = [rawAttendance];
+      }
+
+      console.log("✅ Fetched attendance:", dataArray.length);
+      setAttendanceData(dataArray);
+    } catch (err) {
+      console.error("❌ Fetch error:", err);
+      setAttendanceData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAttendance();
   }, [fetchAttendance]);
 
   // -------------------- HELPERS --------------------
@@ -119,139 +99,77 @@ function DailyAttendance1() {
     });
   };
 
-  const formatTimeFromSeconds = (sec = 0) => {
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    const s = sec % 60;
-    return `${h.toString().padStart(2, "0")}h ${m
-      .toString()
-      .padStart(2, "0")}m`;
+  const getLastRecord = (attendance) => {
+    if (!attendance?.punchRecords?.length) return {};
+    return attendance.punchRecords[attendance.punchRecords.length - 1];
   };
 
   const getStudentStatus = (attendance) => {
     if (!attendance || !attendance.punchRecords || attendance.punchRecords.length === 0) {
       return "Absent";
     }
-    const last = attendance.punchRecords[attendance.punchRecords.length - 1];
+    const last = getLastRecord(attendance);
     if (last?.punchIn && !last?.punchOut) return "Working";
     if (attendance?.currentBreakStart) return "On Break";
     if (last?.punchIn && last?.punchOut) return "Present";
     return "Absent";
   };
 
-  const calculateLiveWorkingTime = (attendance) => {
+  const calculateWorkingSeconds = (attendance) => {
     if (!attendance) return 0;
     let total = attendance.totalWorkingSeconds || 0;
-    const last = attendance.punchRecords?.[attendance.punchRecords.length - 1];
+    const last = getLastRecord(attendance);
     if (last?.punchIn && !last?.punchOut) {
-      total += Math.floor(
-        (liveTime - new Date(last.punchIn).getTime()) / 1000
-      );
+      total += Math.floor((liveTime - new Date(last.punchIn).getTime()) / 1000);
     }
     return Math.max(0, total);
   };
 
-  const calculateLiveBreakTime = (attendance) => {
-    if (!attendance) return 0;
-    let total = attendance.totalBreakSeconds || 0;
-    if (attendance.currentBreakStart) {
-      total += Math.floor(
-        (liveTime - new Date(attendance.currentBreakStart).getTime()) / 1000
-      );
-    }
-    return Math.max(0, total);
+  const formatHours = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h}h ${m}m`;
   };
 
-  const getLastPunchIn = (attendance) => {
-    if (!attendance?.punchRecords?.length) return null;
-    return attendance.punchRecords[attendance.punchRecords.length - 1]?.punchIn || null;
-  };
+  // -------------------- FILTER --------------------
+  const filteredData = attendanceData.filter((student) => {
+    const studentName = student?.studentId?.name || student?.name || "";
+    const studentCourse = student?.studentId?.course || student?.course || "";
+    const studentBatch = student?.studentId?.batch || student?.batch || "";
+    const studentStatus = getStudentStatus(student?.attendance || student);
+    
+    return (
+      studentName.toLowerCase().includes(search.toLowerCase()) &&
+      (course === "All" || studentCourse === course) &&
+      (batch === "All" || studentBatch === batch) &&
+      (status === "All" || studentStatus === status)
+    );
+  });
 
-  const getLastPunchOut = (attendance) => {
-    if (!attendance?.punchRecords?.length) return null;
-    return attendance.punchRecords[attendance.punchRecords.length - 1]?.punchOut || null;
-  };
+  const uniqueCourses = ["All", ...new Set(
+    attendanceData
+      .map((s) => s?.studentId?.course || s?.course)
+      .filter(Boolean)
+  )];
 
-  // -------------------- FILTER + SORT --------------------
-  const filteredData = attendanceData
-    .filter((student) => {
-      const studentName = student?.studentId?.name || student?.name || "";
-      const studentCourse = student?.studentId?.course || student?.course || "";
-      const studentBatch = student?.studentId?.batch || student?.batch || "";
-      
-      const nameMatch = studentName.toLowerCase().includes(search.toLowerCase());
-      const courseMatch = course === "All" || studentCourse === course;
-      const batchMatch = batch === "All" || studentBatch === batch;
-      const statusMatch =
-        status === "All" ||
-        getStudentStatus(student?.attendance || student) === status;
+  const uniqueBatches = ["All", ...new Set(
+    attendanceData
+      .map((s) => s?.studentId?.batch || s?.batch)
+      .filter(Boolean)
+  )];
 
-      return nameMatch && courseMatch && batchMatch && statusMatch;
-    })
-    .sort((a, b) => {
-      if (sortBy === "name") {
-        const nameA = a?.studentId?.name || a?.name || "";
-        const nameB = b?.studentId?.name || b?.name || "";
-        return nameA.localeCompare(nameB);
-      }
-      if (sortBy === "punchIn") {
-        const attA = a?.attendance || a;
-        const attB = b?.attendance || b;
-        const tA = new Date(getLastPunchIn(attA) || 0).getTime();
-        const tB = new Date(getLastPunchIn(attB) || 0).getTime();
-        return tA - tB;
-      }
-      return 0;
-    });
-
-  const uniqueCourses = [
-    "All",
-    ...new Set(
-      attendanceData
-        .map((s) => s?.studentId?.course || s?.course)
-        .filter(Boolean)
-    ),
-  ];
-  const uniqueBatches = [
-    "All",
-    ...new Set(
-      attendanceData
-        .map((s) => s?.studentId?.batch || s?.batch)
-        .filter(Boolean)
-    ),
-  ];
-
-  const isToday = selectedDate === new Date().toISOString().split("T")[0];
-
-  // -------------------- STATUS ICONS --------------------
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "Working":
-        return <Briefcase className="w-4 h-4" />;
-      case "Present":
-        return <CheckCircle className="w-4 h-4" />;
-      case "On Break":
-        return <Coffee className="w-4 h-4" />;
-      case "Absent":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <Users className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Working":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "Present":
-        return "bg-green-50 text-green-700 border-green-200";
-      case "On Break":
-        return "bg-orange-50 text-orange-700 border-orange-200";
-      case "Absent":
-        return "bg-red-50 text-red-700 border-red-200";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
-    }
+  // -------------------- STATS --------------------
+  const stats = {
+    total: attendanceData.length,
+    present: attendanceData.filter((s) =>
+      ["Present", "Working"].includes(getStudentStatus(s?.attendance || s))
+    ).length,
+    working: attendanceData.filter(
+      (s) => getStudentStatus(s?.attendance || s) === "Working"
+    ).length,
+    absent: attendanceData.filter(
+      (s) => getStudentStatus(s?.attendance || s) === "Absent"
+    ).length,
   };
 
   // Clear all filters
@@ -262,12 +180,13 @@ function DailyAttendance1() {
     setStatus("All");
   };
 
+  // -------------------- UI --------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
       <Sidebar />
 
       <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* Header */}
+        {/* HEADER - Exact Admin Style */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -275,11 +194,7 @@ function DailyAttendance1() {
                 Daily Attendance
               </h1>
               <p className="text-gray-600">
-                {new Date(selectedDate).toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                Track attendance for {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
 
@@ -287,168 +202,63 @@ function DailyAttendance1() {
               <input
                 type="date"
                 value={selectedDate}
+                max={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="border px-4 py-2 rounded-lg"
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#0a2540]/40 focus:border-[#0a2540] outline-none transition-all"
               />
               <button
                 onClick={fetchAttendance}
                 disabled={loading}
                 className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 {loading ? "Loading..." : "Refresh"}
               </button>
             </div>
           </div>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-6">
-            <strong>Error:</strong> {error}
-            <button onClick={fetchAttendance} className="ml-3 underline">
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Stats Cards */}
+        {/* STATS CARDS - Exact Admin Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-5 rounded-xl shadow-sm border">
-            <p className="text-sm text-gray-600">Total Students</p>
-            <p className="text-2xl font-bold">{attendanceData.length}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
+              </div>
+              <Users className="w-8 h-8 text-blue-500" />
+            </div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
-            <p className="text-sm text-gray-600">Present</p>
-            <p className="text-2xl font-bold text-green-600">
-              {
-                attendanceData.filter((s) =>
-                  ["Present", "Working"].includes(getStudentStatus(s?.attendance || s))
-                ).length
-              }
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Present</p>
+                <p className="text-2xl font-bold text-green-600">{stats.present}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
-            <p className="text-sm text-gray-600">Working Now</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {
-                attendanceData.filter(
-                  (s) => getStudentStatus(s?.attendance || s) === "Working"
-                ).length
-              }
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Working Now</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.working}</p>
+              </div>
+              <Clock3 className="w-8 h-8 text-blue-500" />
+            </div>
           </div>
           <div className="bg-white p-5 rounded-xl shadow-sm border">
-            <p className="text-sm text-gray-600">Absent</p>
-            <p className="text-2xl font-bold text-red-600">
-              {
-                attendanceData.filter(
-                  (s) => getStudentStatus(s?.attendance || s) === "Absent"
-                ).length
-              }
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Absent</p>
+                <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
           </div>
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-6 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
-          {/* Search Bar */}
-          <div className="group relative w-full sm:w-72">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <input
-                type="text"
-                placeholder="Search by name..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-              />
-              <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
-              </button>
-            </div>
-          </div>
-
-          {/* Course Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                {uniqueCourses.map((c) => (
-                  <option key={c} value={c}>
-                    {c === "All" ? "All Courses" : c}
-                  </option>
-                ))}
-              </select>
-              <BookOpen className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Batch Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                {uniqueBatches.map((b) => (
-                  <option key={b} value={b}>
-                    {b === "All" ? "All Batches" : b}
-                  </option>
-                ))}
-              </select>
-              <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                <option value="All">All Status</option>
-                <option value="Present">Present</option>
-                <option value="Working">Working</option>
-                <option value="On Break">On Break</option>
-                <option value="Absent">Absent</option>
-              </select>
-              <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Sort By */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                <option value="name">Sort: Name</option>
-                <option value="punchIn">Sort: Punch In Time</option>
-              </select>
-              <Clock className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Clear Filters Button */}
-          {(search || course !== "All" || batch !== "All" || status !== "All") && (
-            <button
-              onClick={clearAllFilters}
-              className="group flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors"
-            >
-              <X className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              Clear All
-            </button>
-          )}
-        </div>
-
-        {/* Main Content */}
+        {/* MAIN CONTENT */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -456,203 +266,210 @@ function DailyAttendance1() {
               <p className="mt-4 text-gray-600">Loading attendance data...</p>
             </div>
           </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-red-700 mb-2">
-              Error Loading Data
-            </h3>
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={fetchAttendance}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : filteredData.length === 0 ? (
+        ) : filteredData.length === 0 && attendanceData.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Users className="w-10 h-10 text-[#0a2540]" />
             </div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {attendanceData.length === 0
-                ? isToday
-                  ? "No Attendance Today"
-                  : "No Records Found"
-                : "No Matching Students"}
+              No Attendance Records
             </h3>
             <p className="text-gray-500 max-w-md mx-auto mb-6">
-              {attendanceData.length === 0
-                ? isToday
-                  ? "No students have marked attendance yet. Check back later."
-                  : "No attendance records found for the selected date."
-                : "No students match your current filters. Try adjusting your search criteria."}
+              No attendance data available for today.
             </p>
-            {(search || course !== "All" || batch !== "All" || status !== "All") && (
-              <button
-                onClick={clearAllFilters}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors"
-              >
-                Clear All Filters
-              </button>
-            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredData.map((student) => {
-              const attendance = student?.attendance || student;
-              const studentInfo = student?.studentId || student;
-              const studentStatus = getStudentStatus(attendance);
-              const lastPunchIn = getLastPunchIn(attendance);
-              const lastPunchOut = getLastPunchOut(attendance);
-              const workingTime = calculateLiveWorkingTime(attendance);
-              const breakTime = calculateLiveBreakTime(attendance);
-
-              return (
-                <div
-                  key={student._id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  {/* Header */}
-                  <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center">
-                          <User className="w-6 h-6 text-[#0a2540]" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-[#0a2540]">
-                            {studentInfo?.name || "Unknown Student"}
-                          </h3>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="text-sm text-gray-500">
-                              {studentInfo?.course || "—"}
-                            </span>
-                            <span className="text-sm text-gray-500">•</span>
-                            <span className="text-sm text-gray-500">
-                              {studentInfo?.batch || "—"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                          studentStatus
-                        )} flex items-center gap-1`}
-                      >
-                        {getStatusIcon(studentStatus)}
-                        {studentStatus}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="p-6">
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4" />
-                          <span>Punch In</span>
-                        </div>
-                        <p className="font-medium text-gray-900">
-                          {formatTime(lastPunchIn)}
-                          {studentStatus === "Working" && (
-                            <span className="ml-2 animate-pulse text-blue-500">
-                              ●
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4" />
-                          <span>Punch Out</span>
-                        </div>
-                        <p className="font-medium text-gray-900">
-                          {formatTime(lastPunchOut)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Briefcase className="w-4 h-4" />
-                          <span>Working Time</span>
-                        </div>
-                        <p className="font-mono font-medium text-gray-900">
-                          {formatTimeFromSeconds(workingTime)}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Coffee className="w-4 h-4" />
-                          <span>Break Time</span>
-                        </div>
-                        <p className="font-mono font-medium text-gray-900">
-                          {formatTimeFromSeconds(breakTime)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="p-4 border-t border-gray-100 bg-gray-50">
-                    <div className="text-xs text-gray-500">
-                      Last updated: {formatTime(liveTime)}
-                    </div>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            {/* FILTER BAR - Exact Admin Style */}
+            <div className="hidden lg:block overflow-x-auto max-h-[470px] overflow-y-auto">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
+                {/* Search Bar */}
+                <div className="group relative w-full sm:w-72">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
+                    />
+                    <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
+                      <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
 
-        {/* Stats Bar */}
-        {!loading && !error && filteredData.length > 0 && (
-          <div className="mt-8 bg-white rounded-xl shadow-sm border p-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-              <div className="text-gray-500">
-                {search || course !== "All" || batch !== "All" || status !== "All" ? (
-                  <>
-                    Showing{" "}
-                    <span className="font-semibold text-[#0a2540]">
-                      {filteredData.length}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold">
-                      {attendanceData.length}
-                    </span>{" "}
-                    students
-                  </>
-                ) : (
-                  <>
-                    Showing all{" "}
-                    <span className="font-semibold">
-                      {filteredData.length}
-                    </span>{" "}
-                    students
-                  </>
+                {/* Status Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Present">Present</option>
+                      <option value="Working">Working</option>
+                      <option value="On Break">On Break</option>
+                      <option value="Absent">Absent</option>
+                    </select>
+                    <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Course Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {uniqueCourses.map((c, index) => (
+                        <option key={index} value={c}>
+                          {c === "All" ? "All Courses" : c}
+                        </option>
+                      ))}
+                    </select>
+                    <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Batch Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={batch}
+                      onChange={(e) => setBatch(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {uniqueBatches.map((b, index) => (
+                        <option key={index} value={b}>
+                          {b === "All" ? "All Batches" : b}
+                        </option>
+                      ))}
+                    </select>
+                    <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(search || status !== "All" || batch !== "All" || course !== "All") && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
+                  >
+                    Clear All Filters
+                  </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-4">
-                {(search || course !== "All" || batch !== "All" || status !== "All") && (
+              {/* TABLE - Exact Admin Style */}
+              <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
+                <thead className="bg-white">
+                  <tr className="text-[#1679AB] text-left">
+                    <th className="p-3 text-center">#</th>
+                    <th className="p-3 text-center">Name</th>
+                    <th className="p-3 text-center">Course</th>
+                    <th className="p-3 text-center">Batch</th>
+                    <th className="p-3 text-center">Check In</th>
+                    <th className="p-3 text-center">Check Out</th>
+                    <th className="p-3 text-center">Hours Worked</th>
+                    <th className="p-3 text-center">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredData.length === 0 ? (
+                    <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                      <td colSpan="8" className="text-center p-4 rounded-2xl">
+                        No students found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredData.map((student, index) => {
+                      const attendance = student?.attendance || student;
+                      const status = getStudentStatus(attendance);
+                      const lastRecord = getLastRecord(attendance);
+                      const workingSeconds = calculateWorkingSeconds(attendance);
+                      
+                      return (
+                        <tr
+                          key={index}
+                          className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
+                        >
+                          <td className="px-3 py-3 text-center">{index + 1}</td>
+
+                          <td className="px-4 py-3 text-center font-medium break-words">
+                            {student?.studentId?.name || student?.name || "N/A"}
+                          </td>
+
+                          <td className="px-4 py-3 text-center break-words">
+                            {student?.studentId?.course || student?.course || "N/A"}
+                          </td>
+
+                          <td className="px-4 py-3 text-center break-words">
+                            {student?.studentId?.batch || student?.batch || "N/A"}
+                          </td>
+
+                          <td className="px-4 py-3 text-center text-green-700 font-medium">
+                            {formatTime(lastRecord?.punchIn)}
+                          </td>
+
+                          <td className="px-4 py-3 text-center text-blue-700 font-medium">
+                            {formatTime(lastRecord?.punchOut)}
+                          </td>
+
+                          <td className="px-4 py-3 text-center font-mono font-medium">
+                            {formatHours(workingSeconds)}
+                          </td>
+
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                status === "Present"
+                                  ? "bg-green-100 text-green-700"
+                                  : status === "Working"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : status === "On Break"
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer - Exact Admin Style */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+                <div className="text-gray-500">
+                  Showing{" "}
+                  <span className="font-semibold text-[#0a2540]">
+                    {filteredData.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {attendanceData.length}
+                  </span>{" "}
+                  students
+                </div>
+                
+                {(search || status !== "All" || batch !== "All" || course !== "All") && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-[#0a2540] hover:underline text-sm flex items-center gap-1"
+                    className="text-sm text-[#0a2540] hover:underline flex items-center gap-1"
                   >
-                    <X className="w-3 h-3" />
                     Clear Filters
                   </button>
                 )}
-                <div className="text-xs text-gray-500">
-                  Live updates • Last refresh:{" "}
-                  {new Date(liveTime).toLocaleTimeString("en-IN")}
-                </div>
               </div>
             </div>
           </div>
