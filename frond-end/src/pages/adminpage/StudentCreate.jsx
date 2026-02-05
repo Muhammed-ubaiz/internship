@@ -3,6 +3,7 @@ import Sidebar from "./sidebar";
 import axios from "axios";
 import Swal from "sweetalert2";
 
+
 function StudentCreate() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -18,17 +19,12 @@ function StudentCreate() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
 
-  const [otp, setOtp] = useState("");
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [message, setMessage] = useState("");
+  const [linkSent, setLinkSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // --------------------- FETCH DATA ---------------------
   const fetchCourses = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -79,14 +75,14 @@ function StudentCreate() {
     fetchCourses();
   }, []);
 
-  // --------------------- CREATE ---------------------
   const handleAddStudent = async (e) => {
     e.preventDefault();
-    if (!isVerified) {
+    
+    if (!linkSent) {
       Swal.fire({
         icon: "error",
-        title: "Email not verified",
-        text: "Please verify email before creating student",
+        title: "Password link not sent",
+        text: "Please send password setup link to email first",
         draggable: true,
       });
       return;
@@ -98,7 +94,7 @@ function StudentCreate() {
     try {
       const res = await axios.post(
         "http://localhost:3001/admin/addStudent",
-        { name, email, password, course, batch },
+        { name, email, course, batch, password: "TEMP_PASSWORD" },
         { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
@@ -108,6 +104,7 @@ function StudentCreate() {
 
         Swal.fire({
           title: "Student Added Successfully!",
+          html: "Password setup link has been sent to the student's email.",
           icon: "success",
           draggable: true,
         });
@@ -124,7 +121,6 @@ function StudentCreate() {
     }
   };
 
-  // --------------------- UPDATE ---------------------
   const handleUpdateStudent = async (e) => {
     e.preventDefault();
 
@@ -150,7 +146,7 @@ function StudentCreate() {
     try {
       const res = await axios.put(
         `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
-        { name, email, course, batch, password },
+        { name, email, course, batch },
         { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
@@ -181,7 +177,6 @@ function StudentCreate() {
     setShowEditModal(true);
   };
 
-  // --------------------- STATUS TOGGLE ---------------------
   const handleToggleStatus = async (id) => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -221,8 +216,7 @@ function StudentCreate() {
     }
   };
 
-  // --------------------- SEND OTP ---------------------
-  const sendOtp = async () => {
+  const sendPasswordLink = async () => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
@@ -230,7 +224,7 @@ function StudentCreate() {
       Swal.fire({
         icon: "error",
         title: "Email required",
-        text: "Enter email to send OTP",
+        text: "Enter email to send password setup link",
         draggable: true,
       });
       return;
@@ -240,23 +234,23 @@ function StudentCreate() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/admin/send-otp",
+        "http://localhost:3001/admin/send-password-link",
         { email },
         { headers: { Authorization: `Bearer ${token}`, Role: role } },
       );
 
       if (res.data.success) {
-        setShowOtpModal(true);
+        setLinkSent(true);
         Swal.fire({
-          title: "OTP Sent!",
-          text: "Check your email",
+          title: "Link Sent!",
+          text: "Password setup link has been sent to the email",
           icon: "success",
           draggable: true,
         });
       } else {
         Swal.fire({
           title: "Failed",
-          text: res.data.message || "Could not send OTP",
+          text: res.data.message || "Could not send link",
           icon: "error",
           draggable: true,
         });
@@ -265,61 +259,7 @@ function StudentCreate() {
       console.error(err);
       Swal.fire({
         title: "Error",
-        text: "Error sending OTP",
-        icon: "error",
-        draggable: true,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --------------------- VERIFY OTP ---------------------
-  const verifyOtp = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
-    if (!otp) {
-      Swal.fire({
-        icon: "error",
-        title: "OTP required",
-        text: "Enter OTP to verify",
-        draggable: true,
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/verify-otp",
-        { email, otp },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
-      );
-
-      if (res.data.success) {
-        setIsVerified(true);
-        setShowOtpModal(false);
-
-        Swal.fire({
-          title: "Email Verified!",
-          icon: "success",
-          draggable: true,
-        });
-      } else {
-        Swal.fire({
-          title: "Invalid OTP",
-          text: res.data.message || "Please try again",
-          icon: "error",
-          draggable: true,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        title: "Error",
-        text: "Error verifying OTP",
+        text: "Error sending password link",
         icon: "error",
         draggable: true,
       });
@@ -331,12 +271,9 @@ function StudentCreate() {
   const resetForm = () => {
     setName("");
     setEmail("");
-    setPassword("");
     setCourse("");
     setBatch("");
-    setOtp("");
-    setIsVerified(false);
-    setMessage("");
+    setLinkSent(false);
     setShowCreateModal(false);
     setBatches([]);
   };
@@ -364,7 +301,6 @@ function StudentCreate() {
       <Sidebar />
 
       <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-7 mb-4 sm:mb-6 ">
           <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
             Students Management
@@ -378,11 +314,8 @@ function StudentCreate() {
           </button>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl   max-h-[640px] overflow-y-auto">
-          {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5  sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
-            {/* Search */}
+        <div className="bg-white rounded-xl sm:rounded-3xl shadow-2xl max-h-[640px] overflow-y-auto">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
             <div className="group relative w-full sm:w-80">
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <input
@@ -411,9 +344,7 @@ function StudentCreate() {
               </div>
             </div>
 
-            {/* Status Filter */}
             <div className="relative w-full sm:max-w-[280px] group">
-
               <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#141E46]/40 active:scale-[0.98]">
                 <select
                   value={statusFilter}
@@ -431,7 +362,6 @@ function StudentCreate() {
             </div>
           </div>
 
-          {/* Mobile Card View */}
           <div className="block lg:hidden space-y-3">
             {filteredStudents.length === 0 ? (
               <div className="bg-[#EEF6FB] p-4 rounded-xl text-center">
@@ -485,10 +415,9 @@ function StudentCreate() {
             )}
           </div>
 
-          {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
-              <thead className=" top-18 bg-white">
+              <thead className="top-18 bg-white">
                 <tr className="text-[#1679AB] text-left">
                   <th className="p-3 text-center">#</th>
                   <th className="p-3 text-center">Name</th>
@@ -566,7 +495,6 @@ function StudentCreate() {
         </div>
       </div>
 
-      {/* ================= CREATE MODAL ================= */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
@@ -598,35 +526,33 @@ function StudentCreate() {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    setIsVerified(false);
+                    setLinkSent(false);
                   }}
                   className="flex-1 border p-2 rounded"
                   required
                 />
                 <button
                   type="button"
-                  onClick={sendOtp}
+                  onClick={sendPasswordLink}
                   className={`px-4 py-2 rounded text-white whitespace-nowrap ${
-                    isVerified
+                    linkSent
                       ? "bg-green-500 cursor-not-allowed"
                       : "bg-[#141E46] hover:bg-[#0f2040]"
                   }`}
-                  disabled={isVerified || loading}
+                  disabled={linkSent || loading}
                 >
-                  {isVerified ? "Verified" : loading ? "Sending..." : "Verify"}
+                  {linkSent ? "✓ Sent" : loading ? "Sending..." : "Send Link"}
                 </button>
               </div>
 
-              {message && <p className="text-sm text-gray-600">{message}</p>}
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border p-2 rounded"
-                required
-              />
+              {linkSent && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Password setup link sent to email
+                </p>
+              )}
 
               <select
                 value={course}
@@ -665,9 +591,9 @@ function StudentCreate() {
               </select>
 
               <button
-                className="w-full bg-[#141E46] text-white py-2 rounded disabled:opacity-50"
+                className="w-full bg-[#141E46] text-white py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 type="submit"
-                disabled={!isVerified}
+                disabled={!linkSent}
               >
                 Create Student
               </button>
@@ -676,7 +602,6 @@ function StudentCreate() {
         </div>
       )}
 
-      {/* ================= EDIT MODAL ================= */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-md rounded-2xl p-4 sm:p-6 relative max-h-[90vh] overflow-y-auto">
@@ -753,49 +678,6 @@ function StudentCreate() {
                 Update Student
               </button>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= OTP MODAL ================= */}
-      {showOtpModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-sm rounded-2xl p-4 sm:p-6 relative">
-            <button
-              onClick={() => setShowOtpModal(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-lg sm:text-xl font-semibold text-center mb-4">
-              Enter OTP
-            </h2>
-
-            <p className="text-sm text-gray-600 text-center mb-4">
-              OTP sent to <span className="font-semibold break-all">{email}</span>
-            </p>
-
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter OTP"
-              className="w-full border p-2 rounded mb-4 text-center"
-            />
-
-            <button
-              onClick={verifyOtp}
-              className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#0f2040]"
-            >
-              Verify OTP
-            </button>
-
-            {message && (
-              <p className="text-sm text-gray-600 mt-2 text-center">
-                {message}
-              </p>
-            )}
           </div>
         </div>
       )}

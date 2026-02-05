@@ -311,60 +311,208 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 
-let otpStore = {}; 
+// Store for password reset tokens
+let resetTokenStore = {};
 
-export const sendOtp = async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ success: false, message: "Email required" });
+// Generate random token without crypto module
+const generateToken = () => {
+  return Array.from({ length: 64 }, () => 
+    Math.floor(Math.random() * 16).toString(16)
+  ).join('');
+};
 
-  const otp = Math.floor(100000 + Math.random() * 900000);
-
-  otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // expires in 5 min
-
- 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.APP_EMAIL,
-      pass: process.env.APP_PASSWORD, // 16-char Gmail App Password
-    },
-    tls: { rejectUnauthorized: false },
-  });
-
+// Send Password Reset Link
+export const sendPasswordResetLink = async (req, res) => {
   try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email required" 
+      });
+    }
+
+    // Generate secure random token
+    const token = generateToken();
+    
+    // Store token with expiration (30 minutes)
+    resetTokenStore[email] = { 
+      token, 
+      expiresAt: Date.now() + 30 * 60 * 1000 
+    };
+
+    // Create reset link (update with your frontend URL - change port if needed)
+    const resetLink = `http://localhost:5173/set-password?token=${token}&email=${encodeURIComponent(email)}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.APP_EMAIL,
+        pass: process.env.APP_PASSWORD,
+      },
+      tls: { rejectUnauthorized: false },
+    });
+
     await transporter.sendMail({
       from: `"PUNCHING APP" <${process.env.APP_EMAIL}>`,
       to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
+      subject: "Set Your Password",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #141E46;">Set Your Password</h2>
+          <p>Hello,</p>
+          <p>Click the button below to set your password for your new account:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" 
+               style="background-color: #141E46; color: white; padding: 12px 30px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block;">
+              Set Password
+            </a>
+          </div>
+          <p style="color: #666; font-size: 14px;">
+            Or copy and paste this link in your browser:<br>
+            <a href="${resetLink}" style="color: #141E46;">${resetLink}</a>
+          </p>
+          <p style="color: #666; font-size: 14px;">
+            This link will expire in 30 minutes.
+          </p>
+          <p style="color: #666; font-size: 14px;">
+            If you didn't request this, please ignore this email.
+          </p>
+        </div>
+      `,
     });
 
-    res.json({ success: true, message: "OTP sent" });
+    res.json({ 
+      success: true, 
+      message: "Password reset link sent to email" 
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Failed to send OTP" });
+    console.error("Error sending password link:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to send email",
+      error: err.message 
+    });
   }
 };
 
-// Verify OTP
-export const verifyOtp = (req, res) => {
-  const { email, otp } = req.body;
-  const record = otpStore[email];
+// Verify Reset Token
+export const verifyResetToken = (req, res) => {
+  try {
+    const { email, token } = req.body;
 
-  if (!record) return res.json({ success: false, message: "No OTP found for this email" });
-  if (Date.now() > record.expiresAt) {
-    delete otpStore[email];
-    return res.json({ success: false, message: "OTP expired" });
+    if (!email || !token) {
+      return res.json({ 
+        success: false, 
+        message: "Email and token required" 
+      });
+    }
+
+    const record = resetTokenStore[email];
+
+    if (!record) {
+      return res.json({ 
+        success: false, 
+        message: "Invalid or expired link" 
+      });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      delete resetTokenStore[email];
+      return res.json({ 
+        success: false, 
+        message: "Link has expired" 
+      });
+    }
+
+    if (record.token === token) {
+      return res.json({ 
+        success: true, 
+        message: "Token verified" 
+      });
+    }
+
+    res.json({ 
+      success: false, 
+      message: "Invalid link" 
+    });
+
+  } catch (err) {
+    console.error("Error verifying token:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error verifying token",
+      error: err.message 
+    });
   }
-
-  if (record.otp.toString() === otp) {
-    delete otpStore[email];
-    return res.json({ success: true, message: "OTP verified" });
-  }
-
-  res.json({ success: false, message: "Invalid OTP" });
 };
 
+// Set Password
+export const setPassword = async (req, res) => {
+  try {
+    const { email, token, password } = req.body;
+
+    if (!email || !token || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email, token, and password required" 
+      });
+    }
+
+    const record = resetTokenStore[email];
+
+    if (!record || record.token !== token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid or expired link" 
+      });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      delete resetTokenStore[email];
+      return res.status(400).json({ 
+        success: false, 
+        message: "Link has expired" 
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update student password in database
+    const student = await Student.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    if (!student) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Student not found" 
+      });
+    }
+
+    // Clear token after successful password set
+    delete resetTokenStore[email];
+
+    res.json({ 
+      success: true, 
+      message: "Password set successfully" 
+    });
+
+  } catch (err) {
+    console.error("Error setting password:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to set password",
+      error: err.message 
+    });
+  }
+};
 
 
 export const saveLocation = async (req, res) => {
@@ -503,9 +651,18 @@ export const getDailyAttendance = async (req, res) => {
       },
       { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
       {
+        $lookup: {
+          from: "courses",
+          localField: "student.course",
+          foreignField: "_id",
+          as: "course"
+        }
+      },
+      { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           studentName: { $ifNull: ["$student.name", "Unknown"] },
-          course: { $ifNull: ["$student.course", "—"] },
+          course: { $ifNull: ["$course.name", "—"] },
           batch: { $ifNull: ["$student.batch", "—"] },
           attendance: "$$ROOT"
         }

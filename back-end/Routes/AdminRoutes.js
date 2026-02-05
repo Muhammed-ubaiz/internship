@@ -13,8 +13,6 @@ import {
   toggleStudentStatus,
   updateStudent,
   toggleCourseStatus,
-  sendOtp,
-  verifyOtp,
   saveLocation,
   addMentor,
   getMentors,
@@ -25,7 +23,10 @@ import {
   sendInformation,
   getDailyAttendance,
   getAllLeaves,
-  getMonthlySummaryForAdmin
+  getMonthlySummaryForAdmin,
+  sendPasswordResetLink,
+  verifyResetToken,
+  setPassword
 } from "../Controller/AdminController.js";
 
 import { verifyToken } from "../AuthMiddleware.js";
@@ -55,9 +56,10 @@ adminRoutes.get("/getStudents", verifyToken, getStudents);
 adminRoutes.put("/student/status/:id", verifyToken, toggleStudentStatus);
 adminRoutes.put("/updateStudent/:id", verifyToken, updateStudent);
 
-// OTP routes
-adminRoutes.post("/send-otp", verifyToken, sendOtp);
-adminRoutes.post("/verify-otp", verifyToken, verifyOtp);
+// adminRoutes.js
+adminRoutes.post("/send-password-link", verifyToken, sendPasswordResetLink);
+adminRoutes.post("/verify-reset-token", verifyResetToken);
+adminRoutes.post("/set-password", setPassword); // No auth needed
 
 // Location routes
 adminRoutes.post("/location", verifyToken, saveLocation);
