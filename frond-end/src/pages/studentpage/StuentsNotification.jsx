@@ -22,7 +22,7 @@ function StudentsNotification() {
   // Fetch notifications from admin
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("t+oken");
       const res = await axios.get(
         "http://localhost:3001/student/notifications",
         {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./sidebar";
 import Swal from "sweetalert2";
 import { FiSend } from "react-icons/fi";
@@ -28,7 +28,7 @@ function Information() {
     }
 
     try {
-      await axios.post("http://localhost:3001/admin/send-information", data);
+      await api.post("/admin/send-information", data);
 
       Swal.fire({
         icon: "success",
