@@ -122,9 +122,7 @@ function StudentsNotification() {
         {/* ==================== ANNOUNCEMENTS FROM MENTORS SECTION ==================== */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <FaBullhorn className="text-green-600 text-xl" />
-            </div>
+            
             <h2 className="text-xl font-bold text-gray-800">
               Notification from Mentors
             </h2>
@@ -135,7 +133,7 @@ function StudentsNotification() {
               <p className="text-gray-500">Loading announcements...</p>
             </div>
           ) : announcements.length === 0 ? (
-            <div className="flex justify-center items-center h-32 bg-white rounded-lg shadow-md max-w-xl mx-auto">
+            <div className="flex justify-center items-center h-32  rounded-lg max-w-xl mx-auto">
               <p className="text-gray-500">No message from mentors.</p>
             </div>
           ) : (
@@ -187,8 +185,8 @@ function StudentsNotification() {
               <p className="text-gray-500">Loading notifications...</p>
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-md max-w-xl mx-auto">
-              <p className="text-gray-500 text-lg">No notifications yet.</p>
+            <div className="flex justify-center items-center h-64  rounded-lg max-w-xl mx-auto">
+              <p className="text-gray-500 text-lg">No message from admin.</p>
             </div>
           ) : (
             <div className="flex justify-center">
