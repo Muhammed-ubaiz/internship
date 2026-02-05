@@ -29,13 +29,11 @@ function AdminDailyAttendance() {
   );
   const [now, setNow] = useState(Date.now());
 
-  /* ================= CLOCK ================= */
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(i);
   }, []);
 
-  /* ================= SOCKET ================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -50,7 +48,6 @@ function AdminDailyAttendance() {
     return () => socket.disconnect();
   }, [date]);
 
-  /* ================= FETCH ================= */
   useEffect(() => {
     fetchData();
   }, [date]);
@@ -64,12 +61,13 @@ function AdminDailyAttendance() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setRows(res.data.attendanceData || []);
+    } catch (error) {
+      console.error("Error fetching attendance data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= HELPERS ================= */
   const lastRecord = (a) => a?.punchRecords?.slice(-1)[0];
 
   const getStatus = (a) => {
@@ -100,7 +98,6 @@ function AdminDailyAttendance() {
         })
       : "--";
 
-  /* ================= FILTER ================= */
   const filtered = rows.filter(
     (r) =>
       r.studentName?.toLowerCase().includes(search.toLowerCase()) &&
@@ -112,7 +109,6 @@ function AdminDailyAttendance() {
   const courses = ["All", ...new Set(rows.map((r) => r.course).filter(Boolean))];
   const batches = ["All", ...new Set(rows.map((r) => r.batch).filter(Boolean))];
 
-  /* ================= STATS ================= */
   const stats = {
     total: rows.length,
     present: rows.filter((r) =>
@@ -126,7 +122,6 @@ function AdminDailyAttendance() {
     ).length,
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     setSearch("");
     setCourse("All");
@@ -134,13 +129,11 @@ function AdminDailyAttendance() {
     setStatus("All");
   };
 
-  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
       <Sidebar />
 
       <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* HEADER - Exact MyStudents Style */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -172,7 +165,6 @@ function AdminDailyAttendance() {
           </div>
         </div>
 
-        {/* STATS CARDS - Exact MyStudents Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-5 rounded-xl shadow-sm border">
             <div className="flex items-center justify-between">
@@ -212,7 +204,6 @@ function AdminDailyAttendance() {
           </div>
         </div>
 
-        {/* MAIN CONTENT */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -234,10 +225,8 @@ function AdminDailyAttendance() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* FILTER BAR - Exact MyStudents Style */}
             <div className="hidden lg:block overflow-x-auto max-h-[470px] overflow-y-auto">
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
-                {/* Search Bar */}
                 <div className="group relative w-full sm:w-72">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <input
@@ -253,7 +242,6 @@ function AdminDailyAttendance() {
                   </div>
                 </div>
 
-                {/* Status Filter */}
                 <div className="relative w-full sm:w-48 group">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <select
@@ -270,7 +258,6 @@ function AdminDailyAttendance() {
                   </div>
                 </div>
 
-                {/* Course Filter */}
                 <div className="relative w-full sm:w-48 group">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <select
@@ -288,7 +275,6 @@ function AdminDailyAttendance() {
                   </div>
                 </div>
 
-                {/* Batch Filter */}
                 <div className="relative w-full sm:w-48 group">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <select
@@ -306,7 +292,6 @@ function AdminDailyAttendance() {
                   </div>
                 </div>
 
-                {/* Clear Filters Button */}
                 {(search || status !== "All" || batch !== "All" || course !== "All") && (
                   <button
                     onClick={clearAllFilters}
@@ -317,7 +302,6 @@ function AdminDailyAttendance() {
                 )}
               </div>
 
-              {/* TABLE - Exact MyStudents Style */}
               <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
                 <thead className="bg-white">
                   <tr className="text-[#1679AB] text-left">
@@ -391,7 +375,6 @@ function AdminDailyAttendance() {
               </table>
             </div>
 
-            {/* Footer - Exact MyStudents Style */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
                 <div className="text-gray-500">

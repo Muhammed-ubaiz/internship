@@ -30,6 +30,7 @@ import MentorLeaveRequest from "../pages/mentorpage/MentorLeaveRequest";
 import Information from "../pages/adminpage/Information";
 import MentorNotifications from "../pages/mentorpage/Mentornotification";
 import StuentsNotification from "../pages/studentpage/StuentsNotification";
+import SetPassword from "../pages/adminpage/SetPassword";
 
 
 
@@ -235,6 +236,9 @@ function LayoutRoutes() {
             }
           />
         <Route path="/announcement"element={<Announcement/>}/>
+
+                <Route path="/set-password" element={<SetPassword />} />
+
 
         </Routes>
       </BrowserRouter>
