@@ -25,8 +25,6 @@ import {
   getAllLeaves,
   getMonthlySummaryForAdmin,
   sendPasswordResetLink,
-  verifyResetToken,
-  setPassword
 } from "../Controller/AdminController.js";
 
 import { verifyToken } from "../AuthMiddleware.js";
@@ -58,8 +56,6 @@ adminRoutes.put("/updateStudent/:id", verifyToken, updateStudent);
 
 // adminRoutes.js
 adminRoutes.post("/send-password-link", verifyToken, sendPasswordResetLink);
-adminRoutes.post("/verify-reset-token", verifyResetToken);
-adminRoutes.post("/set-password", setPassword); // No auth needed
 
 // Location routes
 adminRoutes.post("/location", verifyToken, saveLocation);

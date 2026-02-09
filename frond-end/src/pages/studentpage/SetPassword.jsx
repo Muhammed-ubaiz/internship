@@ -33,7 +33,7 @@ function SetPassword() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/admin/verify-reset-token",
+        "http://localhost:3001/student/verify-reset-token",
         { email, token }
       );
 
@@ -82,8 +82,8 @@ function SetPassword() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/admin/set-password",
-        { email, password }
+        "http://localhost:3001/student/set-password",
+        { email, token, password }
       );
 
       if (res.data.success) {
@@ -92,7 +92,7 @@ function SetPassword() {
           title: "Password Set Successfully!",
           text: "You can now login with your new password",
         }).then(() => {
-          navigate("/login");
+          navigate("/");
         });
       } else {
         Swal.fire({

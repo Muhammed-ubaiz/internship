@@ -10,6 +10,7 @@ import Mentor from "../Model/Mentormodel.js";
 import Attendancemodel from "../Model/Attendancemodel.js";
 import Leave from "../Model/LeaveModel.js";
 import Notification from "../Model/NotificationModel.js";
+import resetTokenStore from "../tokenStore.js";
 
 
 
@@ -311,8 +312,7 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 
-// Store for password reset tokens
-let resetTokenStore = {};
+// Store for password reset tokens is imported from tokenStore.js
 
 // Generate random token without crypto module
 const generateToken = () => {
@@ -337,10 +337,12 @@ export const sendPasswordResetLink = async (req, res) => {
     const token = generateToken();
     
     // Store token with expiration (30 minutes)
-    resetTokenStore[email] = { 
-      token, 
-      expiresAt: Date.now() + 30 * 60 * 1000 
+    resetTokenStore[email] = {
+      token,
+      expiresAt: Date.now() + 30 * 60 * 1000
     };
+
+    console.log(`Password reset link generated for ${email}: http://localhost:5173/set-password?token=${token}&email=${encodeURIComponent(email)}`);
 
     // Create reset link (update with your frontend URL - change port if needed)
     const resetLink = `http://localhost:5173/set-password?token=${token}&email=${encodeURIComponent(email)}`;
@@ -399,120 +401,6 @@ export const sendPasswordResetLink = async (req, res) => {
   }
 };
 
-// Verify Reset Token
-export const verifyResetToken = (req, res) => {
-  try {
-    const { email, token } = req.body;
-
-    if (!email || !token) {
-      return res.json({ 
-        success: false, 
-        message: "Email and token required" 
-      });
-    }
-
-    const record = resetTokenStore[email];
-
-    if (!record) {
-      return res.json({ 
-        success: false, 
-        message: "Invalid or expired link" 
-      });
-    }
-
-    if (Date.now() > record.expiresAt) {
-      delete resetTokenStore[email];
-      return res.json({ 
-        success: false, 
-        message: "Link has expired" 
-      });
-    }
-
-    if (record.token === token) {
-      return res.json({ 
-        success: true, 
-        message: "Token verified" 
-      });
-    }
-
-    res.json({ 
-      success: false, 
-      message: "Invalid link" 
-    });
-
-  } catch (err) {
-    console.error("Error verifying token:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Error verifying token",
-      error: err.message 
-    });
-  }
-};
-
-// Set Password
-export const setPassword = async (req, res) => {
-  try {
-    const { email, token, password } = req.body;
-
-    if (!email || !token || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email, token, and password required" 
-      });
-    }
-
-    const record = resetTokenStore[email];
-
-    if (!record || record.token !== token) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid or expired link" 
-      });
-    }
-
-    if (Date.now() > record.expiresAt) {
-      delete resetTokenStore[email];
-      return res.status(400).json({ 
-        success: false, 
-        message: "Link has expired" 
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Update student password in database
-    const student = await Student.findOneAndUpdate(
-      { email },
-      { password: hashedPassword },
-      { new: true }
-    );
-
-    if (!student) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Student not found" 
-      });
-    }
-
-    // Clear token after successful password set
-    delete resetTokenStore[email];
-
-    res.json({ 
-      success: true, 
-      message: "Password set successfully" 
-    });
-
-  } catch (err) {
-    console.error("Error setting password:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Failed to set password",
-      error: err.message 
-    });
-  }
-};
 
 
 export const saveLocation = async (req, res) => {
