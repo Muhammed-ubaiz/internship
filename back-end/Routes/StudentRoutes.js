@@ -23,6 +23,8 @@ import {
   getMonthlySummary,
   autoPunchOut,
   getInitialLocation,
+  verifyResetToken,
+  setPassword,
 
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
@@ -58,6 +60,11 @@ studentroutes.post("/apply-leave", verifyToken, applyLeave);
 studentroutes.get("/my-leaves", verifyToken, getMyLeaves);
 studentroutes.get("/leave-count", verifyToken, getLeaveCount);
 studentroutes.get("/monthly-summary", verifyToken, getMonthlySummary); 
+
+
+studentroutes.post("/verify-reset-token", verifyResetToken);
+studentroutes.post("/set-password", setPassword); // No auth needed
+
 
 // Announcement routes
 studentroutes.get("/announcements", verifyToken, getStudentAnnouncements);
