@@ -107,12 +107,12 @@ export const addStudent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Student already exists" });
     }
 
-     const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const student = await Student.create({
       name,
       email,
-     password: hashedPassword, 
+      password: hashedPassword,
       course,
       batch,
       status: "Active",
@@ -180,7 +180,7 @@ export const updateCourse = async (req, res) => {
     const updatedCourse = await Course.findByIdAndUpdate(
       _id,
       { name: editCourseName, duration: editDuration },
-      { new: true } 
+      { new: true }
     );
 
     if (!updatedCourse) {
@@ -191,7 +191,7 @@ export const updateCourse = async (req, res) => {
 
     res.json({
       success: true,
-      course: updatedCourse, 
+      course: updatedCourse,
     });
   } catch (error) {
     console.error("Update course error:", error);
@@ -218,7 +218,7 @@ export const deleteBatch = async (req, res) => {
       return res.status(404).json({ message: "Batch not found" });
     }
 
-    await batch.deleteOne(); 
+    await batch.deleteOne();
     res.json({ message: "Batch deleted successfully" });
   } catch (error) {
     console.error("Delete batch error:", error);
@@ -228,35 +228,35 @@ export const deleteBatch = async (req, res) => {
 
 
 const toggleStudentStatus = async (req, res) => {
-    try {
-      const { id } = req.params; 
-      const student = await Student.findById(id);
-  
-      if (!student) {
-        return res.status(404).json({ msg: "Student not found" });
-      }
-  
-      
-      student.status = student.status === "Active" ? "Inactive" : "Active";
-      await student.save();
-  
-      res.status(200).json({
-        success: true,
-        msg: "Status updated successfully",
-        data: student,
-      });
-    } catch (error) {
-      console.error("Error toggling status:", error);
-      res.status(500).json({ success: false, message: "Server error" });
+  try {
+    const { id } = req.params;
+    const student = await Student.findById(id);
+
+    if (!student) {
+      return res.status(404).json({ msg: "Student not found" });
     }
-  };
-  
+
+
+    student.status = student.status === "Active" ? "Inactive" : "Active";
+    await student.save();
+
+    res.status(200).json({
+      success: true,
+      msg: "Status updated successfully",
+      data: student,
+    });
+  } catch (error) {
+    console.error("Error toggling status:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 
 export const updateStudent = async (req, res) => {
   try {
-    const { id } = req.params; 
+    const { id } = req.params;
     const { name, email, course, batch, password } = req.body;
-  
+
     if (!name || !email || !course || !batch) {
       return res
         .status(400)
@@ -295,7 +295,7 @@ const toggleCourseStatus = async (req, res) => {
       return res.status(404).json({ msg: "Course not found" });
     }
 
-   
+
     course.status = course.status === "active" ? "inactive" : "active";
 
     await course.save();
@@ -316,7 +316,7 @@ const toggleCourseStatus = async (req, res) => {
 
 // Generate random token without crypto module
 const generateToken = () => {
-  return Array.from({ length: 64 }, () => 
+  return Array.from({ length: 64 }, () =>
     Math.floor(Math.random() * 16).toString(16)
   ).join('');
 };
@@ -325,17 +325,17 @@ const generateToken = () => {
 export const sendPasswordResetLink = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email required" 
+      return res.status(400).json({
+        success: false,
+        message: "Email required"
       });
     }
 
     // Generate secure random token
     const token = generateToken();
-    
+
     // Store token with expiration (30 minutes)
     resetTokenStore[email] = {
       token,
@@ -386,17 +386,17 @@ export const sendPasswordResetLink = async (req, res) => {
       `,
     });
 
-    res.json({ 
-      success: true, 
-      message: "Password reset link sent to email" 
+    res.json({
+      success: true,
+      message: "Password reset link sent to email"
     });
 
   } catch (err) {
     console.error("Error sending password link:", err);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Failed to send email",
-      error: err.message 
+      error: err.message
     });
   }
 };
@@ -539,18 +539,53 @@ export const getDailyAttendance = async (req, res) => {
       },
       { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          courseObjectId: {
+            $cond: {
+              if: { $eq: [{ $type: "$student.course" }, "string"] },
+              then: {
+                $cond: {
+                  if: { $regexMatch: { input: "$student.course", regex: /^[0-9a-fA-F]{24}$/ } },
+                  then: { $toObjectId: "$student.course" },
+                  else: null
+                }
+              },
+              else: "$student.course"
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courseObjectId",
+          foreignField: "_id",
+          as: "courseByObjectId"
+        }
+      },
+      {
         $lookup: {
           from: "courses",
           localField: "student.course",
-          foreignField: "_id",
-          as: "course"
+          foreignField: "name",
+          as: "courseByName"
         }
       },
-      { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          courseDoc: {
+            $cond: {
+              if: { $gt: [{ $size: "$courseByObjectId" }, 0] },
+              then: { $arrayElemAt: ["$courseByObjectId", 0] },
+              else: { $arrayElemAt: ["$courseByName", 0] }
+            }
+          }
+        }
+      },
       {
         $project: {
           studentName: { $ifNull: ["$student.name", "Unknown"] },
-          course: { $ifNull: ["$course.name", "—"] },
+          course: { $ifNull: ["$courseDoc.name", "$student.course"] },
           batch: { $ifNull: ["$student.batch", "—"] },
           attendance: "$$ROOT"
         }
@@ -739,10 +774,9 @@ export const getMonthlySummaryForAdmin = async (req, res) => {
     if (course) studentQuery.course = course;
     if (batch) studentQuery.batch = batch;
 
-    // Get all students with course populated
+    // Get all students
     const students = await Student.find(studentQuery)
-      .select('_id name batch course')
-      .populate('course', 'name');
+      .select('_id name batch course');
 
     // Get attendance and leave data for each student
     const summaryData = await Promise.all(
@@ -773,17 +807,17 @@ export const getMonthlySummaryForAdmin = async (req, res) => {
           leaveDays += diffDays;
         });
 
-        // Get course name - handle both populated object and string
+        // Get course name - handle ObjectId string or course name string
         let courseName = "N/A";
         if (student.course) {
-          if (typeof student.course === 'object' && student.course.name) {
-            courseName = student.course.name;
-          } else if (typeof student.course === 'string') {
-            courseName = student.course;
-          } else {
-            // If it's an ObjectId that wasn't populated, fetch it
+          // Check if it's a valid ObjectId string (24 hex characters)
+          if (typeof student.course === 'string' && /^[0-9a-fA-F]{24}$/.test(student.course)) {
+            // It's an ObjectId string, fetch the course document
             const courseDoc = await Course.findById(student.course);
-            courseName = courseDoc?.name || 'Unknown';
+            courseName = courseDoc?.name || student.course;
+          } else {
+            // It's a course name string
+            courseName = student.course;
           }
         }
 
@@ -818,7 +852,7 @@ export const getMonthlySummaryForAdmin = async (req, res) => {
   }
 };
 
-export{Login,toggleStudentStatus, toggleCourseStatus}
+export { Login, toggleStudentStatus, toggleCourseStatus }
 
 
 

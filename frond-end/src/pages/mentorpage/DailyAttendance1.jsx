@@ -60,8 +60,8 @@ function DailyAttendance1() {
       console.error("❌ Fetch error:", err);
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to load attendance"
+        err.message ||
+        "Failed to load attendance"
       );
       setAttendanceData([]);
     } finally {
@@ -162,9 +162,9 @@ function DailyAttendance1() {
     return Math.max(0, total);
   };
 
-  const getLastPunchIn = (attendance) => {
+  const getFirstPunchIn = (attendance) => {
     if (!attendance?.punchRecords?.length) return null;
-    return attendance.punchRecords[attendance.punchRecords.length - 1]?.punchIn || null;
+    return attendance.punchRecords[0]?.punchIn || null;
   };
 
   const getLastPunchOut = (attendance) => {
@@ -178,7 +178,7 @@ function DailyAttendance1() {
       const studentName = student?.studentId?.name || student?.name || "";
       const studentCourse = student?.studentId?.course || student?.course || "";
       const studentBatch = student?.studentId?.batch || student?.batch || "";
-      
+
       const nameMatch = studentName.toLowerCase().includes(search.toLowerCase());
       const courseMatch = course === "All" || studentCourse === course;
       const batchMatch = batch === "All" || studentBatch === batch;
@@ -197,8 +197,8 @@ function DailyAttendance1() {
       if (sortBy === "punchIn") {
         const attA = a?.attendance || a;
         const attB = b?.attendance || b;
-        const tA = new Date(getLastPunchIn(attA) || 0).getTime();
-        const tB = new Date(getLastPunchIn(attB) || 0).getTime();
+        const tA = new Date(getFirstPunchIn(attA) || 0).getTime();
+        const tB = new Date(getFirstPunchIn(attB) || 0).getTime();
         return tA - tB;
       }
       return 0;
@@ -504,7 +504,7 @@ function DailyAttendance1() {
               const attendance = student?.attendance || student;
               const studentInfo = student?.studentId || student;
               const studentStatus = getStudentStatus(attendance);
-              const lastPunchIn = getLastPunchIn(attendance);
+              const firstPunchIn = getFirstPunchIn(attendance);
               const lastPunchOut = getLastPunchOut(attendance);
               const workingTime = calculateLiveWorkingTime(attendance);
               const breakTime = calculateLiveBreakTime(attendance);
@@ -556,7 +556,7 @@ function DailyAttendance1() {
                           <span>Punch In</span>
                         </div>
                         <p className="font-medium text-gray-900">
-                          {formatTime(lastPunchIn)}
+                          {formatTime(firstPunchIn)}
                           {studentStatus === "Working" && (
                             <span className="ml-2 animate-pulse text-blue-500">
                               ●

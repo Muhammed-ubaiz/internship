@@ -289,13 +289,14 @@ function Studentsdashboard() {
   const [pendingRequestId, setPendingRequestId] = useState(null);
   const [hasLocationCheckedToday, setHasLocationCheckedToday] = useState(false);
   const [attendance, setAttendance] = useState(null);
-  
+
   const [gpsWatchId, setGpsWatchId] = useState(null);
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
   const [initialLocation, setInitialLocation] = useState(null);
 
-  const INSTITUTION_LAT = 11.280610467307952;
+  const INSTITUTION_LAT =    11.280610467307952; 
   const INSTITUTION_LNG = 75.77045696982046;
+  
   const MAX_DISTANCE = 50; // Auto punch-out if student moves 50m from initial location
 
   // ✅ SOCKET CONNECTION
@@ -344,7 +345,7 @@ function Studentsdashboard() {
 
       if (data.type === "PUNCH_IN") {
         console.log("✅ Processing PUNCH_IN approval");
-        
+
         setPendingRequestId(null);
         setPendingAction(null);
         setIsPunchedIn(true);
@@ -356,7 +357,7 @@ function Studentsdashboard() {
         setLocationStatus("✅ Punch-in approved - GPS tracking active");
 
         startLocationTracking();
-        
+
         setTimeout(() => {
           loadTodayAttendance();
         }, 500);
@@ -364,7 +365,7 @@ function Studentsdashboard() {
 
       if (data.type === "PUNCH_OUT") {
         console.log("✅ Processing PUNCH_OUT approval");
-        
+
         setIsPunchedIn(false);
         setPunchOutTime(new Date(data.punchTime));
         setIsOnBreak(true);
@@ -372,7 +373,7 @@ function Studentsdashboard() {
         setLocationStatus("✅ Punch-out approved");
 
         stopLocationTracking();
-        
+
         setTimeout(() => {
           loadTodayAttendance();
         }, 500);
@@ -389,7 +390,7 @@ function Studentsdashboard() {
       setLocationStatus(`⚠️ Auto punch-out: ${Math.round(data.distance)}m from institution`);
 
       stopLocationTracking();
-      
+
       setTimeout(() => {
         loadTodayAttendance();
       }, 500);
@@ -412,7 +413,7 @@ function Studentsdashboard() {
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("role");
       const res = await axios.get("http://localhost:3001/student/today-attendance", {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           Role: role,
         },
@@ -580,7 +581,7 @@ function Studentsdashboard() {
   const handleAutoPunchOut = async (latitude, longitude, distance) => {
     try {
       console.log("⚠️ Triggering auto punch-out...");
-      
+
       const token = localStorage.getItem('token');
       const res = await axios.post(
         "http://localhost:3001/student/auto-punch-out",
@@ -631,12 +632,12 @@ function Studentsdashboard() {
         setPendingAction('punchIn');
         setShowMap(true);
         setLoading(false);
-      } 
+      }
       else {
         const res = await axios.post("http://localhost:3001/student/punch-in", {}, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        
+
         if (res.data.success) {
           setIsPunchedIn(true);
           setPunchInTime(new Date());
@@ -701,10 +702,10 @@ function Studentsdashboard() {
     try {
       setLoading(true);
       setLocationStatus("Processing punch-out...");
-      
+
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        "http://localhost:3001/student/punch-out", 
+        "http://localhost:3001/student/punch-out",
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -716,16 +717,16 @@ function Studentsdashboard() {
         setPunchOutTime(new Date());
         setIsOnBreak(true);
         setBreakStartTime(new Date());
-        
+
         if (res.data.attendance) {
           setBreakTime(res.data.attendance.totalBreakSeconds || 0);
           setTotalWorkingTime(res.data.attendance.totalWorkingSeconds || 0);
           setWorkingHours(formatTimeFromSeconds(res.data.attendance.totalWorkingSeconds || 0));
         }
-        
+
         setLocationStatus("✅ Punched out - Break started");
         stopLocationTracking();
-        
+
         setTimeout(() => {
           loadTodayAttendance();
         }, 500);
@@ -771,13 +772,12 @@ function Studentsdashboard() {
 
         {locationStatus && (
           <div
-            className={`mb-4 p-3 rounded-lg text-center font-semibold ${
-              locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
-              locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
-              locationStatus.includes("⚠️") ? "bg-orange-100 text-orange-700" :
-              locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
-              "bg-blue-100 text-blue-700"
-            }`}
+            className={`mb-4 p-3 rounded-lg text-center font-semibold ${locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
+                locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
+                  locationStatus.includes("⚠️") ? "bg-orange-100 text-orange-700" :
+                    locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
+                      "bg-blue-100 text-blue-700"
+              }`}
           >
             {locationStatus}
           </div>
@@ -857,39 +857,37 @@ function Studentsdashboard() {
               <button
                 onClick={handlePunchInClick}
                 disabled={loading || isPunchedIn || pendingRequestId}
-                className={`py-3 rounded-lg font-semibold text-white transition-colors ${
-                  loading || isPunchedIn || pendingRequestId
+                className={`py-3 rounded-lg font-semibold text-white transition-colors ${loading || isPunchedIn || pendingRequestId
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#0dd635] hover:bg-[#0dd664]"
-                }`}
+                  }`}
               >
                 {pendingRequestId && pendingAction === 'punchIn'
                   ? "⏳ Waiting Admin Approval..."
                   : loading
-                  ? "Getting Location..."
-                  : isPunchedIn
-                  ? "Already Punched In"
-                  : hasLocationCheckedToday
-                  ? "Punch In"
-                  : "First Punch In (Approval Required)"}
+                    ? "Getting Location..."
+                    : isPunchedIn
+                      ? "Already Punched In"
+                      : hasLocationCheckedToday
+                        ? "Punch In"
+                        : "First Punch In (Approval Required)"}
               </button>
 
               <button
                 onClick={handlePunchOutClick}
                 disabled={loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')}
-                className={`py-3 rounded-lg font-semibold text-white transition-colors ${
-                  loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')
+                className={`py-3 rounded-lg font-semibold text-white transition-colors ${loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#ed1717] hover:bg-[#d60d0de2]"
-                }`}
+                  }`}
               >
                 {pendingRequestId && pendingAction === 'punchIn'
                   ? "⏳ Approve Punch-in First"
                   : loading
-                  ? "Processing..."
-                  : !isPunchedIn
-                  ? "Punch In First"
-                  : "Punch Out"}
+                    ? "Processing..."
+                    : !isPunchedIn
+                      ? "Punch In First"
+                      : "Punch Out"}
               </button>
             </div>
           </div>
