@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 
 function ForgotPassword() {
@@ -16,10 +16,9 @@ function ForgotPassword() {
   const sendOtp = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/forgotpassword",
-        { email }
-      );
+      const res = await api.post("/admin/forgotpassword", {
+        email,
+      });
 
       if (res.data.success) {
         alert("OTP sent to your email");
@@ -32,10 +31,10 @@ function ForgotPassword() {
 
   const verifyOtp = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/verify-otp",
-        { email, otp }
-      );
+      const res = await api.post("/admin/verify-otp", {
+        email,
+        otp,
+      });
 
       if (res.data.success) {
         setShowOtpModal(false);
@@ -52,10 +51,10 @@ function ForgotPassword() {
     }
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/resetpassword",
-        { email, newPassword }
-      );
+      const res = await api.post("/admin/resetpassword", {
+        email,
+        newPassword,
+      });
 
       if (res.data.success) {
         alert("Password reset successful");

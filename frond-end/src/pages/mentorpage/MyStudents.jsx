@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { Search, Filter, Users, GraduationCap, CheckCircle, XCircle, Clock, RefreshCw, AlertCircle } from "lucide-react";
 
 function MyStudents() {
@@ -25,15 +25,11 @@ function MyStudents() {
         const token = localStorage.getItem("token");
         const role = localStorage.getItem("role");
 
-        const res = await axios.get(
-          "http://localhost:3001/mentor/getStudents",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Role: role,
-            },
-          }
-        );
+        const res = await api.get("/mentor/getStudents", {
+          headers: {
+            Role: role,
+          },
+        });
 
         setStudents(res.data || []);
       } catch (error) {
@@ -189,7 +185,7 @@ function MyStudents() {
         </div>
 
         {/* Search and Filter Section */}
-        
+
 
         {/* Main Content */}
         {loading ? (
@@ -239,147 +235,146 @@ function MyStudents() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          
-<div className="hidden lg:block overflow-x-auto">
-  <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
-          {/* Search Bar */}
-          <div className="group relative w-full sm:w-72">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <input
-                type="text"
-                placeholder="Search by name, email or batch..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-              />
-              <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
-              </button>
+
+            <div className="hidden lg:block overflow-x-auto">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
+                {/* Search Bar */}
+                <div className="group relative w-full sm:w-72">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <input
+                      type="text"
+                      placeholder="Search by name, email or batch..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
+                    />
+                    <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
+                      <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Course Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={courseFilter}
+                      onChange={(e) => setCourseFilter(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {courses.map((course, index) => (
+                        <option key={index} value={course}>
+                          {course === "All" ? "All Courses" : course}
+                        </option>
+                      ))}
+                    </select>
+                    <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Batch Filter */}
+                <div className="relative w-full sm:w-48 group">
+                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                    <select
+                      value={batchFilter}
+                      onChange={(e) => setBatchFilter(e.target.value)}
+                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    >
+                      {batches.map((batch, index) => (
+                        <option key={index} value={batch}>
+                          {batch === "All" ? "All Batches" : batch}
+                        </option>
+                      ))}
+                    </select>
+                    <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                  </div>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+              <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
+                <thead className="bg-white">
+                  <tr className="text-[#1679AB] text-left">
+                    <th className="p-3 text-center">#</th>
+                    <th className="p-3 text-center">Name</th>
+                    <th className="p-3 text-center">Email</th>
+                    <th className="p-3 text-center">Course</th>
+                    <th className="p-3 text-center">Batch</th>
+                    <th className="p-3 text-center">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredStudents.length === 0 ? (
+                    <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                      <td colSpan="6" className="text-center p-4 rounded-2xl">
+                        No students found
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStudents.map((student, index) => (
+                      <tr
+                        key={student._id}
+                        className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
+                      >
+                        <td className="px-3 py-3 text-center">{index + 1}</td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {student.name}
+                        </td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {student.email}
+                        </td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {student.course || "N/A"}
+                        </td>
+
+                        <td className="px-4 py-3 text-center break-words">
+                          {student.batch || "N/A"}
+                        </td>
+
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${student.status === "Active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                              }`}
+                          >
+                            {student.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                <option value="All">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-              <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Course Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={courseFilter}
-                onChange={(e) => setCourseFilter(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                {courses.map((course, index) => (
-                  <option key={index} value={course}>
-                    {course === "All" ? "All Courses" : course}
-                  </option>
-                ))}
-              </select>
-              <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Batch Filter */}
-          <div className="relative w-full sm:w-48 group">
-            <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-              <select
-                value={batchFilter}
-                onChange={(e) => setBatchFilter(e.target.value)}
-                className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-              >
-                {batches.map((batch, index) => (
-                  <option key={index} value={batch}>
-                    {batch === "All" ? "All Batches" : batch}
-                  </option>
-                ))}
-              </select>
-              <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-            </div>
-          </div>
-
-          {/* Clear Filters Button */}
-          {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
-            <button
-              onClick={clearAllFilters}
-              className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
-            >
-              Clear All Filters
-            </button>
-          )}
-        </div>
-  <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
-    <thead className="bg-white">
-      <tr className="text-[#1679AB] text-left">
-        <th className="p-3 text-center">#</th>
-        <th className="p-3 text-center">Name</th>
-        <th className="p-3 text-center">Email</th>
-        <th className="p-3 text-center">Course</th>
-        <th className="p-3 text-center">Batch</th>
-        <th className="p-3 text-center">Status</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {filteredStudents.length === 0 ? (
-        <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-          <td colSpan="6" className="text-center p-4 rounded-2xl">
-            No students found
-          </td>
-        </tr>
-      ) : (
-        filteredStudents.map((student, index) => (
-          <tr
-            key={student._id}
-            className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
-          >
-            <td className="px-3 py-3 text-center">{index + 1}</td>
-
-            <td className="px-4 py-3 text-center break-words">
-              {student.name}
-            </td>
-
-            <td className="px-4 py-3 text-center break-words">
-              {student.email}
-            </td>
-
-            <td className="px-4 py-3 text-center break-words">
-              {student.course || "N/A"}
-            </td>
-
-            <td className="px-4 py-3 text-center break-words">
-              {student.batch || "N/A"}
-            </td>
-
-            <td className="px-4 py-3 text-center">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  student.status === "Active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {student.status}
-              </span>
-            </td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
 
 
 
@@ -397,7 +392,7 @@ function MyStudents() {
                   </span>{" "}
                   students
                 </div>
-                
+
                 {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
                   <button
                     onClick={clearAllFilters}

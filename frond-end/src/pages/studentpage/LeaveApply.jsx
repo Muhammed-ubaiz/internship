@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import api from "../../utils/axiosConfig";
 import SideBarStudent from "./SideBarStudent";
-import { 
-  Calendar, 
-  AlertCircle, 
-  CheckCircle, 
+import {
+  Calendar,
+  AlertCircle,
+  CheckCircle,
   TrendingUp,
   TrendingDown,
   UserCheck,
@@ -36,13 +37,8 @@ function LeaveApply() {
 
   const fetchLeaveStats = async () => {
     try {
-      const res = await fetch("http://localhost:3001/student/leave-count", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLeaveStats(data);
-      }
+      const res = await api.get("/student/leave-count");
+      setLeaveStats(res.data);
     } catch (err) {
       console.error("Error fetching leave stats:", err);
     }
@@ -75,25 +71,20 @@ function LeaveApply() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("http://localhost:3001/student/apply-leave", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ leaveType, fromDate, toDate, reason }),
+      const res = await api.post("/student/apply-leave", {
+        leaveType,
+        fromDate,
+        toDate,
+        reason
       });
 
-      const data = await res.json();
+
+      const data = res.data;
       console.log("RESPONSE 👉 ", data);
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to apply leave");
-      } else {
-        alert("Leave applied successfully!");
-        setFormData({ leaveType: "", fromDate: "", toDate: "", reason: "" });
-        fetchLeaveStats();
-      }
+      alert("Leave applied successfully!");
+      setFormData({ leaveType: "", fromDate: "", toDate: "", reason: "" });
+      fetchLeaveStats();
     } catch (err) {
       console.error("Error:", err);
       setError(err.message);
@@ -115,16 +106,16 @@ function LeaveApply() {
         <div className="flex-1 ml-0 lg:ml-64 p-4 md:p-6 max-w-6xl mx-auto w-full">
           {/* Header */}
           <div className="mb-4">
-           
-            
+
+
             <div className="flex flex-col md:flex-row md:items-center justify-between ">
               <div>
                 <h1 className="text-2xl font-bold text-[#0a2540] font-[Montserrat] mb-1">
                   Apply for Leave
                 </h1>
-                
+
               </div>
-            
+
             </div>
           </div>
 
@@ -199,7 +190,7 @@ function LeaveApply() {
               {/* Leave Type Input */}
               <div className="group">
                 <label className="block mb-3 font-medium text-gray-700">
-                  Leave Type 
+                  Leave Type
                 </label>
                 <div className="relative">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
@@ -214,7 +205,7 @@ function LeaveApply() {
                       <option value="Sick">Sick Leave</option>
                       <option value="Personal">Personal Leave</option>
                       <option value="Emergency">Emergency Leave</option>
-                     
+
                     </select>
                     <span className="absolute right-5 text-[#0a2540] transition-all duration-300 group-hover:rotate-180 group-focus-within:rotate-180 group-active:scale-90">
                       ▼
@@ -227,7 +218,7 @@ function LeaveApply() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="group">
                   <label className="block mb-3 font-medium text-gray-700">
-                    From Date 
+                    From Date
                   </label>
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <input
@@ -243,7 +234,7 @@ function LeaveApply() {
 
                 <div className="group">
                   <label className="block mb-3 font-medium text-gray-700">
-                    To Date 
+                    To Date
                   </label>
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                     <input
@@ -261,7 +252,7 @@ function LeaveApply() {
               {/* Reason Input */}
               <div className="group">
                 <label className="block mb-1 font-medium text-gray-700">
-                  Reason 
+                  Reason
                 </label>
                 <div className="flex items-start bg-white rounded-2xl shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
                   <textarea
@@ -320,7 +311,7 @@ function LeaveApply() {
           </div>
 
           {/* Information Box */}
-          
+
         </div>
       </div>
     </div>
@@ -329,33 +320,33 @@ function LeaveApply() {
 
 // Custom Icon Components
 const RefreshCw = ({ className }) => (
-  <svg 
-    className={className} 
-    fill="none" 
-    viewBox="0 0 24 24" 
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      strokeWidth={2} 
-      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
     />
   </svg>
 );
 
 const InfoIcon = ({ className }) => (
-  <svg 
-    className={className} 
-    fill="none" 
-    viewBox="0 0 24 24" 
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      strokeWidth={2} 
-      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
     />
   </svg>
 );

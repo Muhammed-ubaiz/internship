@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import api from "../../utils/axiosConfig";
 import { FaBell, FaSearch, FaMapMarkerAlt, FaTimes } from "react-icons/fa";
 
 function Topbar() {
@@ -15,17 +16,13 @@ function Topbar() {
         const longitude = pos.coords.longitude;
 
         try {
-          const res = await fetch("http://localhost:3001/admin/location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latitude, longitude }),
+          const res = await api.post("/admin/location", {
+            latitude,
+            longitude,
           });
-          const data = await res.json();
+          const data = res.data;
 
-          if (!res.ok) {
-            alert("Error: " + data.message);
-            return;
-          }
+          // Removed res.ok check
 
           alert(data.message); // Location saved successfully
         } catch (err) {
@@ -42,18 +39,18 @@ function Topbar() {
 
   return (
     <>
-   <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
-  
-  <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]
+      <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
+
+        <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]
                  text-center w-full md:w-auto md:text-left">
-    Dashboard
-  </h2>
+          Dashboard
+        </h2>
 
 
 
-        
+
         <div className="flex items-center gap-6">
-       
+
           <div
             onClick={toggleMapModal}
             className="cursor-pointer text-[#1679AB] hover:text-[#141E46] transition-colors"
@@ -62,7 +59,7 @@ function Topbar() {
             <FaMapMarkerAlt size={20} />
           </div>
 
-      
+
           <div className="relative cursor-pointer">
             <FaBell className="text-[#1679AB]" size={20} />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -70,7 +67,7 @@ function Topbar() {
         </div>
       </div>
 
-  
+
       {showMapModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -80,7 +77,7 @@ function Topbar() {
             className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative animate-fadeIn"
             onClick={(e) => e.stopPropagation()}
           >
-      
+
             <div className="flex items-center justify-between p-4 border-b border-[#1679AB]">
               <h3 className="text-xl font-semibold text-[#141E46]">
                 Aviv Digital Academy Location
@@ -93,7 +90,7 @@ function Topbar() {
               </button>
             </div>
 
-          
+
             <div className="p-4">
               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                 <iframe
@@ -108,7 +105,7 @@ function Topbar() {
               </div>
             </div>
 
-           
+
             <div className="flex items-center justify-between p-4 border-t border-gray-200">
               <a
                 href="https://maps.app.goo.gl/pVGovdtuynCpghqY6"

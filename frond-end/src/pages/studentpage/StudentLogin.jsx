@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -23,96 +23,96 @@ function StudentLogin() {
 
   const [otpLoading, setOtpLoading] = useState(false);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const res = await axios.post(
-      "http://localhost:3001/student/checkstudent",
-      { email, password }
-    );
+    try {
+      const res = await api.post("/student/checkstudent", {
+        email,
+        password,
+      });
 
-    if (!res.data.success) {
-      Swal.fire("Error", "Email or password incorrect", "error");
-      return;
-    }
-
-
-   
-    
-
-    const { token, student } = res.data;
-
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", student.role);
-    localStorage.setItem("studentId", student.id);
+      if (!res.data.success) {
+        Swal.fire("Error", "Email or password incorrect", "error");
+        return;
+      }
 
 
-    const decoded = jwtDecode(token);
-    const timeout = decoded.exp * 1000 - Date.now();
 
 
-    setTimeout(()=>{
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      window.location.href = "/";
-    },timeout);
 
-    if (timeout > 0) {
+      const { token, student } = res.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", student.role);
+      localStorage.setItem("studentId", student.id);
+
+
+      const decoded = jwtDecode(token);
+      const timeout = decoded.exp * 1000 - Date.now();
+
+
       setTimeout(() => {
-        localStorage.clear();
-        window.location.href = "/studentlogin";
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/";
       }, timeout);
+
+      if (timeout > 0) {
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = "/studentlogin";
+        }, timeout);
+      }
+
+
+      Swal.fire({
+        title: "Login Successful!",
+        icon: "success",
+        timer: 1000,
+        showConfirmButton: false,
+      }).then(() => navigate("/studentsdashboard"));
+
+    } catch (error) {
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Something went wrong",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
-
-
-    Swal.fire({
-      title: "Login Successful!",
-      icon: "success",
-      timer: 1000,
-      showConfirmButton: false,
-    }).then(() => navigate("/studentsdashboard"));
-
-  } catch (error) {
-    Swal.fire(
-      "Error",
-      error.response?.data?.message || "Something went wrong",
-      "error"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
   const sendOtp = async () => {
-   
+
 
     try {
       setOtpLoading(true);
 
-      await axios.post("http://localhost:3001/student/send-otp", {
+      await api.post("/student/send-otp", {
         email: forgotEmail,
       });
 
-       Swal.fire({
-              title: "OTP Sent!",
-              text: "Check your email.",
-              icon: "success",
-              timer: 1500,
-              showConfirmButton: false,
-            });
+      Swal.fire({
+        title: "OTP Sent!",
+        text: "Check your email.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
 
       setShowEmailModal(false);
       setShowOtpModal(true);
     } catch (error) {
       Swal.fire({
-              icon: "error",
-              title: "Oops...",
-              text: error.response?.data?.message || "Error sending OTP",
-            });
+        icon: "error",
+        title: "Oops...",
+        text: error.response?.data?.message || "Error sending OTP",
+      });
 
     } finally {
       setOtpLoading(false);
@@ -121,54 +121,55 @@ const handleLogin = async (e) => {
 
   const verifyOtpHandler = async () => {
     try {
-      await axios.post("http://localhost:3001/student/verify-otp", {
+      await api.post("/student/verify-otp", {
         email: forgotEmail,
         otp,
       });
 
-       Swal.fire({
-              title: "OTP Verified!",
-              text: "Enter your new password.",
-              icon: "success",
-              timer: 1500,
-              showConfirmButton: false,
-            });
-      
+      Swal.fire({
+        title: "OTP Verified!",
+        text: "Enter your new password.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
       setShowOtpModal(false);
       setShowResetModal(true);
     } catch (error) {
       Swal.fire({
-              icon: "error",
-              title: "Invalid OTP",
-              text: error.response?.data?.message || "Please try again",
-            });
+        icon: "error",
+        title: "Invalid OTP",
+        text: error.response?.data?.message || "Please try again",
+      });
     }
   };
 
   const resetPasswordHandler = async () => {
     try {
-      await axios.post("http://localhost:3001/student/reset-password", {
+      await api.post("/student/reset-password", {
         email: forgotEmail,
         newPassword,
         confirmPassword,
       });
 
-       Swal.fire({
-             title: "Password Reset!",
-             text: "You can now login with your new password.",
-             icon: "success",
-             timer: 1500,
-             showConfirmButton: false,
-           });
+      Swal.fire({
+        title: "Password Reset!",
+        text: "You can now login with your new password.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       setShowResetModal(false);
 
       resetForm();
     } catch (error) {
-Swal.fire({
+      Swal.fire({
         icon: "error",
         title: "Error",
         text: error.response?.data?.message || "Something went wrong",
-      });    }
+      });
+    }
   };
 
   const resetForm = () => {
@@ -261,20 +262,20 @@ Swal.fire({
             <h2 className="text-lg font-semibold text-center mb-4">
               Forgot Password
             </h2>
-           <input
-  type="Email"
-  placeholder="Enter your email"
-  required
-  value={forgotEmail}
-  onChange={(e) => setForgotEmail(e.target.value)}
-  className="w-full border p-2 rounded "
-/>
+            <input
+              type="Email"
+              placeholder="Enter your email"
+              required
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full border p-2 rounded "
+            />
 
-{otpLoading && (
-  <p className="text-sm text-blue-600 mt-2">
-    OTP sending...
-  </p>
-)}
+            {otpLoading && (
+              <p className="text-sm text-blue-600 mt-2">
+                OTP sending...
+              </p>
+            )}
 
 
             <button

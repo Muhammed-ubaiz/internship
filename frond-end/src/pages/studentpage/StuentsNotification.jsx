@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./SideBarStudent";
 import { MdDelete } from "react-icons/md";
 
@@ -24,17 +24,12 @@ function StudentsNotification() {
   // Fetch notifications from admin
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("t+oken");
-      const res = await axios.get(
-        "http://localhost:3001/student/notifications",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const token = localStorage.getItem("token");
+      const res = await api.get(
+        "/student/notifications"
       );
 
-      
+
       const studentMessages = (res.data.notifications || res.data).filter(
         (msg) => msg.audience === "students" || msg.audience === "all"
       );
@@ -53,24 +48,19 @@ function StudentsNotification() {
     }
   };
 
-  
+
   const fetchAnnouncements = async () => {
     try {
       setAnnouncementLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        "http://localhost:3001/student/announcements",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const res = await api.get(
+        "/student/announcements"
       );
 
       setAnnouncements(res.data.announcements || []);
     } catch (error) {
       console.error("Error fetching announcements:", error);
-   
+
     } finally {
       setAnnouncementLoading(false);
     }
@@ -98,9 +88,7 @@ function StudentsNotification() {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.delete(`http://localhost:3001/student/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await api.delete(`/student/notifications/${id}`);
       setNotifications((prev) => prev.filter((msg) => msg._id !== id));
       Swal.fire("Deleted!", "", "success");
     } catch (error) {
@@ -116,13 +104,13 @@ function StudentsNotification() {
       {/* MAIN CONTENT */}
       <div className="flex-1 px-4 sm:px-6 md:px-8 pt-6 md:ml-[220px]">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center md:text-left">
-          Notifications 
+          Notifications
         </h1>
 
         {/* ==================== ANNOUNCEMENTS FROM MENTORS SECTION ==================== */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            
+
             <h2 className="text-xl font-bold text-gray-800">
               Notification from Mentors
             </h2>

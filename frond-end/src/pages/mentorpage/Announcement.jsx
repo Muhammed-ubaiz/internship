@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./sidebar";
 
 function Announcement() {
@@ -20,21 +20,14 @@ function Announcement() {
 
       // Get fresh token each time
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         setError("Please login again");
         setBatches([]);
         return;
       }
 
-      const res = await axios.get(
-        "http://localhost:3001/mentor/getbatch",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.get("/mentor/getbatch");
 
       console.log("✅ FULL RESPONSE:", res.data);
 
@@ -52,7 +45,7 @@ function Announcement() {
       );
       setError(
         err.response?.data?.message ||
-          "Failed to load batches"
+        "Failed to load batches"
       );
       setBatches([]);
     } finally {
@@ -79,24 +72,19 @@ function Announcement() {
       setLoading(true);
 
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         alert("Please login again");
         setLoading(false);
         return;
       }
 
-      const res = await axios.post(
-        "http://localhost:3001/mentor/announcementsend",
+      const res = await api.post(
+        "/mentor/announcementsend",
         {
           title: title.trim(),
           message: message.trim(),
           batch,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -111,7 +99,7 @@ function Announcement() {
       console.error("❌ Send error:", err.response?.data || err.message);
       alert(
         err.response?.data?.message ||
-          "Failed to send announcement"
+        "Failed to send announcement"
       );
     } finally {
       setLoading(false);
@@ -162,8 +150,8 @@ function Announcement() {
                 {fetchingBatches
                   ? "Loading batches..."
                   : batches.length === 0
-                  ? "No batches assigned"
-                  : `${batches.length} batch(es) available`}
+                    ? "No batches assigned"
+                    : `${batches.length} batch(es) available`}
               </p>
             </div>
 

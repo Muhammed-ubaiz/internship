@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { io } from "socket.io-client";
 import {
   Search,
@@ -38,8 +38,9 @@ function AdminDailyAttendance() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const socket = io("http://localhost:3001", {
+    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:3001", {
       auth: { token },
+      transports: ['websocket']
     });
 
     socket.on("requestApproved", fetchData);
@@ -56,9 +57,8 @@ function AdminDailyAttendance() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `http://localhost:3001/admin/daily-attendance?date=${date}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await api.get(
+        `/admin/daily-attendance?date=${date}`,
       );
       setRows(res.data.attendanceData || []);
     } catch (error) {
