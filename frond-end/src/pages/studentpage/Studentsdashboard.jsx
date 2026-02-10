@@ -3,7 +3,7 @@ import LiveClockUpdate from "../LiveClockUpdate";
 import DashboardCalendar from "../Dashboardcalender";
 import SideBarStudent from "./SideBarStudent";
 import StudentTopbar from "./StudentTopbar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { io } from "socket.io-client";
 
 // Enhanced Map Modal Component
@@ -294,9 +294,9 @@ function Studentsdashboard() {
   const [isTrackingLocation, setIsTrackingLocation] = useState(false);
   const [initialLocation, setInitialLocation] = useState(null);
 
-  const INSTITUTION_LAT =    11.280610467307952; 
+  const INSTITUTION_LAT = 11.280610467307952;
   const INSTITUTION_LNG = 75.77045696982046;
-  
+
   const MAX_DISTANCE = 50; // Auto punch-out if student moves 50m from initial location
 
   // ✅ SOCKET CONNECTION
@@ -312,7 +312,7 @@ function Studentsdashboard() {
     const studentId = decoded.id;
     console.log("👤 Student ID:", studentId);
 
-    const newSocket = io("http://localhost:3001", {
+    const newSocket = io(import.meta.env.VITE_API_URL || "http://localhost:3001", {
       auth: { token },
       transports: ["websocket"],
     });
@@ -412,9 +412,8 @@ function Studentsdashboard() {
     try {
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("role");
-      const res = await axios.get("http://localhost:3001/student/today-attendance", {
+      const res = await api.get("/student/today-attendance", {
         headers: {
-          Authorization: `Bearer ${token}`,
           Role: role,
         },
       });
@@ -583,10 +582,9 @@ function Studentsdashboard() {
       console.log("⚠️ Triggering auto punch-out...");
 
       const token = localStorage.getItem('token');
-      const res = await axios.post(
-        "http://localhost:3001/student/auto-punch-out",
+      const res = await api.post(
+        "/student/auto-punch-out",
         { latitude, longitude, distance },
-        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (res.data.success) {
@@ -634,9 +632,7 @@ function Studentsdashboard() {
         setLoading(false);
       }
       else {
-        const res = await axios.post("http://localhost:3001/student/punch-in", {}, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const res = await api.post("/student/punch-in", {});
 
         if (res.data.success) {
           setIsPunchedIn(true);
@@ -667,18 +663,13 @@ function Studentsdashboard() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:3001/student/request-punch-in",
+      const res = await api.post(
+        "/student/request-punch-in",
         {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
           distance: currentDistance || 0,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
       );
 
       if (res.data.message === 'Punch-in request submitted successfully') {
@@ -704,12 +695,9 @@ function Studentsdashboard() {
       setLocationStatus("Processing punch-out...");
 
       const token = localStorage.getItem('token');
-      const res = await axios.post(
-        "http://localhost:3001/student/punch-out",
+      const res = await api.post(
+        "/student/punch-out",
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
       );
 
       if (res.data.success) {
@@ -773,10 +761,10 @@ function Studentsdashboard() {
         {locationStatus && (
           <div
             className={`mb-4 p-3 rounded-lg text-center font-semibold ${locationStatus.includes("✅") ? "bg-green-100 text-green-700" :
-                locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
-                  locationStatus.includes("⚠️") ? "bg-orange-100 text-orange-700" :
-                    locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
-                      "bg-blue-100 text-blue-700"
+              locationStatus.includes("❌") ? "bg-red-100 text-red-700" :
+                locationStatus.includes("⚠️") ? "bg-orange-100 text-orange-700" :
+                  locationStatus.includes("⏳") ? "bg-yellow-100 text-yellow-700" :
+                    "bg-blue-100 text-blue-700"
               }`}
           >
             {locationStatus}
@@ -858,8 +846,8 @@ function Studentsdashboard() {
                 onClick={handlePunchInClick}
                 disabled={loading || isPunchedIn || pendingRequestId}
                 className={`py-3 rounded-lg font-semibold text-white transition-colors ${loading || isPunchedIn || pendingRequestId
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#0dd635] hover:bg-[#0dd664]"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#0dd635] hover:bg-[#0dd664]"
                   }`}
               >
                 {pendingRequestId && pendingAction === 'punchIn'
@@ -877,8 +865,8 @@ function Studentsdashboard() {
                 onClick={handlePunchOutClick}
                 disabled={loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')}
                 className={`py-3 rounded-lg font-semibold text-white transition-colors ${loading || !isPunchedIn || (pendingRequestId && pendingAction === 'punchIn')
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#ed1717] hover:bg-[#d60d0de2]"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#ed1717] hover:bg-[#d60d0de2]"
                   }`}
               >
                 {pendingRequestId && pendingAction === 'punchIn'

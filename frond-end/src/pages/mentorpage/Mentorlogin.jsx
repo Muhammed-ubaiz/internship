@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 
@@ -29,15 +29,10 @@ function Mentorlogin() {
 
     try {
 
-      const res = await axios.post(
-        "http://localhost:3001/mentor/mentorlogin",
-        { email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
-        }
-      );
+      const res = await api.post("/mentor/mentorlogin", {
+        email,
+        password,
+      });
 
 
       if (!res.data.success) {
@@ -64,7 +59,7 @@ function Mentorlogin() {
       }, timeout);
 
       Swal.fire({
-        
+
         title: "Login Successful!",
         icon: "success",
         draggable: true,
@@ -86,12 +81,12 @@ function Mentorlogin() {
   const sendOtp = async () => {
 
     if (!forgotEmail) return alert("Please enter email");
-  
+
 
     try {
       setOtpLoading(true);
 
-      await axios.post("http://localhost:3001/mentor/forgot-password", {
+      await api.post("/mentor/forgot-password", {
         email: forgotEmail,
       });
 
@@ -118,10 +113,9 @@ function Mentorlogin() {
 
   const verifyOtpHandler = async () => {
     try {
-      await axios.post("http://localhost:3001/mentor/verify-otp", {
+      await api.post("/mentor/verify-otp", {
         email: forgotEmail,
         otp,
-
       });
 
       Swal.fire({
@@ -147,11 +141,10 @@ function Mentorlogin() {
   const resetPasswordHandler = async () => {
 
     try {
-      await axios.post("http://localhost:3001/mentor/reset-password", {
+      await api.post("/mentor/reset-password", {
         email: forgotEmail,
         newPassword,
         confirmPassword,
-
       });
 
       Swal.fire({
@@ -274,19 +267,19 @@ function Mentorlogin() {
             <h2 className=" text-lg font-semibold mb-4 w-full flex justify-center items-center">
               Forgot Password
             </h2>
-           <input
-  type="email"
-  placeholder="Enter your email"
-  value={forgotEmail}
-  onChange={(e) => setForgotEmail(e.target.value)}
-  className="w-full border p-2 rounded m"
-/>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full border p-2 rounded m"
+            />
 
-{otpLoading && (
-  <p className="text-sm text-blue-600 mt-2">
-    OTP sending...
-  </p>
-)}
+            {otpLoading && (
+              <p className="text-sm text-blue-600 mt-2">
+                OTP sending...
+              </p>
+            )}
 
 
             <button
@@ -298,7 +291,7 @@ function Mentorlogin() {
           </div>
         </div>
       )}
-  
+
       {showOtpModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-96 relative">

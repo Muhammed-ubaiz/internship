@@ -435,7 +435,7 @@ function DailyAttendance1() {
                       const studentStatus = getStudentStatus(attendance);
                       const lastRecord = getLastRecord(attendance);
                       const workingSeconds = calculateWorkingSeconds(attendance);
-                      
+
                       return (
                         <tr
                           key={index}
@@ -456,11 +456,11 @@ function DailyAttendance1() {
                           </td>
 
                           <td className="px-4 py-3 text-center text-green-700 font-medium">
-                            {formatTime(lastRecord?.punchIn)}
+                            {formatTime(getFirstPunchIn(attendance))}
                           </td>
 
                           <td className="px-4 py-3 text-center text-blue-700 font-medium">
-                            {formatTime(lastRecord?.punchOut)}
+                            {formatTime(getLastPunchOut(attendance))}
                           </td>
 
                           <td className="px-4 py-3 text-center font-mono font-medium">
@@ -469,15 +469,14 @@ function DailyAttendance1() {
 
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                studentStatus === "Present"
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${studentStatus === "Present"
                                   ? "bg-green-100 text-green-700"
                                   : studentStatus === "Working"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : studentStatus === "On Break"
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
+                                    ? "bg-blue-100 text-blue-700"
+                                    : studentStatus === "On Break"
+                                      ? "bg-orange-100 text-orange-700"
+                                      : "bg-red-100 text-red-700"
+                                }`}
                             >
                               {studentStatus}
                             </span>
@@ -504,7 +503,7 @@ function DailyAttendance1() {
                   </span>{" "}
                   students
                 </div>
-                
+
                 {(search || status !== "All" || batch !== "All" || course !== "All") && (
                   <button
                     onClick={clearAllFilters}

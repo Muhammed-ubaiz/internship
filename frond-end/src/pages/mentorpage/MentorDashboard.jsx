@@ -3,7 +3,7 @@ import Sidebar from "./sidebar";
 import Topbar from "./Topbar";
 import DashboardCalendar from "../Dashboardcalender";
 import LiveClockUpdate from "../LiveClockUpdate";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 
 function MentorDashboard() {
   const [students, setStudents] = useState([]);
@@ -14,15 +14,11 @@ function MentorDashboard() {
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("role");
 
-      const res = await axios.get(
-        "http://localhost:3001/mentor/getStudents",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
-      );
+      const res = await api.get("/mentor/getStudents", {
+        headers: {
+          Role: role,
+        },
+      });
 
       setStudents(res.data);
     } catch (err) {

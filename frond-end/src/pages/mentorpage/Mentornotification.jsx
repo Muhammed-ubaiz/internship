@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./sidebar";
 import { MdDelete } from "react-icons/md";
 import { FaHeart, FaBullhorn } from "react-icons/fa";
@@ -19,12 +19,7 @@ function MentorNotifications() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        "http://localhost:3001/mentor/notifications",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.get("/mentor/notifications");
 
       const notes = res.data.notifications || res.data;
       const mentorMessages = notes.filter(
@@ -43,12 +38,7 @@ function MentorNotifications() {
     try {
       setAnnouncementLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        "http://localhost:3001/mentor/my-announcements",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.get("/mentor/my-announcements");
 
       setMyAnnouncements(res.data.announcements || []);
     } catch (err) {
@@ -72,9 +62,7 @@ function MentorNotifications() {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.delete(`http://localhost:3001/mentor/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await api.delete(`/mentor/notifications/${id}`);
       setNotifications((prev) => prev.filter((note) => note._id !== id));
       Swal.fire("Deleted!", "", "success");
     } catch (error) {
@@ -96,9 +84,7 @@ function MentorNotifications() {
     if (!confirm.isConfirmed) return;
 
     try {
-      await axios.delete(`http://localhost:3001/mentor/announcements/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await api.delete(`/mentor/announcements/${id}`);
       setMyAnnouncements((prev) => prev.filter((ann) => ann._id !== id));
       Swal.fire("Deleted!", "Your announcement has been removed.", "success");
     } catch (error) {

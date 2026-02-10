@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Swal from "sweetalert2";
 
 function SetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,10 +32,10 @@ function SetPassword() {
     }
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/student/verify-reset-token",
-        { email, token }
-      );
+      const res = await api.post("/student/verify-reset-token", {
+        email,
+        token,
+      });
 
       if (res.data.success) {
         setTokenValid(true);
@@ -81,10 +81,11 @@ function SetPassword() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/student/set-password",
-        { email, token, password }
-      );
+      const res = await api.post("/student/set-password", {
+        email,
+        token,
+        password,
+      });
 
       if (res.data.success) {
         Swal.fire({
@@ -189,8 +190,8 @@ function SetPassword() {
 
           <div className="bg-blue-50 p-3 rounded-lg">
             <p className="text-xs text-gray-600">
-              • Password must be at least 6 characters long<br/>
-              • Use a combination of letters and numbers<br/>
+              • Password must be at least 6 characters long<br />
+              • Use a combination of letters and numbers<br />
               • Avoid common passwords
             </p>
           </div>

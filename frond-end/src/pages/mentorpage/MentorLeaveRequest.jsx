@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./sidebar";
 import {
   CalendarDays,
@@ -34,15 +35,8 @@ function MentorLeaveRequest() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("http://localhost:3001/mentor/leave-requests", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const data = await res.json();
+      const res = await api.get("/mentor/leave-requests");
+      const data = res.data;
       console.log("📋 Mentor - Leave requests:", data);
 
       // Extract unique leave types from data
@@ -96,24 +90,14 @@ function MentorLeaveRequest() {
   // Approve / Reject
   const handleStatusChange = async (id, action) => {
     try {
-      const res = await fetch(
-        `http://localhost:3001/mentor/leave-requests/${id}/${action}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+      const res = await api.post(
+        `/mentor/leave-requests/${id}/${action}`
       );
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (res.ok) {
-        setLeaveRequests((prev) => prev.filter((leave) => leave._id !== id));
-        alert(`Leave ${action} successfully!`);
-      } else {
-        alert(data.message || "Failed to update leave");
-      }
+      setLeaveRequests((prev) => prev.filter((leave) => leave._id !== id));
+      alert(`Leave ${action} successfully!`);
     } catch (err) {
       console.error(err);
       alert("Something went wrong!");
@@ -151,11 +135,11 @@ function MentorLeaveRequest() {
               <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
                 Leave Requests
               </h1>
-            
+
             </div>
 
             <div className="flex items-center gap-4">
-             
+
 
               <button
                 onClick={fetchLeaves}
@@ -366,21 +350,21 @@ function MentorLeaveRequest() {
                     </div>
                   </div>
 
-                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <Clock className="w-4 h-4" />
-                        <span>Reason</span>
-                      </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                    <Clock className="w-4 h-4" />
+                    <span>Reason</span>
+                  </div>
 
-              <div className="relative bg-gray-50 rounded-lg h-25 p-3">
-                
-  <div className="max-h-20 overflow-y-auto pr-2">
-    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
-      {leave.reason}
-    </p>
-  </div>
-  {/* Bottom fade effect for long content */}
-  <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none"></div>
-</div>
+                  <div className="relative bg-gray-50 rounded-lg h-25 p-3">
+
+                    <div className="max-h-20 overflow-y-auto pr-2">
+                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                        {leave.reason}
+                      </p>
+                    </div>
+                    {/* Bottom fade effect for long content */}
+                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none"></div>
+                  </div>
                 </div>
 
                 {/* Actions */}

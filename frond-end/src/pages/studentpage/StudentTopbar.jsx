@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { FaBell, FaSearch, FaMapMarkerAlt, FaTimes } from "react-icons/fa";
 
@@ -63,9 +64,9 @@ function StudentTopbar({ onLocationSave }) {
           const distanceInKm = (distance / 1000).toFixed(2);
           alert(
             `❌ Location Save Denied\n\n` +
-              `You are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\n` +
-              `You must be within ${MAX_DISTANCE} meters of the institution to save location.\n\n` +
-              `Please come closer to the institution premises.`
+            `You are ${Math.round(distance)} meters (${distanceInKm} km) away from Aviv Digital Academy.\n\n` +
+            `You must be within ${MAX_DISTANCE} meters of the institution to save location.\n\n` +
+            `Please come closer to the institution premises.`
           );
           setIsSavingLocation(false);
           return;
@@ -75,35 +76,26 @@ function StudentTopbar({ onLocationSave }) {
           const token = localStorage.getItem("token");
           const role = localStorage.getItem("role");
 
-          const res = await fetch("http://localhost:3001/student/location", {
-            method: "POST",
+          const res = await api.post("/student/location", {
+            latitude,
+            longitude,
+            distance,
+            accuracy,
+          }, {
             headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
               role: role,
-            },
-            body: JSON.stringify({
-              latitude,
-              longitude,
-              distance,
-              accuracy,
-            }),
+            }
           });
 
-          const data = await res.json();
-
-          if (!res.ok) {
-            alert("Error: " + data.message);
-            setIsSavingLocation(false);
-            return;
-          }
+          // Removed res.ok check as axios throws on error status
+          const data = res.data;
 
           alert(
             `✅ Location saved successfully!\n\n` +
-              `Latitude: ${latitude.toFixed(6)}\n` +
-              `Longitude: ${longitude.toFixed(6)}\n` +
-              `Distance from institution: ${Math.round(distance)}m\n` +
-              `GPS Accuracy: ±${Math.round(accuracy)}m`
+            `Latitude: ${latitude.toFixed(6)}\n` +
+            `Longitude: ${longitude.toFixed(6)}\n` +
+            `Distance from institution: ${Math.round(distance)}m\n` +
+            `GPS Accuracy: ±${Math.round(accuracy)}m`
           );
 
           if (onLocationSave) onLocationSave();
@@ -151,10 +143,10 @@ function StudentTopbar({ onLocationSave }) {
   return (
     <>
       <div className="h-16 w-full bg-[#EEF6FB] border-b border-[#1679AB] flex items-center justify-between px-6">
-      <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]
+        <h2 className="font-[Montserrat] text-xl font-semibold text-[#141E46]
                  text-center w-full md:w-auto md:text-left">
-    Dashboard
-  </h2>
+          Dashboard
+        </h2>
 
         <div className="flex items-center gap-6">
           {/* 📍 Location - Opens Map Modal */}

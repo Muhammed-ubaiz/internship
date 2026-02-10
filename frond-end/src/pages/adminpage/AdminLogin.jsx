@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
 
@@ -17,11 +17,11 @@ function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3001/admin/login",
-        { email, password }
-      );
-    
+      const response = await api.post("/admin/login", {
+        email,
+        password,
+      });
+
       if (response.data.success) {
         const { token } = response.data;
 

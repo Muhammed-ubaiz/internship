@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Swal from "sweetalert2";
 import Sidebar from "./sidebar";
 
@@ -40,8 +40,8 @@ function Mentorcreate() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get("http://localhost:3001/admin/getMentors", {
-        headers: { Authorization: `Bearer ${token}`, Role: role },
+      const res = await api.get("/admin/getMentors", {
+        headers: { Role: role },
       });
       if (res.data.success) setMentors(res.data.mentors);
     } catch (error) {
@@ -53,8 +53,8 @@ function Mentorcreate() {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     try {
-      const res = await axios.get("http://localhost:3001/admin/getCourse", {
-        headers: { Authorization: `Bearer ${token}`, Role: role },
+      const res = await api.get("/admin/getCourse", {
+        headers: { Role: role },
       });
       setCourses(res.data);
     } catch (error) {
@@ -84,7 +84,7 @@ function Mentorcreate() {
   // ================= ADD MENTOR =================
   const handleAddMentor = async (e) => {
     e.preventDefault();
-    
+
     if (!isVerified) {
       Swal.fire({
         icon: "error",
@@ -109,10 +109,10 @@ function Mentorcreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/addMentor",
+      const res = await api.post(
+        "/admin/addMentor",
         { name, email, password, course },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -160,10 +160,10 @@ function Mentorcreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateMentor/${selectedMentorId}`,
+      const res = await api.put(
+        `/admin/updateMentor/${selectedMentorId}`,
         { name, email, course },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -183,10 +183,10 @@ function Mentorcreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/mentor/status/${id}`,
+      const res = await api.put(
+        `/admin/mentor/status/${id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -228,10 +228,10 @@ function Mentorcreate() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/send-otp",
+      const res = await api.post(
+        "/admin/send-otp",
         { email },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -275,10 +275,10 @@ function Mentorcreate() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/verify-otp",
+      const res = await api.post(
+        "/admin/verify-otp",
         { email, otp },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -409,11 +409,10 @@ function Mentorcreate() {
                       </p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
-                        mentor.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${mentor.status === "Active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {mentor.status}
                     </span>
@@ -427,11 +426,10 @@ function Mentorcreate() {
                     </button>
                     <button
                       onClick={() => handleToggleStatus(mentor._id)}
-                      className={`flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg text-white ${
-                        mentor.status === "Active"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }`}
+                      className={`flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg text-white ${mentor.status === "Active"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                        }`}
                     >
                       {mentor.status === "Active" ? "Inactive" : "Active"}
                     </button>
@@ -479,11 +477,10 @@ function Mentorcreate() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            mentor.status === "Active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs ${mentor.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {mentor.status}
                         </span>
@@ -498,11 +495,10 @@ function Mentorcreate() {
                           </button>
                           <button
                             onClick={() => handleToggleStatus(mentor._id)}
-                            className={`px-3 py-1 text-xs rounded-lg text-white ${
-                              mentor.status === "Active"
-                                ? "bg-red-600 hover:bg-red-700"
-                                : "bg-green-600 hover:bg-green-700"
-                            }`}
+                            className={`px-3 py-1 text-xs rounded-lg text-white ${mentor.status === "Active"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "bg-green-600 hover:bg-green-700"
+                              }`}
                           >
                             {mentor.status === "Active" ? "Inactive" : "Active"}
                           </button>
@@ -557,11 +553,10 @@ function Mentorcreate() {
                 <button
                   type="button"
                   onClick={sendOtp}
-                  className={`px-4 py-2 rounded text-white whitespace-nowrap ${
-                    isVerified
-                      ? "bg-green-500 cursor-not-allowed"
-                      : "bg-[#141E46] hover:bg-[#0f2040]"
-                  }`}
+                  className={`px-4 py-2 rounded text-white whitespace-nowrap ${isVerified
+                    ? "bg-green-500 cursor-not-allowed"
+                    : "bg-[#141E46] hover:bg-[#0f2040]"
+                    }`}
                   disabled={isVerified || loading}
                 >
                   {isVerified ? "Verified" : loading ? "Sending..." : "Verify"}

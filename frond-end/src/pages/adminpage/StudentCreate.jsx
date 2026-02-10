@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./sidebar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import Swal from "sweetalert2";
 
 
@@ -30,8 +30,8 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.get("http://localhost:3001/admin/getCourse", {
-        headers: { Authorization: `Bearer ${token}`, Role: role },
+      const res = await api.get("/admin/getCourse", {
+        headers: { Role: role },
       });
       setCourses(res.data);
     } catch (error) {
@@ -44,10 +44,10 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.get(
-        `http://localhost:3001/admin/getBatches/${courseName}`,
+      const res = await api.get(
+        `/admin/getBatches/${courseName}`,
         {
-          headers: { Authorization: `Bearer ${token}`, Role: role },
+          headers: { Role: role },
         },
       );
       setBatches(res.data.batches);
@@ -61,8 +61,8 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.get("http://localhost:3001/admin/getStudents", {
-        headers: { Authorization: `Bearer ${token}`, Role: role },
+      const res = await api.get("/admin/getStudents", {
+        headers: { Role: role },
       });
       setStudents(res.data);
     } catch (error) {
@@ -77,7 +77,7 @@ function StudentCreate() {
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
-    
+
     if (!linkSent) {
       Swal.fire({
         icon: "error",
@@ -92,10 +92,10 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/addStudent",
+      const res = await api.post(
+        "/admin/addStudent",
         { name, email, course, batch, password: "TEMP_PASSWORD" },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -144,10 +144,10 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/updateStudent/${selectedStudentId}`,
+      const res = await api.put(
+        `/admin/updateStudent/${selectedStudentId}`,
         { name, email, course, batch },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -182,10 +182,10 @@ function StudentCreate() {
     const role = localStorage.getItem("role");
 
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/student/status/${id}`,
+      const res = await api.put(
+        `/admin/student/status/${id}`,
         {},
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -233,10 +233,10 @@ function StudentCreate() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/send-password-link",
+      const res = await api.post(
+        "/admin/send-password-link",
         { email },
-        { headers: { Authorization: `Bearer ${token}`, Role: role } },
+        { headers: { Role: role } },
       );
 
       if (res.data.success) {
@@ -383,11 +383,10 @@ function StudentCreate() {
                       </p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
-                        student.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${student.status === "Active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {student.status}
                     </span>
@@ -401,11 +400,10 @@ function StudentCreate() {
                     </button>
                     <button
                       onClick={() => handleToggleStatus(student._id)}
-                      className={`flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg text-white ${
-                        student.status === "Active"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }`}
+                      className={`flex-1 min-w-[100px] px-3 py-2 text-xs rounded-lg text-white ${student.status === "Active"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                        }`}
                     >
                       {student.status === "Active" ? "Inactive" : "Active"}
                     </button>
@@ -457,11 +455,10 @@ function StudentCreate() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            student.status === "Active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs ${student.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {student.status}
                         </span>
@@ -476,11 +473,10 @@ function StudentCreate() {
                           </button>
                           <button
                             onClick={() => handleToggleStatus(student._id)}
-                            className={`px-3 py-1 text-xs rounded-lg text-white ${
-                              student.status === "Active"
-                                ? "bg-red-600 hover:bg-red-700"
-                                : "bg-green-600 hover:bg-green-700"
-                            }`}
+                            className={`px-3 py-1 text-xs rounded-lg text-white ${student.status === "Active"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "bg-green-600 hover:bg-green-700"
+                              }`}
                           >
                             {student.status === "Active" ? "Inactive" : "Active"}
                           </button>
@@ -534,11 +530,10 @@ function StudentCreate() {
                 <button
                   type="button"
                   onClick={sendPasswordLink}
-                  className={`px-4 py-2 rounded text-white whitespace-nowrap ${
-                    linkSent
-                      ? "bg-green-500 cursor-not-allowed"
-                      : "bg-[#141E46] hover:bg-[#0f2040]"
-                  }`}
+                  className={`px-4 py-2 rounded text-white whitespace-nowrap ${linkSent
+                    ? "bg-green-500 cursor-not-allowed"
+                    : "bg-[#141E46] hover:bg-[#0f2040]"
+                    }`}
                   disabled={linkSent || loading}
                 >
                   {linkSent ? "✓ Sent" : loading ? "Sending..." : "Send Link"}

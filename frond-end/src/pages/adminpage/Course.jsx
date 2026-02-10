@@ -1,17 +1,16 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "./sidebar";
-import axios from "axios";
+import api from "../../utils/axiosConfig";
 import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 
 // Custom hook for auth headers
+// Custom hook for auth headers
 const useAuthHeaders = () => {
   return useMemo(() => {
-    const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     return {
       headers: {
-        Authorization: `Bearer ${token}`,
         Role: role,
       },
     };
@@ -52,7 +51,7 @@ function Course() {
   const fetchCourse = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get("http://localhost:3001/admin/getCourse", authConfig);
+      const res = await api.get("/admin/getCourse", authConfig);
       setCourses(res.data);
     } catch (error) {
       console.error(error);
@@ -74,8 +73,8 @@ function Course() {
   const handleAddCourse = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:3001/admin/addCourse",
+      const res = await api.post(
+        "/admin/addCourse",
         { name: courseName, duration },
         authConfig
       );
@@ -107,8 +106,8 @@ function Course() {
     setIsBatchLoading(true);
 
     try {
-      const res = await axios.get(
-        `http://localhost:3001/admin/getBatches/${course.name}`,
+      const res = await api.get(
+        `/admin/getBatches/${course.name}`,
         authConfig
       );
       setBatches(res.data.batches);
@@ -137,8 +136,8 @@ function Course() {
     }
 
     try {
-      const res = await axios.post(
-        `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
+      const res = await api.post(
+        `/admin/addBatch/${selectedCourse.name}`,
         { name: batchName.trim() },
         authConfig
       );
@@ -177,8 +176,8 @@ function Course() {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(
-          `http://localhost:3001/admin/deleteBatch/${id}`,
+        await api.delete(
+          `/admin/deleteBatch/${id}`,
           authConfig
         );
 
@@ -221,8 +220,8 @@ function Course() {
 
     if (result.isConfirmed) {
       try {
-        const res = await axios.post(
-          `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
+        const res = await api.post(
+          `/admin/updateCourse/${selectedCourse._id}`,
           { editCourseName, editDuration },
           authConfig
         );
@@ -251,8 +250,8 @@ function Course() {
 
   const handleToggleStatus = async (course) => {
     try {
-      const res = await axios.put(
-        `http://localhost:3001/admin/course/status/${course._id}`,
+      const res = await api.put(
+        `/admin/course/status/${course._id}`,
         {},
         authConfig
       );
@@ -397,8 +396,8 @@ function Course() {
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${course.status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                         }`}
                     >
                       {course.status}
@@ -420,8 +419,8 @@ function Course() {
                     <button
                       onClick={() => handleToggleStatus(course)}
                       className={`flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg text-white ${course.status === "active"
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
                         }`}
                     >
                       {course.status === "active" ? "Inactive" : "Active"}
@@ -473,8 +472,8 @@ function Course() {
                       <td className="px-4 py-3 text-center">
                         <span
                           className={`px-3 py-1 rounded-full text-xs ${course.status === "active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
                             }`}
                         >
                           {course.status}
@@ -497,8 +496,8 @@ function Course() {
                           <button
                             onClick={() => handleToggleStatus(course)}
                             className={`px-3 py-1 text-xs rounded-lg text-white ${course.status === "active"
-                                ? "bg-red-600 hover:bg-red-700"
-                                : "bg-green-600 hover:bg-green-700"
+                              ? "bg-red-600 hover:bg-red-700"
+                              : "bg-green-600 hover:bg-green-700"
                               }`}
                           >
                             {course.status === "active" ? "Inactive" : "Active"}

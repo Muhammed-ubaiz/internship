@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import api from "../../utils/axiosConfig";
 import Sidebar from "./sidebar";
 import {
   CalendarDays,
@@ -33,19 +34,12 @@ function AdminLeaveRequest() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("http://localhost:3001/admin/leave-requests", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const data = await res.json();
+      const res = await api.get("/admin/leave-requests");
+      const data = res.data;
       console.log("📋 Admin - Leave requests received:", data);
 
       const requests = data.leaves || [];
-      
+
       // Extract unique leave types from data
       const types = [
         ...new Set(requests.map((leave) => leave.type).filter(Boolean)),
@@ -98,32 +92,25 @@ function AdminLeaveRequest() {
     try {
       console.log(`📝 Admin ${status} leave request:`, id);
 
-      const res = await fetch(
-        `http://localhost:3001/admin/leave-status/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status }),
-        }
+      const res = await api.put(
+        `/admin/leave-status/${id}`,
+        { status }
       );
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (res.ok) {
-        console.log("✅ Leave status updated successfully");
-        // Remove approved/rejected leave from UI
-        setLeaveRequests((prev) => prev.filter((l) => l._id !== id));
-        alert(`Leave ${status.toLowerCase()} successfully!`);
-      } else {
-        console.error("❌ Failed to update leave:", data.message);
-        alert(data.message || "Failed to update leave status");
-      }
+      // Removed res.ok check as axios throws on error status
+      console.log("✅ Leave status updated successfully");
+      // Remove approved/rejected leave from UI
+      setLeaveRequests((prev) => prev.filter((l) => l._id !== id));
+      alert(`Leave ${status.toLowerCase()} successfully!`);
     } catch (err) {
       console.error("❌ Error updating leave status:", err);
-      alert("Something went wrong!");
+      // alert(err.response?.data?.message || err.message || "Failed to update leave status");
+      // Keeping original error handling behavior somewhat consistent but improved
+      const msg = err.response?.data?.message || err.message || "Failed to update leave status";
+      console.error("❌ Failed to update leave:", msg);
+      alert(msg);
     }
   };
 
