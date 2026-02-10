@@ -1,46 +1,69 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Sidebar from "./sidebar";
 import axios from "axios";
 import { MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 
+// Custom hook for auth headers
+const useAuthHeaders = () => {
+  return useMemo(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Role: role,
+      },
+    };
+  }, []);
+};
+
 function Course() {
+  // Modal states
   const [showCourseModal, setShowCourseModal] = useState(false);
-  const [courses, setCourses] = useState([]);
-
-  const [courseName, setCourseName] = useState("");
-  const [duration, setDuration] = useState("");
-
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showAddBatchModal, setShowAddBatchModal] = useState(false);
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
 
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  // Data states
+  const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+
+  // Form states
+  const [courseName, setCourseName] = useState("");
+  const [duration, setDuration] = useState("");
   const [batchName, setBatchName] = useState("");
-
-  const [batchSearch, setBatchSearch] = useState("");
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-
   const [editCourseName, setEditCourseName] = useState("");
   const [editDuration, setEditDuration] = useState("");
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [batchSearch, setBatchSearch] = useState("");
+
+  // Loading states
+  const [isLoading, setIsLoading] = useState(false);
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
+
+  // Auth headers
+  const authConfig = useAuthHeaders();
+
   const fetchCourse = async () => {
-    const token = localStorage.getItem("token");  
-    const role = localStorage.getItem("role");
+    setIsLoading(true);
     try {
-      const res = await axios.get("http://localhost:3001/admin/getCourse", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Role: role,
-        },
-      });
-      
+      const res = await axios.get("http://localhost:3001/admin/getCourse", authConfig);
       setCourses(res.data);
     } catch (error) {
       console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch courses",
+        draggable: true,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,19 +73,11 @@ function Course() {
 
   const handleAddCourse = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
     try {
       const res = await axios.post(
         "http://localhost:3001/admin/addCourse",
         { name: courseName, duration },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
+        authConfig
       );
 
       setCourses([...courses, res.data.course]);
@@ -75,7 +90,6 @@ function Course() {
         icon: "success",
         draggable: true,
       });
-
     } catch (error) {
       console.error(error);
       Swal.fire({
@@ -90,40 +104,43 @@ function Course() {
   const handleViewBatch = async (course) => {
     setSelectedCourse(course);
     setShowBatchModal(true);
-
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    setIsBatchLoading(true);
 
     try {
       const res = await axios.get(
         `http://localhost:3001/admin/getBatches/${course.name}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
+        authConfig
       );
       setBatches(res.data.batches);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch batches",
+        draggable: true,
+      });
+    } finally {
+      setIsBatchLoading(false);
     }
   };
 
   const handleAddBatch = async () => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    if (!batchName.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Input",
+        text: "Please enter a batch name",
+        draggable: true,
+      });
+      return;
+    }
 
     try {
       const res = await axios.post(
         `http://localhost:3001/admin/addBatch/${selectedCourse.name}`,
         { name: batchName.trim() },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
+        authConfig
       );
 
       setBatches([...batches, res.data.batch]);
@@ -135,13 +152,12 @@ function Course() {
         icon: "success",
         draggable: true,
       });
-
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: err.response?.data?.message || "Failed to add batch",
+        text: error.response?.data?.message || "Failed to add batch",
         draggable: true,
       });
     }
@@ -160,18 +176,10 @@ function Course() {
     });
 
     if (result.isConfirmed) {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
-
       try {
         await axios.delete(
           `http://localhost:3001/admin/deleteBatch/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Role: role,
-            },
-          }
+          authConfig
         );
 
         setBatches(batches.filter((b) => b._id !== id));
@@ -182,7 +190,6 @@ function Course() {
           icon: "success",
           draggable: true,
         });
-
       } catch (error) {
         console.error(error);
         Swal.fire({
@@ -213,19 +220,11 @@ function Course() {
     });
 
     if (result.isConfirmed) {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
-
       try {
         const res = await axios.post(
           `http://localhost:3001/admin/updateCourse/${selectedCourse._id}`,
           { editCourseName, editDuration },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Role: role,
-            },
-          }
+          authConfig
         );
 
         setCourses(
@@ -251,19 +250,11 @@ function Course() {
   };
 
   const handleToggleStatus = async (course) => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
-
     try {
       const res = await axios.put(
         `http://localhost:3001/admin/course/status/${course._id}`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Role: role,
-          },
-        }
+        authConfig
       );
 
       setCourses(
@@ -279,7 +270,6 @@ function Course() {
         timer: 1500,
         draggable: true,
       });
-
     } catch (error) {
       console.error(error);
       Swal.fire({
@@ -291,22 +281,27 @@ function Course() {
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
-    const search = searchTerm.toLowerCase();
+  // Memoized filtered data
+  const filteredCourses = useMemo(() => {
+    return courses.filter((course) => {
+      const search = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      course.name.toLowerCase().includes(search) ||
-      course.duration.toLowerCase().includes(search);
+      const matchesSearch =
+        course.name.toLowerCase().includes(search) ||
+        course.duration.toLowerCase().includes(search);
 
-    const matchesStatus =
-      statusFilter === "All" || course.status === statusFilter.toLowerCase();
+      const matchesStatus =
+        statusFilter === "All" || course.status === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [courses, searchTerm, statusFilter]);
 
-  const filteredBatches = batches.filter((b) =>
-    b.name.toLowerCase().includes(batchSearch.toLowerCase())
-  );
+  const filteredBatches = useMemo(() => {
+    return batches.filter((b) =>
+      b.name.toLowerCase().includes(batchSearch.toLowerCase())
+    );
+  }, [batches, batchSearch]);
 
   return (
     <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6">
@@ -380,7 +375,11 @@ function Course() {
 
           {/* Mobile Card View */}
           <div className="block lg:hidden space-y-3">
-            {filteredCourses.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-[#EEF6FB] p-4 rounded-xl text-center">
+                Loading courses...
+              </div>
+            ) : filteredCourses.length === 0 ? (
               <div className="bg-[#EEF6FB] p-4 rounded-xl text-center">
                 No courses found
               </div>
@@ -397,11 +396,10 @@ function Course() {
                       <p className="text-sm text-gray-600">{course.duration}</p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${
-                        course.status === "active"
+                      className={`px-3 py-1 rounded-full text-xs whitespace-nowrap ${course.status === "active"
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {course.status}
                     </span>
@@ -421,11 +419,10 @@ function Course() {
                     </button>
                     <button
                       onClick={() => handleToggleStatus(course)}
-                      className={`flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg text-white ${
-                        course.status === "active"
+                      className={`flex-1 min-w-[70px] px-3 py-2 text-xs rounded-lg text-white ${course.status === "active"
                           ? "bg-red-600 hover:bg-red-700"
                           : "bg-green-600 hover:bg-green-700"
-                      }`}
+                        }`}
                     >
                       {course.status === "active" ? "Inactive" : "Active"}
                     </button>
@@ -448,7 +445,13 @@ function Course() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCourses.length === 0 ? (
+                {isLoading ? (
+                  <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                    <td colSpan="5" className="text-center p-3 rounded-2xl">
+                      Loading courses...
+                    </td>
+                  </tr>
+                ) : filteredCourses.length === 0 ? (
                   <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
                     <td colSpan="5" className="text-center p-3 rounded-2xl">
                       No courses found
@@ -469,11 +472,10 @@ function Course() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs ${
-                            course.status === "active"
+                          className={`px-3 py-1 rounded-full text-xs ${course.status === "active"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
-                          }`}
+                            }`}
                         >
                           {course.status}
                         </span>
@@ -494,11 +496,10 @@ function Course() {
                           </button>
                           <button
                             onClick={() => handleToggleStatus(course)}
-                            className={`px-3 py-1 text-xs rounded-lg text-white ${
-                              course.status === "active"
+                            className={`px-3 py-1 text-xs rounded-lg text-white ${course.status === "active"
                                 ? "bg-red-600 hover:bg-red-700"
                                 : "bg-green-600 hover:bg-green-700"
-                            }`}
+                              }`}
                           >
                             {course.status === "active" ? "Inactive" : "Active"}
                           </button>
@@ -600,7 +601,9 @@ function Course() {
               </div>
             </div>
 
-            {filteredBatches.length === 0 ? (
+            {isBatchLoading ? (
+              <p className="text-gray-500 text-center mb-4">Loading batches...</p>
+            ) : filteredBatches.length === 0 ? (
               <p className="text-gray-500 text-center mb-4">No batches found</p>
             ) : (
               <ul className="space-y-2 mb-4">
@@ -648,9 +651,10 @@ function Course() {
 
             <div className="space-y-3">
               <input
-                type="date"
+                type="text"
                 value={batchName}
                 onChange={(e) => setBatchName(e.target.value)}
+                placeholder="Batch Name"
                 className="w-full border p-2 rounded"
               />
               <button

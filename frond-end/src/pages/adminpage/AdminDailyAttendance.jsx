@@ -70,6 +70,16 @@ function AdminDailyAttendance() {
 
   const lastRecord = (a) => a?.punchRecords?.slice(-1)[0];
 
+  const getFirstPunchIn = (a) => {
+    if (!a?.punchRecords?.length) return null;
+    return a.punchRecords[0]?.punchIn || null;
+  };
+
+  const getLastPunchOut = (a) => {
+    if (!a?.punchRecords?.length) return null;
+    return a.punchRecords[a.punchRecords.length - 1]?.punchOut || null;
+  };
+
   const getStatus = (a) => {
     const r = lastRecord(a);
     if (!r) return "Absent";
@@ -92,10 +102,10 @@ function AdminDailyAttendance() {
   const time = (t) =>
     t
       ? new Date(t).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
       : "--";
 
   const filtered = rows.filter(
@@ -344,11 +354,11 @@ function AdminDailyAttendance() {
                         </td>
 
                         <td className="px-4 py-3 text-center text-green-700 font-medium">
-                          {time(lastRecord(r.attendance)?.punchIn)}
+                          {time(getFirstPunchIn(r.attendance))}
                         </td>
 
                         <td className="px-4 py-3 text-center text-blue-700 font-medium">
-                          {time(lastRecord(r.attendance)?.punchOut)}
+                          {time(getLastPunchOut(r.attendance))}
                         </td>
 
                         <td className="px-4 py-3 text-center font-mono font-medium">
@@ -357,13 +367,12 @@ function AdminDailyAttendance() {
 
                         <td className="px-4 py-3 text-center">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              getStatus(r.attendance) === "Present"
-                                ? "bg-green-100 text-green-700"
-                                : getStatus(r.attendance) === "Working"
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${getStatus(r.attendance) === "Present"
+                              ? "bg-green-100 text-green-700"
+                              : getStatus(r.attendance) === "Working"
                                 ? "bg-blue-100 text-blue-700"
                                 : "bg-red-100 text-red-700"
-                            }`}
+                              }`}
                           >
                             {getStatus(r.attendance)}
                           </span>
@@ -388,7 +397,7 @@ function AdminDailyAttendance() {
                   </span>{" "}
                   students
                 </div>
-                
+
                 {(search || status !== "All" || batch !== "All" || course !== "All") && (
                   <button
                     onClick={clearAllFilters}

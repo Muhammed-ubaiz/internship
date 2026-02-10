@@ -24,9 +24,52 @@ function DailyAttendance1() {
   const [course, setCourse] = useState("All");
   const [batch, setBatch] = useState("All");
   const [status, setStatus] = useState("All");
+  const [sortBy, setSortBy] = useState("name");
+
+  // -------------------- FETCH ATTENDANCE --------------------
+  const fetchAttendance = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Backend now filters by mentor's course automatically
+      const res = await api.get("/mentor/today-attendance");
+
+      const rawAttendance = res.data?.data || [];
+
+      let dataArray = [];
+      if (Array.isArray(rawAttendance)) {
+        dataArray = rawAttendance;
+      } else if (rawAttendance && typeof rawAttendance === "object") {
+        dataArray = [rawAttendance];
+      }
+
+      console.log("✅ Fetched attendance (filtered by mentor's course):", dataArray.length);
+      setAttendanceData(dataArray);
+    } catch (err) {
+      console.error("❌ Fetch error:", err);
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to load attendance"
+      );
+      setAttendanceData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // -------------------- AUTO FETCH --------------------
+  useEffect(() => {
+    fetchAttendance();
+    const interval = setInterval(fetchAttendance, 30000);
+    return () => clearInterval(interval);
+  }, [fetchAttendance]);
+
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+
 
   // -------------------- LIVE CLOCK --------------------
   useEffect(() => {
@@ -131,6 +174,96 @@ function DailyAttendance1() {
     return `${h}h ${m}m`;
   };
 
+  const getFirstPunchIn = (attendance) => {
+    if (!attendance?.punchRecords?.length) return null;
+    return attendance.punchRecords[0]?.punchIn || null;
+  };
+
+  const getLastPunchOut = (attendance) => {
+    if (!attendance?.punchRecords?.length) return null;
+    return attendance.punchRecords[attendance.punchRecords.length - 1]?.punchOut || null;
+  };
+
+  // -------------------- FILTER + SORT --------------------
+  const filteredData = attendanceData
+    .filter((student) => {
+      const studentName = student?.studentId?.name || student?.name || "";
+      const studentCourse = student?.studentId?.course || student?.course || "";
+      const studentBatch = student?.studentId?.batch || student?.batch || "";
+
+      const nameMatch = studentName.toLowerCase().includes(search.toLowerCase());
+      const courseMatch = course === "All" || studentCourse === course;
+      const batchMatch = batch === "All" || studentBatch === batch;
+      const statusMatch =
+        status === "All" ||
+        getStudentStatus(student?.attendance || student) === status;
+
+      return nameMatch && courseMatch && batchMatch && statusMatch;
+    })
+    .sort((a, b) => {
+      if (sortBy === "name") {
+        const nameA = a?.studentId?.name || a?.name || "";
+        const nameB = b?.studentId?.name || b?.name || "";
+        return nameA.localeCompare(nameB);
+      }
+      if (sortBy === "punchIn") {
+        const attA = a?.attendance || a;
+        const attB = b?.attendance || b;
+        const tA = new Date(getFirstPunchIn(attA) || 0).getTime();
+        const tB = new Date(getFirstPunchIn(attB) || 0).getTime();
+        return tA - tB;
+      }
+      return 0;
+    });
+
+  const uniqueCourses = [
+    "All",
+    ...new Set(
+      attendanceData
+        .map((s) => s?.studentId?.course || s?.course)
+        .filter(Boolean)
+    ),
+  ];
+  const uniqueBatches = [
+    "All",
+    ...new Set(
+      attendanceData
+        .map((s) => s?.studentId?.batch || s?.batch)
+        .filter(Boolean)
+    ),
+  ];
+
+  const isToday = selectedDate === new Date().toISOString().split("T")[0];
+
+  // -------------------- STATUS ICONS --------------------
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "Working":
+        return <Briefcase className="w-4 h-4" />;
+      case "Present":
+        return <CheckCircle className="w-4 h-4" />;
+      case "On Break":
+        return <Coffee className="w-4 h-4" />;
+      case "Absent":
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Users className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Working":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "Present":
+        return "bg-green-50 text-green-700 border-green-200";
+      case "On Break":
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      case "Absent":
+        return "bg-red-50 text-red-700 border-red-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
+    }
   // -------------------- FILTER --------------------
   const filteredData = attendanceData.filter((student) => {
     const studentName = student?.studentId?.name || student?.name || "";
@@ -279,6 +412,52 @@ function DailyAttendance1() {
             </p>
           </div>
         ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredData.map((student) => {
+              const attendance = student?.attendance || student;
+              const studentInfo = student?.studentId || student;
+              const studentStatus = getStudentStatus(attendance);
+              const firstPunchIn = getFirstPunchIn(attendance);
+              const lastPunchOut = getLastPunchOut(attendance);
+              const workingTime = calculateLiveWorkingTime(attendance);
+              const breakTime = calculateLiveBreakTime(attendance);
+
+              return (
+                <div
+                  key={student._id}
+                  className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  {/* Header */}
+                  <div className="p-6 border-b border-gray-100">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl flex items-center justify-center">
+                          <User className="w-6 h-6 text-[#0a2540]" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-[#0a2540]">
+                            {studentInfo?.name || "Unknown Student"}
+                          </h3>
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-sm text-gray-500">
+                              {studentInfo?.course || "—"}
+                            </span>
+                            <span className="text-sm text-gray-500">•</span>
+                            <span className="text-sm text-gray-500">
+                              {studentInfo?.batch || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                          studentStatus
+                        )} flex items-center gap-1`}
+                      >
+                        {getStatusIcon(studentStatus)}
+                        {studentStatus}
+                      </span>
+                    </div>
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {/* FILTER BAR - Exact Admin Style */}
             <div className="hidden lg:block overflow-x-auto max-h-[470px] overflow-y-auto">
@@ -299,6 +478,56 @@ function DailyAttendance1() {
                   </div>
                 </div>
 
+                  {/* Details */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Clock className="w-4 h-4" />
+                          <span>Punch In</span>
+                        </div>
+                        <p className="font-medium text-gray-900">
+                          {formatTime(firstPunchIn)}
+                          {studentStatus === "Working" && (
+                            <span className="ml-2 animate-pulse text-blue-500">
+                              ●
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Clock className="w-4 h-4" />
+                          <span>Punch Out</span>
+                        </div>
+                        <p className="font-medium text-gray-900">
+                          {formatTime(lastPunchOut)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Briefcase className="w-4 h-4" />
+                          <span>Working Time</span>
+                        </div>
+                        <p className="font-mono font-medium text-gray-900">
+                          {formatTimeFromSeconds(workingTime)}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Coffee className="w-4 h-4" />
+                          <span>Break Time</span>
+                        </div>
+                        <p className="font-mono font-medium text-gray-900">
+                          {formatTimeFromSeconds(breakTime)}
+                        </p>
+                      </div>
+                    </div>
                 {/* Status Filter */}
                 <div className="relative w-full sm:w-48 group">
                   <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
