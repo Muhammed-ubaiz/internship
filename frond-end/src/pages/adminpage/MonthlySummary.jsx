@@ -105,12 +105,7 @@ function MonthlySummary() {
             </div>
 
             <div className="flex items-center gap-4">
-              <input
-                type="month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#0a2540]/40 focus:border-[#0a2540] outline-none transition-all"
-              />
+          
               <button
                 onClick={fetchMonthlySummary}
                 disabled={loading}
