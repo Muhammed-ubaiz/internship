@@ -62,7 +62,7 @@ function StudentLogin() {
       if (timeout > 0) {
         setTimeout(() => {
           localStorage.clear();
-          window.location.href = "/studentlogin";
+          window.location.href = "/";
         }, timeout);
       }
 
