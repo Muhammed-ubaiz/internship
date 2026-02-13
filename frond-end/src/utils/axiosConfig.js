@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL 
-|| "https://internshipbackend-p5sn.onrender.com";
+// Hardcoded production API URL - no environment variable issues
+const API_BASE = "https://internshipbackend-p5sn.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({
