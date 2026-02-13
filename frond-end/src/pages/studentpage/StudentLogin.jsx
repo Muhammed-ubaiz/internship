@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import Swal from "sweetalert2";
 
-
 function StudentLogin() {
   const navigate = useNavigate();
 
@@ -38,26 +37,14 @@ function StudentLogin() {
         return;
       }
 
-
-
-
-
       const { token, student } = res.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("role", student.role);
       localStorage.setItem("studentId", student.id);
 
-
       const decoded = jwtDecode(token);
       const timeout = decoded.exp * 1000 - Date.now();
-
-
-      setTimeout(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-        window.location.href = "/";
-      }, timeout);
 
       if (timeout > 0) {
         setTimeout(() => {
@@ -65,7 +52,6 @@ function StudentLogin() {
           window.location.href = "/";
         }, timeout);
       }
-
 
       Swal.fire({
         title: "Login Successful!",
@@ -85,10 +71,15 @@ function StudentLogin() {
     }
   };
 
-
-
   const sendOtp = async () => {
-
+    if (!forgotEmail) {
+      Swal.fire({
+        icon: "warning",
+        title: "Email Required",
+        text: "Please enter your email address",
+      });
+      return;
+    }
 
     try {
       setOtpLoading(true);
@@ -113,13 +104,21 @@ function StudentLogin() {
         title: "Oops...",
         text: error.response?.data?.message || "Error sending OTP",
       });
-
     } finally {
       setOtpLoading(false);
     }
   };
 
   const verifyOtpHandler = async () => {
+    if (!otp) {
+      Swal.fire({
+        icon: "warning",
+        title: "OTP Required",
+        text: "Please enter the OTP sent to your email",
+      });
+      return;
+    }
+
     try {
       await api.post("/student/verify-otp", {
         email: forgotEmail,
@@ -146,6 +145,24 @@ function StudentLogin() {
   };
 
   const resetPasswordHandler = async () => {
+    if (!newPassword || !confirmPassword) {
+      Swal.fire({
+        icon: "warning",
+        title: "Fields Required",
+        text: "Please fill in all password fields",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Swal.fire({
+        icon: "error",
+        title: "Password Mismatch",
+        text: "Passwords do not match",
+      });
+      return;
+    }
+
     try {
       await api.post("/student/reset-password", {
         email: forgotEmail,
@@ -239,7 +256,7 @@ function StudentLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-[#141E46] text-white font-bold rounded-2xl"
+              className="w-full py-4 bg-[#141E46] text-white font-bold rounded-2xl hover:bg-[#1a2654] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Logging in..." : "LOGIN"}
             </button>
@@ -247,15 +264,16 @@ function StudentLogin() {
         </div>
       </div>
 
+      {/* Email Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 relative">
             <button
               onClick={() => {
                 setShowEmailModal(false);
                 resetForm();
               }}
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
@@ -263,12 +281,12 @@ function StudentLogin() {
               Forgot Password
             </h2>
             <input
-              type="Email"
+              type="email"
               placeholder="Enter your email"
               required
               value={forgotEmail}
               onChange={(e) => setForgotEmail(e.target.value)}
-              className="w-full border p-2 rounded "
+              className="w-full border p-2 rounded focus:outline-none focus:border-[#1679AB]"
             />
 
             {otpLoading && (
@@ -277,26 +295,27 @@ function StudentLogin() {
               </p>
             )}
 
-
             <button
               onClick={sendOtp}
-              className="w-full bg-[#141E46] text-white py-2 rounded mt-5"
+              disabled={otpLoading}
+              className="w-full bg-[#141E46] text-white py-2 rounded mt-5 hover:bg-[#1a2654] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send OTP
+              {otpLoading ? "Sending..." : "Send OTP"}
             </button>
           </div>
         </div>
       )}
 
+      {/* OTP Modal */}
       {showOtpModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 relative">
             <button
               onClick={() => {
                 setShowOtpModal(false);
                 resetForm();
               }}
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
@@ -308,11 +327,11 @@ function StudentLogin() {
               placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
+              className="w-full border p-2 rounded mb-4 focus:outline-none focus:border-[#1679AB]"
             />
             <button
               onClick={verifyOtpHandler}
-              className="w-full bg-[#141E46] text-white py-2 rounded"
+              className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#1a2654] transition-colors"
             >
               Verify OTP
             </button>
@@ -320,15 +339,16 @@ function StudentLogin() {
         </div>
       )}
 
+      {/* Reset Password Modal */}
       {showResetModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 relative">
             <button
               onClick={() => {
                 setShowResetModal(false);
                 resetForm();
               }}
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✕
             </button>
@@ -340,18 +360,18 @@ function StudentLogin() {
               placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border p-2 rounded mb-3"
+              className="w-full border p-2 rounded mb-3 focus:outline-none focus:border-[#1679AB]"
             />
             <input
               type="password"
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
+              className="w-full border p-2 rounded mb-4 focus:outline-none focus:border-[#1679AB]"
             />
             <button
               onClick={resetPasswordHandler}
-              className="w-full bg-[#141E46] text-white py-2 rounded"
+              className="w-full bg-[#141E46] text-white py-2 rounded hover:bg-[#1a2654] transition-colors"
             >
               Confirm
             </button>
