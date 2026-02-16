@@ -13,32 +13,45 @@ function StudentMonthlySummary() {
     year: ""
   });
   const [monthlyData, setMonthlyData] = useState([]);
-  const [dailyRecords, setDailyRecords] = useState([]); // New state for daily records
+  const [dailyRecords, setDailyRecords] = useState([]);
+  const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMonthlySummary();
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([fetchMonthlySummary(), fetchLeaves()]);
+      setLoading(false);
+    };
+    fetchData();
   }, []);
 
   const fetchMonthlySummary = async () => {
     try {
       const response = await api.get("/student/monthly-summary");
-
       if (response.data.success) {
         setSummary(response.data.summary);
         setMonthlyData(response.data.monthlyData);
-        setDailyRecords(response.data.dailyRecords || []); // Set daily records
+        setDailyRecords(response.data.dailyRecords || []);
       }
     } catch (error) {
       console.error("Error fetching monthly summary:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
-
+  const fetchLeaves = async () => {
+    try {
+      const response = await api.get("/student/my-leaves");
+      if (response.data.success) {
+        setLeaves(response.data.leaves || []);
+      }
+    } catch (error) {
+      console.error("Error fetching leaves:", error);
+    }
+  };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-CA"); // YYYY-MM-DD format
   };
@@ -52,7 +65,7 @@ function StudentMonthlySummary() {
       case "Pending":
         return "bg-yellow-100 text-yellow-700";
       default:
-        return "";
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -103,14 +116,16 @@ function StudentMonthlySummary() {
         )}
 
         {/* Graph Section */}
-        <div className="bg-white rounded-2xl shadow-2xl p-5 mb-6 overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-2xl p-5 mb-8 overflow-x-auto">
           <GraphSection monthlyData={monthlyData} loading={loading} />
         </div>
 
 
-        {/* Leave Details - Table (desktop) + Cards (mobile) */}
-        <div className="bg-white rounded-2xl shadow-2xl p-5">
-          <h3 className="text-lg font-semibold mb-4 text-center lg:text-left">Leave Details</h3>
+        {/* Leave Details Section */}
+        <div className="bg-white rounded-2xl shadow-2xl p-5 mb-8">
+          <h3 className="text-lg font-semibold mb-4 text-center lg:text-left text-[#141E46]">Leave Details</h3>
+
+          {/* Desktop Table */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full min-w-[600px] border-collapse">
               <thead>
@@ -127,49 +142,7 @@ function StudentMonthlySummary() {
                   <tr>
                     <td colSpan="5" className="text-center py-6 text-gray-400">
                       No leave records found
-
-        {/* Daily Attendance Table */}
-        <div className="bg-white rounded-2xl shadow-2xl p-5 overflow-x-auto">
-          <h3 className="text-lg font-semibold mb-4 text-[#141E46]">Daily Attendance Report</h3>
-          <table className="w-full min-w-[800px] border-collapse">
-            <thead>
-              <tr className="text-left text-[#0077b6] font-semibold border-b-2 border-gray-200 bg-blue-50">
-                <th className="px-4 py-3 rounded-tl-lg">Date</th>
-                <th className="px-4 py-3">Day</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Punch In</th>
-                <th className="px-4 py-3">Punch Out</th>
-                <th className="px-4 py-3">Working Time</th>
-                <th className="px-4 py-3 rounded-tr-lg">Break Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dailyRecords.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-400">
-                    No records found for this month
-                  </td>
-                </tr>
-              ) : (
-                dailyRecords.map((record, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-700">{formatDate(record.date)}</td>
-                    <td className="px-4 py-3 text-gray-600">{record.day}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-700' :
-                          record.status === 'Absent' ? 'bg-red-100 text-red-700' :
-                            record.status === 'Weekend' ? 'bg-gray-100 text-gray-600' :
-                              record.status.includes('Leave') ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-gray-100 text-gray-600'
-                        }`}>
-                        {record.status}
-                      </span>
-
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{record.punchIn}</td>
-                    <td className="px-4 py-3 text-gray-600">{record.punchOut}</td>
-                    <td className="px-4 py-3 font-medium text-[#141E46]">{record.totalWorking}</td>
-                    <td className="px-4 py-3 text-gray-500">{record.totalBreak}</td>
                   </tr>
                 ) : (
                   leaves.map((leave) => (
@@ -189,21 +162,118 @@ function StudentMonthlySummary() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Card View */}
           <div className="block lg:hidden space-y-3">
             {leaves.length === 0 ? (
               <div className="text-center py-6 text-gray-400">No leave records found</div>
             ) : (
               leaves.map((leave) => (
                 <div key={leave._id} className="bg-[#EEF6FB] p-4 rounded-xl border border-gray-100">
-                  <p className="font-medium text-[#141E46] mb-1">{formatDate(leave.from)} → {formatDate(leave.to)}</p>
-                  <p className="text-sm text-gray-600 mb-1">{leave.type}</p>
-                  <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap break-words font-medium">Reason:</p>
-                  <p className="text-sm text-gray-700 bg-white/60 p-3 rounded-lg whitespace-pre-wrap break-words min-h-[2.5rem]">
-                    {leave.reason || "—"}
-                  </p>
-                  <span className={`inline-block mt-2 px-3 py-1 text-sm rounded-full ${getStatusStyle(leave.status)}`}>
-                    {leave.status}
-                  </span>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-medium text-[#141E46]">{formatDate(leave.from)} → {formatDate(leave.to)}</p>
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusStyle(leave.status)}`}>
+                      {leave.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">{leave.type}</p>
+                  <div className="text-sm text-gray-700 bg-white/60 p-2 rounded-lg break-words">
+                    {leave.reason || "No reason provided"}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+
+        {/* Daily Attendance Section */}
+        <div className="bg-white rounded-2xl shadow-2xl p-5 overflow-x-auto">
+          <h3 className="text-lg font-semibold mb-4 text-[#141E46] text-center lg:text-left">Daily Attendance Report</h3>
+
+          {/* Desktop Table */}
+          <div className="hidden lg:block">
+            <table className="w-full min-w-[800px] border-collapse">
+              <thead>
+                <tr className="text-left text-[#0077b6] font-semibold border-b-2 border-gray-200 bg-blue-50">
+                  <th className="px-4 py-3 rounded-tl-lg">Date</th>
+                  <th className="px-4 py-3">Day</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Punch In</th>
+                  <th className="px-4 py-3">Punch Out</th>
+                  <th className="px-4 py-3">Working Time</th>
+                  <th className="px-4 py-3 rounded-tr-lg">Break Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailyRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-6 text-gray-400">
+                      No records found for this month
+                    </td>
+                  </tr>
+                ) : (
+                  dailyRecords.map((record, index) => (
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-700">{formatDate(record.date)}</td>
+                      <td className="px-4 py-3 text-gray-600">{record.day}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-700' :
+                          record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                            record.status === 'Weekend' ? 'bg-gray-100 text-gray-600' :
+                              record.status.includes('Leave') ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-600'
+                          }`}>
+                          {record.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{record.punchIn}</td>
+                      <td className="px-4 py-3 text-gray-600">{record.punchOut}</td>
+                      <td className="px-4 py-3 font-medium text-[#141E46]">{record.totalWorking}</td>
+                      <td className="px-4 py-3 text-gray-500">{record.totalBreak}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block lg:hidden space-y-3">
+            {dailyRecords.length === 0 ? (
+              <div className="text-center py-6 text-gray-400">No records found</div>
+            ) : (
+              dailyRecords.map((record, index) => (
+                <div key={index} className="bg-[#EEF6FB] p-4 rounded-xl border border-gray-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold text-[#141E46]">{formatDate(record.date)}</span>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-700' :
+                      record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                        record.status === 'Weekend' ? 'bg-gray-100 text-gray-600' :
+                          record.status.includes('Leave') ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
+                      }`}>
+                      {record.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="bg-white p-2 rounded">
+                      <p className="text-xs text-gray-500">Punch In</p>
+                      <p className="font-medium">{record.punchIn}</p>
+                    </div>
+                    <div className="bg-white p-2 rounded">
+                      <p className="text-xs text-gray-500">Punch Out</p>
+                      <p className="font-medium">{record.punchOut}</p>
+                    </div>
+                    <div className="bg-white p-2 rounded">
+                      <p className="text-xs text-gray-500">Working</p>
+                      <p className="font-medium text-blue-600">{record.totalWorking}</p>
+                    </div>
+                    <div className="bg-white p-2 rounded">
+                      <p className="text-xs text-gray-500">Break</p>
+                      <p className="font-medium text-gray-600">{record.totalBreak}</p>
+                    </div>
+                  </div>
                 </div>
               ))
             )}
