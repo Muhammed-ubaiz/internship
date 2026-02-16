@@ -25,9 +25,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
-      'https://internship-4wco.onrender.com',
-      'https://internship-4wco.onrender.com/mentorlogin',
-      'https://internship-4wco.onrender.com/adminlogin',
+      // 'https://internship-4wco.onrender.com',
+      'https://enchanting-salmiakki-09499a.netlify.app',
       'http://localhost:5173',
       'http://localhost:5174'
     ];
