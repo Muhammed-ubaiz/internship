@@ -23,17 +23,17 @@ const PORT = process.env.PORT || 3001;
 // CORS middleware
 // More explicit CORS configuration
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     const allowedOrigins = [
       // 'https://internship-4wco.onrender.com',
       'https://enchanting-salmiakki-09499a.netlify.app',
       'http://localhost:5173',
       'http://localhost:5174'
     ];
-    
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -58,7 +58,7 @@ const server = http.createServer(app);
 // ✅ FIX: Initialize Socket.IO with the server, not Server class
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://enchanting-salmiakki-09499a.netlify.app'],
     methods: ["GET", "POST"],
     credentials: true,
   },
