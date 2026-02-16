@@ -297,12 +297,12 @@ function StudentCreate() {
   });
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6">
+    <div className="min-h-screen bg-[#EEF6FB] p-2 sm:p-4 lg:p-6 pt-14 lg:pt-4">
       <Sidebar />
 
-      <div className="lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
+      <div className="ml-0 lg:ml-52 p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-7 mb-4 sm:mb-6 ">
-          <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#141E46] font-[Montserrat] text-center sm:text-left w-full sm:w-auto">
             Students Management
           </h1>
 

@@ -202,40 +202,35 @@ function DailyAttendance() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 pt-14 lg:pt-0">
       {/* Sidebar */}
       <SideBarStudent />
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6">
-        {/* Header - MonthlySummary Style */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
-                Today's Attendance
-              </h1>
-              <p className="text-gray-600">
-                {new Date().toLocaleDateString('en-IN', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchAttendance}
-                disabled={loading}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                {loading ? "Loading..." : "Refresh"}
-              </button>
-            </div>
-          </div>
+      <div className="flex-1 ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
+        {/* Header - centered on mobile */}
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
+            Today's Attendance
+          </h1>
+          <p className="text-gray-600">
+            {new Date().toLocaleDateString('en-IN', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
+        </div>
+        <div className="mb-6 flex justify-center md:justify-end">
+          <button
+            onClick={fetchAttendance}
+            disabled={loading}
+            className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Loading..." : "Refresh"}
+          </button>
         </div>
 
         {/* Error Message - MonthlySummary Style */}
@@ -368,53 +363,49 @@ function DailyAttendance() {
 
         {/* Punch Records Table */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Filter Bar */}
-          <div className="hidden lg:block">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 bg-white border-b">
-              {/* Search Bar */}
-              <div className="group relative w-full sm:w-72">
-                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                  <input
-                    type="text"
-                    placeholder="Search by time..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-                  />
-                  <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                    <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Sort Filter */}
-              <div className="relative w-full sm:w-48 group">
-                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-                  >
-                    <option value="asc">Oldest First</option>
-                    <option value="desc">Newest First</option>
-                  </select>
-                  <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-                </div>
-              </div>
-
-              {/* Clear Filters Button */}
-              {(search || sortOrder !== "asc") && (
-                <button
-                  onClick={clearAllFilters}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
-                >
-                  Clear All Filters
+          {/* Filter Bar - visible on all screens */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 bg-white border-b border-gray-100">
+            <div className="group relative w-full sm:w-72">
+              <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                <input
+                  type="text"
+                  placeholder="Search by time..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none rounded-full"
+                />
+                <button type="button" className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300">
+                  <Search className="h-4 w-4 text-white" />
                 </button>
-              )}
+              </div>
             </div>
 
-            {/* TABLE - MonthlySummary Style */}
-            <div className="overflow-x-auto">
+            <div className="relative w-full sm:w-48 group">
+              <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
+                >
+                  <option value="asc">Oldest First</option>
+                  <option value="desc">Newest First</option>
+                </select>
+                <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+              </div>
+            </div>
+
+            {(search || sortOrder !== "asc") && (
+              <button
+                onClick={clearAllFilters}
+                className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-gray-50 rounded-lg flex items-center gap-2"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
                 <thead className="bg-white">
                   <tr className="text-[#1679AB] text-left">
@@ -531,7 +522,6 @@ function DailyAttendance() {
                 </tbody>
               </table>
             </div>
-          </div>
 
           {/* Mobile Card View */}
           <div className="block lg:hidden p-4 space-y-3">

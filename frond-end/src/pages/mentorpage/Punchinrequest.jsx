@@ -279,38 +279,33 @@ function Punchinrequest() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 pt-14 lg:pt-0">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 md:ml-64 p-4 md:p-6">
-        {/* Header - DailyAttendance Style */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
-                Punch-in Requests
-              </h1>
-              <p className="text-gray-600">
-                Review and manage student attendance requests
-                {mentorCourse && (
-                  <span className="ml-2 text-blue-600 font-medium">• {mentorCourse}</span>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchRequests}
-                disabled={loading}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                {loading ? "Loading..." : "Refresh"}
-              </button>
-            </div>
-          </div>
+      <div className="flex-1 ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
+        {/* Header - centered on mobile */}
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
+            Punch-in Requests
+          </h1>
+          <p className="text-gray-600">
+            Review and manage student attendance requests
+            {mentorCourse && (
+              <span className="ml-2 text-blue-600 font-medium">• {mentorCourse}</span>
+            )}
+          </p>
+        </div>
+        <div className="mb-6 flex justify-center md:justify-end">
+          <button
+            onClick={fetchRequests}
+            disabled={loading}
+            className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Loading..." : "Refresh"}
+          </button>
         </div>
 
         {/* Stats Cards - 3 Cards like DailyAttendance */}
@@ -360,32 +355,30 @@ function Punchinrequest() {
 
         {/* Main Requests Table */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Filter Bar - DailyAttendance Style */}
-          <div className="hidden lg:block">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 bg-white border-b">
-              {/* Search Bar */}
+          {/* Filter Bar & Tabs - visible on all screens */}
+          <div className="p-5 bg-white border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center mb-4">
               <div className="group relative w-full sm:w-72">
-                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
                   <input
                     type="text"
                     placeholder="Search by name, batch, course..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
+                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none rounded-full"
                   />
-                  <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                    <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
+                  <button type="button" className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300">
+                    <Search className="h-4 w-4 text-white" />
                   </button>
                 </div>
               </div>
 
-              {/* Sort Filter */}
               <div className="relative w-full sm:w-48 group">
-                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
+                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
                   >
                     <option value="desc">Newest First</option>
                     <option value="asc">Oldest First</option>
@@ -394,20 +387,19 @@ function Punchinrequest() {
                 </div>
               </div>
 
-              {/* Clear Filters Button */}
               {(search || sortOrder !== "desc") && (
                 <button
                   onClick={clearAllFilters}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-gray-50 rounded-lg flex items-center gap-2"
                 >
                   Clear All Filters
                 </button>
               )}
             </div>
 
-            {/* Tabs */}
-            <div className="border-b border-gray-200 bg-white">
-              <nav className="flex flex-wrap px-6 -mb-px overflow-x-auto">
+            {/* Tabs - visible on mobile too */}
+            <div className="border-b border-gray-200">
+              <nav className="flex flex-wrap -mb-px overflow-x-auto">
                 {[
                   { key: "pending", label: "Pending", count: pendingCount },
                   { key: "accepted", label: "Accepted", count: acceptedCount },
@@ -419,7 +411,7 @@ function Punchinrequest() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center px-5 py-3 mr-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    className={`flex items-center px-4 py-3 mr-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === tab.key
                         ? "border-[#1679AB] text-[#1679AB]"
                         : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -437,9 +429,10 @@ function Punchinrequest() {
                 ))}
               </nav>
             </div>
+          </div>
 
-            {/* TABLE - DailyAttendance Style */}
-            <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
                 <thead className="bg-white">
                   <tr className="text-[#1679AB] text-left">
@@ -598,7 +591,6 @@ function Punchinrequest() {
                 </tbody>
               </table>
             </div>
-          </div>
 
           {/* Mobile Card View - DailyAttendance Style */}
           <div className="block lg:hidden p-4 space-y-3">
