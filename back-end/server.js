@@ -1,5 +1,7 @@
 import express from "express";
 import http from "http"; // ✅ ADD THIS - You were missing this import
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import cors from "cors";
 import jwt from "jsonwebtoken"; // ✅ ADD THIS - For socket authentication
@@ -8,6 +10,10 @@ import adminRoutes from "./Routes/AdminRoutes.js";
 import studentroutes from "./Routes/StudentRoutes.js";
 import mentorroutes from "./Routes/MentorRoutes.js";
 import { Server } from "socket.io";
+import { startCronJobs } from "./utils/cronJobs.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -15,10 +21,31 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS middleware
+// More explicit CORS configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      // 'https://internship-4wco.onrender.com',
+      'https://enchanting-salmiakki-09499a.netlify.app',
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ];
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.use(express.json());
 
@@ -31,7 +58,7 @@ const server = http.createServer(app);
 // ✅ FIX: Initialize Socket.IO with the server, not Server class
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://enchanting-salmiakki-09499a.netlify.app'],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -41,19 +68,19 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Routes - MUST come after app.set('io', io)
-app.use("/admin", adminRoutes);
-app.use("/student", studentroutes);
-app.use("/mentor", mentorroutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/student", studentroutes);
+app.use("/api/mentor", mentorroutes);
 
 // ✅ Socket.IO Authentication Middleware
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  
+
   if (!token) {
     console.log('❌ Socket connection rejected: No token');
     return next(new Error('Authentication error'));
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.id;
@@ -86,7 +113,7 @@ io.on("connection", (socket) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'OK',
     port: PORT,
     socketio: 'Running'
@@ -98,6 +125,9 @@ server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 Socket.IO ready for connections`);
   console.log(`🌐 CORS enabled for: http://localhost:5173, http://localhost:5174`);
+
+  // Start Cron Jobs
+  startCronJobs(io);
 });
 
 export default app;

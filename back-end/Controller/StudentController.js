@@ -17,7 +17,7 @@ export const getStudentNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({
       audience: { $in: ["students", "all"] },
-      deletedBy: { $ne: "student" }, 
+      deletedBy: { $ne: "student" },
     }).sort({ createdAt: -1 });
 
     res.json({
@@ -35,7 +35,7 @@ export const deleteStudentNotification = async (req, res) => {
     const { id } = req.params;
 
     await Notification.findByIdAndUpdate(id, {
-      $addToSet: { deletedBy: "student" }, 
+      $addToSet: { deletedBy: "student" },
     });
 
     res.json({ success: true });
@@ -53,7 +53,7 @@ export const deleteStudentNotification = async (req, res) => {
 
 
 
- const JWT_SECRET = process.env.JWT_SECRET || "key321";
+const JWT_SECRET = process.env.JWT_SECRET || "key321";
 
 
 export const checkstudent = async (req, res) => {
@@ -69,7 +69,7 @@ export const checkstudent = async (req, res) => {
       });
     }
 
-    
+
     const isPasswordValid = await bcrypt.compare(password, student.password);
 
     if (!isPasswordValid) {
@@ -114,7 +114,7 @@ export const getStudentsByMentor = async (req, res) => {
 
     res.json(students);
 
-    
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -320,23 +320,23 @@ export const saveLocation = async (req, res) => {
 
     // Validate coordinates
     if (!latitude || !longitude) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Latitude and longitude are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude and longitude are required'
       });
     }
 
     if (latitude < -90 || latitude > 90) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid latitude value' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid latitude value'
       });
     }
 
     if (longitude < -180 || longitude > 180) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid longitude value' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid longitude value'
       });
     }
 
@@ -606,7 +606,7 @@ export const requestPunchOut = async (req, res) => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -616,7 +616,7 @@ export const requestPunchOut = async (req, res) => {
       date: { $gte: today, $lt: tomorrow },
       punchInTime: { $exists: true, $ne: null }, // ✅ CRITICAL: Must have actual punch-in
       $or: [
-        { punchOutTime: null }, 
+        { punchOutTime: null },
         { punchOutTime: { $exists: false } }
       ]
     }).sort({ punchInTime: -1 });
@@ -633,7 +633,7 @@ export const requestPunchOut = async (req, res) => {
 
     // Create punch-out request
     const requestId = `PUNCHOUT_${Date.now()}_${studentId}`;
-    
+
     const punchOutRequest = {
       requestId,
       studentId,
@@ -662,9 +662,9 @@ export const requestPunchOut = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Error in requestPunchOut:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -742,8 +742,9 @@ export const getLeaveCount = async (req, res) => {
   } catch (error) {
     console.error("Error getting leave count:", error);
     res.status(500).json({ success: false, message: "Server error" })
-  }}
-  
+  }
+}
+
 export const getStudentDailyAttendance = async (req, res) => {
   try {
     const studentId = req.user.id;
@@ -850,6 +851,100 @@ export const getMonthlySummary = async (req, res) => {
       });
     }
 
+    // --- Generate Daily Records ---
+    const dailyRecords = [];
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const currentDate = new Date(targetYear, targetMonth, i);
+
+      // Skip future dates
+      if (currentDate > today) continue;
+
+      const dateString = currentDate.toLocaleDateString("en-CA");
+      const dayOfWeek = currentDate.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      // Find attendance for this day
+      const attendance = attendanceRecords.find(a =>
+        new Date(a.date).toDateString() === currentDate.toDateString()
+      );
+
+      // Find leave for this day
+      const leave = approvedLeaves.find(l => {
+        const from = new Date(l.from);
+        const to = new Date(l.to);
+        // Reset times for date comparison
+        from.setHours(0, 0, 0, 0);
+        to.setHours(0, 0, 0, 0);
+        const check = new Date(currentDate);
+        check.setHours(0, 0, 0, 0);
+        return check >= from && check <= to;
+      });
+
+      let status = "Absent";
+      let punchIn = "-";
+      let punchOut = "-";
+      let totalWorking = "-";
+      let totalBreak = "-";
+
+      if (attendance) {
+        status = "Present";
+
+        // Format Punch In
+        if (attendance.punchRecords && attendance.punchRecords.length > 0) {
+          punchIn = new Date(attendance.punchRecords[0].punchIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          // Format Punch Out (last record)
+          const lastRecord = attendance.punchRecords[attendance.punchRecords.length - 1];
+          if (lastRecord.punchOut) {
+            punchOut = new Date(lastRecord.punchOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          } else if (currentDate.toDateString() === today.toDateString()) {
+            punchOut = "Active";
+          }
+        }
+
+        // Format Working Time
+        if (attendance.totalWorkingSeconds) {
+          const hours = Math.floor(attendance.totalWorkingSeconds / 3600);
+          const minutes = Math.floor((attendance.totalWorkingSeconds % 3600) / 60);
+          const seconds = attendance.totalWorkingSeconds % 60;
+          totalWorking = `${hours}h ${minutes}m ${seconds}s`;
+        } else {
+          totalWorking = "0h 0m 0s";
+        }
+
+        // Format Break Time
+        if (attendance.totalBreakSeconds) {
+          const hours = Math.floor(attendance.totalBreakSeconds / 3600);
+          const minutes = Math.floor((attendance.totalBreakSeconds % 3600) / 60);
+          const seconds = attendance.totalBreakSeconds % 60;
+          totalBreak = `${hours}h ${minutes}m ${seconds}s`;
+        } else {
+          totalBreak = "0h 0m 0s";
+        }
+      } else if (leave) {
+        status = `Leave (${leave.type})`;
+      } else if (currentDate.toDateString() === today.toDateString()) {
+        status = "Not Marked";
+      } else if (isWeekend) {
+        status = "Weekend";
+      }
+
+      dailyRecords.push({
+        date: dateString,
+        day: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
+        status,
+        punchIn,
+        punchOut,
+        totalWorking,
+        totalBreak
+      });
+    }
+    // Sort by date descending
+    dailyRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+
     res.json({
       success: true,
       summary: {
@@ -860,7 +955,8 @@ export const getMonthlySummary = async (req, res) => {
         month: startOfMonth.toLocaleString('default', { month: 'long' }),
         year: targetYear
       },
-      monthlyData
+      monthlyData,
+      dailyRecords // Include the detailed daily records
     });
 
   } catch (error) {
@@ -1001,7 +1097,7 @@ export const getInitialLocation = async (req, res) => {
 export const getStudentAnnouncements = async (req, res) => {
   try {
     const studentId = req.user.id;
-    
+
     // First, find the student to get their batch and mentor info
     const student = await Student.findById(studentId);
     if (!student) {
@@ -1039,7 +1135,7 @@ export const getStudentAnnouncements = async (req, res) => {
     });
   }
 };
-  
+
 
 
 export const verifyResetToken = (req, res) => {
@@ -1047,47 +1143,47 @@ export const verifyResetToken = (req, res) => {
     const { email, token } = req.body;
 
     if (!email || !token) {
-      return res.json({ 
-        success: false, 
-        message: "Email and token required" 
+      return res.json({
+        success: false,
+        message: "Email and token required"
       });
     }
 
     const record = resetTokenStore[email];
 
     if (!record) {
-      return res.json({ 
-        success: false, 
-        message: "Invalid or expired link" 
+      return res.json({
+        success: false,
+        message: "Invalid or expired link"
       });
     }
 
     if (Date.now() > record.expiresAt) {
       delete resetTokenStore[email];
-      return res.json({ 
-        success: false, 
-        message: "Link has expired" 
+      return res.json({
+        success: false,
+        message: "Link has expired"
       });
     }
 
     if (record.token === token) {
-      return res.json({ 
-        success: true, 
-        message: "Token verified" 
+      return res.json({
+        success: true,
+        message: "Token verified"
       });
     }
 
-    res.json({ 
-      success: false, 
-      message: "Invalid link" 
+    res.json({
+      success: false,
+      message: "Invalid link"
     });
 
   } catch (err) {
     console.error("Error verifying token:", err);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Error verifying token",
-      error: err.message 
+      error: err.message
     });
   }
 };
@@ -1098,26 +1194,26 @@ export const setPassword = async (req, res) => {
     const { email, token, password } = req.body;
 
     if (!email || !token || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Email, token, and password required" 
+      return res.status(400).json({
+        success: false,
+        message: "Email, token, and password required"
       });
     }
 
     const record = resetTokenStore[email];
 
     if (!record || record.token !== token) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid or expired link" 
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired link"
       });
     }
 
     if (Date.now() > record.expiresAt) {
       delete resetTokenStore[email];
-      return res.status(400).json({ 
-        success: false, 
-        message: "Link has expired" 
+      return res.status(400).json({
+        success: false,
+        message: "Link has expired"
       });
     }
 
@@ -1132,26 +1228,26 @@ export const setPassword = async (req, res) => {
     );
 
     if (!student) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Student not found" 
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
       });
     }
 
     // Clear token after successful password set
     delete resetTokenStore[email];
 
-    res.json({ 
-      success: true, 
-      message: "Password set successfully" 
+    res.json({
+      success: true,
+      message: "Password set successfully"
     });
 
   } catch (err) {
     console.error("Error setting password:", err);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: "Failed to set password",
-      error: err.message 
+      error: err.message
     });
   }
 };

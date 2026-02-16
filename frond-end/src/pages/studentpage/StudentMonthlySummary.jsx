@@ -13,12 +13,11 @@ function StudentMonthlySummary() {
     year: ""
   });
   const [monthlyData, setMonthlyData] = useState([]);
-  const [leaves, setLeaves] = useState([]);
+  const [dailyRecords, setDailyRecords] = useState([]); // New state for daily records
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchMonthlySummary();
-    fetchLeaves();
   }, []);
 
   const fetchMonthlySummary = async () => {
@@ -28,6 +27,7 @@ function StudentMonthlySummary() {
       if (response.data.success) {
         setSummary(response.data.summary);
         setMonthlyData(response.data.monthlyData);
+        setDailyRecords(response.data.dailyRecords || []); // Set daily records
       }
     } catch (error) {
       console.error("Error fetching monthly summary:", error);
@@ -36,17 +36,7 @@ function StudentMonthlySummary() {
     }
   };
 
-  const fetchLeaves = async () => {
-    try {
-      const response = await api.get("/student/my-leaves");
 
-      if (response.data.success) {
-        setLeaves(response.data.leaves);
-      }
-    } catch (error) {
-      console.error("Error fetching leaves:", error);
-    }
-  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -117,6 +107,7 @@ function StudentMonthlySummary() {
           <GraphSection monthlyData={monthlyData} loading={loading} />
         </div>
 
+
         {/* Leave Details - Table (desktop) + Cards (mobile) */}
         <div className="bg-white rounded-2xl shadow-2xl p-5">
           <h3 className="text-lg font-semibold mb-4 text-center lg:text-left">Leave Details</h3>
@@ -136,7 +127,49 @@ function StudentMonthlySummary() {
                   <tr>
                     <td colSpan="5" className="text-center py-6 text-gray-400">
                       No leave records found
+
+        {/* Daily Attendance Table */}
+        <div className="bg-white rounded-2xl shadow-2xl p-5 overflow-x-auto">
+          <h3 className="text-lg font-semibold mb-4 text-[#141E46]">Daily Attendance Report</h3>
+          <table className="w-full min-w-[800px] border-collapse">
+            <thead>
+              <tr className="text-left text-[#0077b6] font-semibold border-b-2 border-gray-200 bg-blue-50">
+                <th className="px-4 py-3 rounded-tl-lg">Date</th>
+                <th className="px-4 py-3">Day</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Punch In</th>
+                <th className="px-4 py-3">Punch Out</th>
+                <th className="px-4 py-3">Working Time</th>
+                <th className="px-4 py-3 rounded-tr-lg">Break Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dailyRecords.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center py-6 text-gray-400">
+                    No records found for this month
+                  </td>
+                </tr>
+              ) : (
+                dailyRecords.map((record, index) => (
+                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-700">{formatDate(record.date)}</td>
+                    <td className="px-4 py-3 text-gray-600">{record.day}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${record.status === 'Present' ? 'bg-green-100 text-green-700' :
+                          record.status === 'Absent' ? 'bg-red-100 text-red-700' :
+                            record.status === 'Weekend' ? 'bg-gray-100 text-gray-600' :
+                              record.status.includes('Leave') ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-600'
+                        }`}>
+                        {record.status}
+                      </span>
+
                     </td>
+                    <td className="px-4 py-3 text-gray-600">{record.punchIn}</td>
+                    <td className="px-4 py-3 text-gray-600">{record.punchOut}</td>
+                    <td className="px-4 py-3 font-medium text-[#141E46]">{record.totalWorking}</td>
+                    <td className="px-4 py-3 text-gray-500">{record.totalBreak}</td>
                   </tr>
                 ) : (
                   leaves.map((leave) => (

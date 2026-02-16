@@ -76,7 +76,7 @@ function DailyAttendance1() {
   // -------------------- SOCKET.IO --------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const API_BASE = import.meta.env.VITE_API_URL || "https://internshipbackend-p5sn.onrender.com";
 
     const socket = io(API_BASE, {
       auth: { token },
@@ -460,12 +460,12 @@ function DailyAttendance1() {
                           <td className="px-4 py-3 text-center">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-medium ${studentStatus === "Present"
-                                  ? "bg-green-100 text-green-700"
-                                  : studentStatus === "Working"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : studentStatus === "On Break"
-                                      ? "bg-orange-100 text-orange-700"
-                                      : "bg-red-100 text-red-700"
+                                ? "bg-green-100 text-green-700"
+                                : studentStatus === "Working"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : studentStatus === "On Break"
+                                    ? "bg-orange-100 text-orange-700"
+                                    : "bg-red-100 text-red-700"
                                 }`}
                             >
                               {studentStatus}
