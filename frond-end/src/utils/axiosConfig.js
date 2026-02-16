@@ -6,13 +6,11 @@ const API_BASE = "https://internshipbackend-p5sn.onrender.com/api";
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000, // 30 second timeout
+  timeout: 30000, // 
 });
 
-// Flag to prevent multiple redirects
 let isRedirecting = false;
 
-// Request interceptor - add token to all requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -39,7 +37,6 @@ api.interceptors.response.use(
       const { status, data } = error.response;
       const message = data?.message || "";
 
-      // Handle authentication errors (401 Unauthorized, 403 Forbidden)
       if (status === 401 || status === 403) {
         // Check if it's actually a token/auth error
         const isTokenError =
