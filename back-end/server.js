@@ -26,6 +26,8 @@ app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       'https://internship-4wco.onrender.com',
+      'https://internship-4wco.onrender.com/mentorlogin',
+      'https://internship-4wco.onrender.com/adminlogin',
       'http://localhost:5173',
       'http://localhost:5174'
     ];
