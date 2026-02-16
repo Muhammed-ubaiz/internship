@@ -134,32 +134,27 @@ function AdminLeaveRequest() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6 pt-14 lg:pt-4">
       <Sidebar />
 
       <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
-                Leave Requests
-              </h1>
-              <p className="text-gray-600">
-                Admin Leave Approval - Review and manage all student leave requests
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={fetchLeaves}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Refresh
-              </button>
-            </div>
-          </div>
+        {/* Header - centered on mobile */}
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
+            Leave Requests
+          </h1>
+          <p className="text-gray-600">
+            Admin Leave Approval - Review and manage all student leave requests
+          </p>
+        </div>
+        <div className="mb-6 flex justify-center md:justify-end">
+          <button
+            onClick={fetchLeaves}
+            className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
         </div>
 
         {/* Search and Filter Section */}

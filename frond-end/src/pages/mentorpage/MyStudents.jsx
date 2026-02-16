@@ -103,33 +103,28 @@ function MyStudents() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-6 pt-14 lg:pt-4">
       <Sidebar />
 
       <div className="ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
-                My Students
-              </h1>
-              <p className="text-gray-600">
-                Manage and track all your assigned students
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => window.location.reload()}
-                disabled={loading}
-                className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                {loading ? "Loading..." : "Refresh"}
-              </button>
-            </div>
-          </div>
+        {/* Header - centered on mobile */}
+        <div className="mb-8 text-center md:text-left">
+          <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
+            My Students
+          </h1>
+          <p className="text-gray-600">
+            Manage and track all your assigned students
+          </p>
+        </div>
+        <div className="mb-6 flex justify-center md:justify-end">
+          <button
+            onClick={() => window.location.reload()}
+            disabled={loading}
+            className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Loading..." : "Refresh"}
+          </button>
         </div>
 
         {error && (
@@ -235,87 +230,84 @@ function MyStudents() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-
-            <div className="hidden lg:block overflow-x-auto">
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 mt-2 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl">
-                {/* Search Bar */}
-                <div className="group relative w-full sm:w-72">
-                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                    <input
-                      type="text"
-                      placeholder="Search by name, email or batch..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none"
-                    />
-                    <button className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
-                      <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div className="relative w-full sm:w-48 group">
-                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-                    >
-                      <option value="All">All Status</option>
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-                  </div>
-                </div>
-
-                {/* Course Filter */}
-                <div className="relative w-full sm:w-48 group">
-                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                    <select
-                      value={courseFilter}
-                      onChange={(e) => setCourseFilter(e.target.value)}
-                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-                    >
-                      {courses.map((course, index) => (
-                        <option key={index} value={course}>
-                          {course === "All" ? "All Courses" : course}
-                        </option>
-                      ))}
-                    </select>
-                    <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-                  </div>
-                </div>
-
-                {/* Batch Filter */}
-                <div className="relative w-full sm:w-48 group">
-                  <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98]">
-                    <select
-                      value={batchFilter}
-                      onChange={(e) => setBatchFilter(e.target.value)}
-                      className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none transition-all duration-300 focus:text-[#0a2540]"
-                    >
-                      {batches.map((batch, index) => (
-                        <option key={index} value={batch}>
-                          {batch === "All" ? "All Batches" : batch}
-                        </option>
-                      ))}
-                    </select>
-                    <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-                  </div>
-                </div>
-
-                {/* Clear Filters Button */}
-                {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-white rounded-lg flex items-center gap-2"
-                  >
-                    Clear All Filters
+            {/* Search & Filter - visible on all screens */}
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 sticky top-0 backdrop-blur-sm py-4 z-10 rounded-xl bg-white border-b border-gray-100">
+              <div className="group relative w-full sm:w-72">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                  <input
+                    type="text"
+                    placeholder="Search by name, email or batch..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none rounded-full"
+                  />
+                  <button type="button" className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300">
+                    <Search className="h-4 w-4 text-white" />
                   </button>
-                )}
+                </div>
               </div>
+
+              <div className="relative w-full sm:w-48 group">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
+                  >
+                    <option value="All">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                  <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                </div>
+              </div>
+
+              <div className="relative w-full sm:w-48 group">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                  <select
+                    value={courseFilter}
+                    onChange={(e) => setCourseFilter(e.target.value)}
+                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
+                  >
+                    {courses.map((course, index) => (
+                      <option key={index} value={course}>
+                        {course === "All" ? "All Courses" : course}
+                      </option>
+                    ))}
+                  </select>
+                  <GraduationCap className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                </div>
+              </div>
+
+              <div className="relative w-full sm:w-48 group">
+                <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
+                  <select
+                    value={batchFilter}
+                    onChange={(e) => setBatchFilter(e.target.value)}
+                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
+                  >
+                    {batches.map((batch, index) => (
+                      <option key={index} value={batch}>
+                        {batch === "All" ? "All Batches" : batch}
+                      </option>
+                    ))}
+                  </select>
+                  <Users className="absolute right-4 w-4 h-4 text-[#0a2540]" />
+                </div>
+              </div>
+
+              {(searchTerm || statusFilter !== "All" || batchFilter !== "All" || courseFilter !== "All") && (
+                <button
+                  onClick={clearAllFilters}
+                  className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-gray-50 rounded-lg flex items-center gap-2"
+                >
+                  Clear All Filters
+                </button>
+              )}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
                 <thead className="bg-white">
                   <tr className="text-[#1679AB] text-left">
@@ -376,7 +368,35 @@ function MyStudents() {
               </table>
             </div>
 
-
+            {/* Mobile Card View */}
+            <div className="block lg:hidden p-4 space-y-3">
+              {filteredStudents.length === 0 ? (
+                <div className="bg-[#EEF6FB] rounded-xl p-6 text-center text-gray-500">
+                  No students found
+                </div>
+              ) : (
+                filteredStudents.map((student, idx) => (
+                  <div
+                    key={student._id}
+                    className="bg-[#EEF6FB] p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-[#D1E8FF] transition-all duration-300"
+                  >
+                    <p className="font-semibold text-[#0a2540] mb-1">{student.name}</p>
+                    <p className="text-xs text-gray-500 mb-2 break-all">{student.email}</p>
+                    <p className="text-xs text-gray-500 mb-3">{student.course || "N/A"} | {student.batch || "N/A"}</p>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${student.status === "Active"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {student.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-200 bg-gray-50">

@@ -72,10 +72,10 @@ function Admindashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] flex">
+    <div className="min-h-screen bg-[#EEF6FB] flex pt-14 lg:pt-0">
       <Sidebar />
 
-      <div className="flex-1 p-3 md:p-6 lg:ml-64">
+      <div className="flex-1 p-3 md:p-6 ml-0 lg:ml-52 max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto">
 
           {/* Header */}

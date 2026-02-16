@@ -42,12 +42,12 @@ function MentorDashboard() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB] flex">
+    <div className="min-h-screen bg-[#EEF6FB] flex pt-14 lg:pt-0">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 px-3 sm:px-4 md:px-6 pt-4 md:ml-52">
+      <div className="flex-1 px-3 sm:px-4 md:px-6 pt-4 ml-0 md:ml-52 max-w-7xl mx-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">

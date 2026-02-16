@@ -67,19 +67,17 @@ function StudentMonthlySummary() {
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF6FB]">
-
+    <div className="min-h-screen bg-[#EEF6FB] pt-14 lg:pt-0">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64">
+      <div className="fixed left-0 top-0 h-screen w-64 z-40">
         <SideBarStudent />
       </div>
 
       {/* Main Content */}
       <div className="ml-0 lg:ml-64 p-6 max-w-6xl mx-auto">
-
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold text-[#141E46] text-center lg:text-left w-full">
+        {/* Header - centered on mobile */}
+        <div className="mb-6 text-center lg:text-left">
+          <h2 className="text-xl sm:text-2xl font-semibold text-[#141E46]">
             Monthly Summary - {summary.month} {summary.year}
           </h2>
         </div>
@@ -119,43 +117,64 @@ function StudentMonthlySummary() {
           <GraphSection monthlyData={monthlyData} loading={loading} />
         </div>
 
-        {/* Leave Details Table */}
-        <div className="bg-white rounded-2xl shadow-2xl p-5 overflow-x-auto">
-          <h3 className="text-lg font-semibold mb-4">Leave Details</h3>
-          <table className="w-full min-w-[600px] border-collapse">
-            <thead>
-              <tr className="text-left text-[#0077b6] font-semibold border-b-2 border-gray-200">
-                <th className="px-4 py-3">From</th>
-                <th className="px-4 py-3">To</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Reason</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaves.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-6 text-gray-400">
-                    No leave records found
-                  </td>
+        {/* Leave Details - Table (desktop) + Cards (mobile) */}
+        <div className="bg-white rounded-2xl shadow-2xl p-5">
+          <h3 className="text-lg font-semibold mb-4 text-center lg:text-left">Leave Details</h3>
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full min-w-[600px] border-collapse">
+              <thead>
+                <tr className="text-left text-[#0077b6] font-semibold border-b-2 border-gray-200">
+                  <th className="px-4 py-3">From</th>
+                  <th className="px-4 py-3">To</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Reason</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ) : (
-                leaves.map((leave) => (
-                  <tr key={leave._id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-3">{formatDate(leave.from)}</td>
-                    <td className="px-4 py-3">{formatDate(leave.to)}</td>
-                    <td className="px-4 py-3">{leave.type}</td>
-                    <td className="px-4 py-3">{leave.reason}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-3 py-1 text-sm rounded-full ${getStatusStyle(leave.status)}`}>
-                        {leave.status}
-                      </span>
+              </thead>
+              <tbody>
+                {leaves.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-6 text-gray-400">
+                      No leave records found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  leaves.map((leave) => (
+                    <tr key={leave._id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-4 py-3">{formatDate(leave.from)}</td>
+                      <td className="px-4 py-3">{formatDate(leave.to)}</td>
+                      <td className="px-4 py-3">{leave.type}</td>
+                      <td className="px-4 py-3">{leave.reason}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-3 py-1 text-sm rounded-full ${getStatusStyle(leave.status)}`}>
+                          {leave.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="block lg:hidden space-y-3">
+            {leaves.length === 0 ? (
+              <div className="text-center py-6 text-gray-400">No leave records found</div>
+            ) : (
+              leaves.map((leave) => (
+                <div key={leave._id} className="bg-[#EEF6FB] p-4 rounded-xl border border-gray-100">
+                  <p className="font-medium text-[#141E46] mb-1">{formatDate(leave.from)} → {formatDate(leave.to)}</p>
+                  <p className="text-sm text-gray-600 mb-1">{leave.type}</p>
+                  <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap break-words font-medium">Reason:</p>
+                  <p className="text-sm text-gray-700 bg-white/60 p-3 rounded-lg whitespace-pre-wrap break-words min-h-[2.5rem]">
+                    {leave.reason || "—"}
+                  </p>
+                  <span className={`inline-block mt-2 px-3 py-1 text-sm rounded-full ${getStatusStyle(leave.status)}`}>
+                    {leave.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
       </div>

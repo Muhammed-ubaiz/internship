@@ -49,13 +49,13 @@ function Information() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[100vh] bg-gradient-to-br from-[#eef2ff] to-[#f8fafc] overflow-hidden">
+    <div className="flex flex-col md:flex-row min-h-[100vh] bg-gradient-to-br from-[#eef2ff] to-[#f8fafc] overflow-hidden pt-14 lg:pt-0">
       <Sidebar />
 
-      <div className="w-full md:ml-[220px] flex flex-col items-center justify-center p-4 md:p-6 min-h-[calc(100vh-2rem)]">
+      <div className="w-full ml-0 md:ml-[220px] flex flex-col items-center justify-center p-4 md:p-6 min-h-[calc(100vh-2rem)]">
         <div className="bg-white/90 backdrop-blur-xl w-full max-w-3xl md:rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100 min-h-[600px] md:min-h-[700px]">
-          {/* Header */}
-          <div className="mb-4 md:mb-6">
+          {/* Header - centered on mobile */}
+          <div className="mb-4 md:mb-6 text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Send Information</h1>
             <p className="text-gray-500 text-sm mt-1">
               Broadcast announcements to students, mentors or all users
