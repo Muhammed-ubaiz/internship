@@ -25,8 +25,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
-      // 'https://internship-4wco.onrender.com',
-      'https://enchanting-salmiakki-09499a.netlify.app',
+      'https://internship-4wco.onrender.com',
       'http://localhost:5173',
       'http://localhost:5174'
     ];
@@ -58,7 +57,7 @@ const server = http.createServer(app);
 // ✅ FIX: Initialize Socket.IO with the server, not Server class
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://enchanting-salmiakki-09499a.netlify.app'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://internship-4wco.onrender.com'],
     methods: ["GET", "POST"],
     credentials: true,
   },
