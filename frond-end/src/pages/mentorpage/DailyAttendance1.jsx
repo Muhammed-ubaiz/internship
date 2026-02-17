@@ -76,9 +76,9 @@ function DailyAttendance1() {
   // -------------------- SOCKET.IO --------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const API_BASE = import.meta.env.VITE_API_URL || "https://internshipbackend-p5sn.onrender.com";
+    const socketUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/api$/, "");
 
-    const socket = io(API_BASE, {
+    const socket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
     });
