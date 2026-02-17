@@ -27,7 +27,8 @@ app.use(cors({
     const allowedOrigins = [
       'https://internship-4wco.onrender.com',
       'http://localhost:5173',
-      'http://localhost:5174'
+      'http://localhost:5174',
+      'https://enchanting-salmiakki-09499a.netlify.app'
     ];
 
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -57,7 +58,7 @@ const server = http.createServer(app);
 // ✅ FIX: Initialize Socket.IO with the server, not Server class
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://internship-4wco.onrender.com'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://internship-4wco.onrender.com', 'https://enchanting-salmiakki-09499a.netlify.app'],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -105,9 +106,20 @@ io.on("connection", (socket) => {
     console.log(`👤 ${role} manually joined room: ${userId}`);
   });
 
+  // ✅ Handle joinStudentRoom event from StudentsDashboard
+  socket.on("joinStudentRoom", (studentId) => {
+    socket.join(studentId);
+    console.log(`👨‍🎓 Student manually joined room: ${studentId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ Socket disconnected:", socket.id);
   });
+});
+
+// ✅ FIX: Handle SPA routing - Return index.html for all unknown routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // Health check endpoint

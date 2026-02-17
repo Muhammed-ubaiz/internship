@@ -38,7 +38,7 @@ function AdminDailyAttendance() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const socket = io(import.meta.env.VITE_API_URL || "https://internshipbackend-p5sn.onrender.com", {
+    const socket = io((import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/api$/, ""), {
       auth: { token },
       transports: ['websocket']
     });

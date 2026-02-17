@@ -40,7 +40,7 @@ export const getbatch = async (req, res) => {
 
     // Find batches for this course using the Batch model
     const batches = await Batch.find({ courseName: mentorCourse }).select("name");
-    
+
     console.log("📋 Found batches:", batches);
 
     if (!batches.length) {
@@ -74,7 +74,7 @@ export const getbatch = async (req, res) => {
 export const announcementsend = async (req, res) => {
   try {
     const { title, message, batch } = req.body;
-    
+
     // Try to get email from different possible fields
     const mentorEmail = req.user?.email || req.user?.userEmail || req.user?.emailId;
     const mentorId = req.user?.id || req.user?._id || req.user?.userId;
@@ -114,7 +114,7 @@ export const announcementsend = async (req, res) => {
       // Get valid batches from Batch model
       const validBatches = await Batch.find({ courseName: mentor.course }).select("name");
       const validBatchNames = validBatches.map(b => b.name);
-      
+
       if (!validBatchNames.includes(batch)) {
         return res.status(400).json({
           success: false,
@@ -148,7 +148,7 @@ export const announcementsend = async (req, res) => {
       recipientCount,
       announcement,
     });
-    
+
 
   } catch (error) {
     console.error("[announcementsend] Error:", error);
@@ -285,7 +285,7 @@ export const resetPassword = async (req, res) => {
 
     await Mentor.findOneAndUpdate({ email }, { password: hashedPassword });
 
-    await ForgetModel.deleteOne({ email }); 
+    await ForgetModel.deleteOne({ email });
 
     return res.json({ success: true, message: "Password reset successfully" });
   } catch (error) {
@@ -379,11 +379,11 @@ export const getPunchRequests = async (req, res) => {
 
 export const getPunchRequestHistory = async (req, res) => {
   try {
-    const { days = 30 } = req.query; 
-    
+    const { days = 30 } = req.query;
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(days));
-    
+
     const requests = await PunchingRequest.find({
       status: { $in: ['APPROVED', 'REJECTED'] },
       updatedAt: { $gte: startDate }
@@ -392,7 +392,7 @@ export const getPunchRequestHistory = async (req, res) => {
       .sort({ updatedAt: -1 });
 
     console.log(`✅ Found ${requests.length} history records`);
-    
+
     res.json(requests);
   } catch (error) {
     console.error('❌ Error fetching history:', error);
@@ -411,7 +411,7 @@ export const acceptPunchRequest = async (req, res) => {
     console.log("📝 Accept request - ID:", punchId, "Mentor:", mentorId);
 
     const punchRequest = await PunchRequest.findById(punchId);
-    
+
     if (!punchRequest) {
       console.log("❌ Punch request not found");
       return res.status(404).json({ message: 'Punch request not found' });
@@ -428,7 +428,7 @@ export const acceptPunchRequest = async (req, res) => {
     punchRequest.status = 'APPROVED';
     punchRequest.approvedAt = new Date();
     punchRequest.processedBy = mentorId;
-    
+
     console.log("💾 Saving punch request...");
     await punchRequest.save();
     console.log("✅ Punch request saved");
@@ -455,7 +455,7 @@ export const acceptPunchRequest = async (req, res) => {
     if (!attendance) {
       // ✅ CREATE NEW ATTENDANCE FOR TODAY
       console.log("📝 Creating new attendance record");
-      
+
       attendance = new Attendance({
         studentId: punchRequest.studentId,
         date: today,
@@ -474,7 +474,7 @@ export const acceptPunchRequest = async (req, res) => {
     } else {
       // ✅ UPDATE EXISTING ATTENDANCE
       console.log("📝 Updating existing attendance");
-      
+
       // Add new punch record
       attendance.punchRecords.push({
         punchIn: now,
@@ -495,39 +495,38 @@ export const acceptPunchRequest = async (req, res) => {
       console.log("✅ Attendance updated:", attendance);
     }
 
-    // ✅ Emit socket event
-    const io = req.app.get("socketio");
-    
+    const io = req.app.get("io");
+
     if (io) {
       const studentRoom = String(punchRequest.studentId);
-      
+
       const emitData = {
         studentId: String(punchRequest.studentId),
         type: punchRequest.type,
         punchTime: now,
         requestId: punchRequest._id
       };
-      
+
       console.log("📡 Emitting to room:", studentRoom);
       console.log("📦 Emit data:", emitData);
-      
+
       io.to(studentRoom).emit("requestApproved", emitData);
-      
+
       console.log("✅ Approval emitted to student");
     } else {
       console.warn("⚠️ Socket.IO not initialized");
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: punchRequest,
       attendance: attendance,
-      message: 'Punch request approved successfully' 
+      message: 'Punch request approved successfully'
     });
   } catch (err) {
     console.error("❌ ERROR in acceptPunchRequest:", err);
     console.error("Stack trace:", err.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Server error",
       error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
@@ -561,7 +560,7 @@ export const rejectPunchRequest = async (req, res) => {
 
     console.log('✅ Request status updated to REJECTED');
 
-    const io = req.app.get('socketio');
+    const io = req.app.get('io');
     if (io) {
       io.to(punchRequest.studentId.toString()).emit('requestRejected', {
         requestId: punchRequest._id,
@@ -579,9 +578,9 @@ export const rejectPunchRequest = async (req, res) => {
 
   } catch (err) {
     console.error("❌ BACKEND ERROR in rejectPunchRequest:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to reject punch request",
-      error: err.message 
+      error: err.message
     });
   }
 };
@@ -686,12 +685,12 @@ export const getStudentLeavesForMentor = async (req, res) => {
     console.log("👥 Students in course:", studentIds.length);
 
     // 4️⃣ Find pending leaves for these students only
-    const pendingLeaves = await Leave.find({ 
-      studentId: { $in: studentIds }, 
-      status: "Pending" 
+    const pendingLeaves = await Leave.find({
+      studentId: { $in: studentIds },
+      status: "Pending"
     })
-    .populate("studentId", "name email batch")
-    .sort({ createdAt: -1 });
+      .populate("studentId", "name email batch")
+      .sort({ createdAt: -1 });
 
     console.log("📋 Pending leaves found:", pendingLeaves.length);
 

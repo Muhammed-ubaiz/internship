@@ -14,7 +14,7 @@ import LeaveHistory from "../pages/adminpage/LeaveHistory";
 import StudentMonthlySummary from "../pages/studentpage/StudentMonthlySummary";
 import LeaveApply from "../pages/studentpage/LeaveApply";
 import StudentLeaveHistory from "../pages/studentpage/StudentLeaveHistory";
-import Mentorlogin from "../pages/mentorpage/Mentorlogin";
+import MentorLogin from "../pages/mentorpage/MentorLogin";
 import Mentorcreate from "../pages/adminpage/Mentorcreate";
 import MentorDashboard from "../pages/mentorpage/MentorDashboard";
 import MyStudents from "../pages/mentorpage/MyStudents";
@@ -40,11 +40,11 @@ function LayoutRoutes() {
       <BrowserRouter>
         <Routes>
           <Route path="/adminlogin" element={<AdminLogin />} />
-          <Route path="/mentorlogin" element={<Mentorlogin />} />
+          <Route path="/mentorlogin" element={<MentorLogin />} />
           <Route path="/" element={<StudentLogin />} />
-             <Route path="/information" element={<Information />} />
-             <Route path="/mentornotification" element={<MentorNotifications/>} />
-              <Route path="/studentsnotification" element={<StuentsNotification/>} />
+          <Route path="/information" element={<Information />} />
+          <Route path="/mentornotification" element={<MentorNotifications />} />
+          <Route path="/studentsnotification" element={<StuentsNotification />} />
           <Route
             path="/admindashboard"
             element={
@@ -78,8 +78,8 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-        
-        <Route
+
+          <Route
             path="/attendance"
             element={
               <ProtectedRoute role="admin">
@@ -87,7 +87,7 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/monthlySummary"
             element={
@@ -96,8 +96,8 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-           
-           <Route
+
+          <Route
             path="/adminLeaveRequest"
             element={
               <ProtectedRoute role="admin">
@@ -105,8 +105,8 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           />
-        
-        <Route
+
+          <Route
             path="/leaveHistory"
             element={
               <ProtectedRoute role="admin">
@@ -118,15 +118,15 @@ function LayoutRoutes() {
           <Route
             path="/studentsdashboard"
             element={
-         <ProtectedRoute role="student">
-         <Studentsdashboard />
-         </ProtectedRoute>
-                
-        
+              <ProtectedRoute role="student">
+                <Studentsdashboard />
+              </ProtectedRoute>
+
+
             }
           />
 
-        
+
 
           {/* <Route
             path="/dailyAttendance"
@@ -136,9 +136,9 @@ function LayoutRoutes() {
               </ProtectedRoute>
             }
           /> */}
-        
-          
-          
+
+
+
 
           <Route
             path="/studentMonthlySummary"
@@ -152,13 +152,13 @@ function LayoutRoutes() {
             path="/DailyAttendance"
             element={
               <ProtectedRoute role="student">
-                <DailyAttendance/>
+                <DailyAttendance />
               </ProtectedRoute>
             }
           />
 
-         
-          
+
+
 
           <Route
             path="/StudentLeaveHistory"
@@ -216,7 +216,7 @@ function LayoutRoutes() {
             }
           />
 
-          <Route path="/mentorleaverequest" element={<MentorLeaveRequest/>}/>
+          <Route path="/mentorleaverequest" element={<MentorLeaveRequest />} />
 
           <Route
             path="/leavehistory1"
@@ -230,14 +230,14 @@ function LayoutRoutes() {
           <Route
             path="/punchinrequest"
             element={
-              <ProtectedRoute  role="mentor">
+              <ProtectedRoute role="mentor">
                 <Punchinrequest />
               </ProtectedRoute>
             }
           />
-        <Route path="/announcement"element={<Announcement/>}/>
+          <Route path="/announcement" element={<Announcement />} />
 
-                <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
 
 
         </Routes>

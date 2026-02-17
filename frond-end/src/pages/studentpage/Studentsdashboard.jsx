@@ -313,7 +313,7 @@ function Studentsdashboard() {
     console.log("👤 Student ID:", studentId);
 
     // Strip /api from URL for Socket.IO (it uses its own /socket.io/ path)
-    const socketUrl = (import.meta.env.VITE_API_URL || "https://internshipbackend-p5sn.onrender.com").replace(/\/api$/, "");
+    const socketUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/api$/, "");
     const newSocket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
