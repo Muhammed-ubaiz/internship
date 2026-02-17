@@ -342,10 +342,11 @@ export const sendPasswordResetLink = async (req, res) => {
       expiresAt: Date.now() + 30 * 60 * 1000
     };
 
-    console.log(`Password reset link generated for ${email}: http://localhost:5173/set-password?token=${token}&email=${encodeURIComponent(email)}`);
+    console.log(`Password reset link generated for ${email}`);
 
-    // Create reset link (update with your frontend URL - change port if needed)
-    const resetLink = `http://localhost:5173/set-password?token=${token}&email=${encodeURIComponent(email)}`;
+    // Create reset link - use environment variable for frontend URL
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
