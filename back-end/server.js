@@ -126,12 +126,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ✅ FIX: Handle SPA routing - Return index.html for all unknown routes
-// Express v5 compatible syntax
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
 // ✅ FIX: Use server.listen instead of app.listen
 server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
