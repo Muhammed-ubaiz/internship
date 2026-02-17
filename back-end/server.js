@@ -117,18 +117,19 @@ io.on("connection", (socket) => {
   });
 });
 
-// ✅ FIX: Handle SPA routing - Return index.html for all unknown routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Health check endpoint
+// Health check endpoint (must come before wildcard route)
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     port: PORT,
     socketio: 'Running'
   });
+});
+
+// ✅ FIX: Handle SPA routing - Return index.html for all unknown routes
+// Express v5 compatible syntax
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // ✅ FIX: Use server.listen instead of app.listen
