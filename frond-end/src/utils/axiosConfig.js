@@ -62,7 +62,7 @@ api.interceptors.response.use(
 
           // Determine which login page to redirect to based on current path
           const currentPath = window.location.pathname;
-          let loginPath = "/login"; // default to student login
+          let loginPath = "/"; // default to student login
 
           if (currentPath.includes("/mentor") || currentPath.includes("/Mentor")) {
             loginPath = "/mentorlogin";
