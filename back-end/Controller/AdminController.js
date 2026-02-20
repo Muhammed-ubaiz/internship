@@ -319,6 +319,17 @@ const generateToken = () => {
 };
 
 // Send Password Reset Link
+// Move transporter outside the function (at top of file)
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.APP_EMAIL,
+    pass: process.env.APP_PASSWORD,
+  },
+  tls: { rejectUnauthorized: false },
+});
+
+// Send Password Reset Link
 export const sendPasswordResetLink = async (req, res) => {
   try {
     const { email } = req.body;
@@ -326,7 +337,7 @@ export const sendPasswordResetLink = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Email required"
+        message: "Email required",
       });
     }
 
@@ -336,23 +347,13 @@ export const sendPasswordResetLink = async (req, res) => {
     // Store token with expiration (30 minutes)
     resetTokenStore[email] = {
       token,
-      expiresAt: Date.now() + 30 * 60 * 1000
+      expiresAt: Date.now() + 30 * 60 * 1000,
     };
 
-    console.log(`Password reset link generated for ${email}`);
+    const frontendUrl = 'https://enchanting-salmiakki-09499a.netlify.app';
+    const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-    // Create reset link - use environment variable for frontend URL
-      const frontendUrl = process.env.FRONTEND_URL ||'https://enchanting-salmiakki-09499a.netlify.app';
-      const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.APP_EMAIL,
-        pass: process.env.APP_PASSWORD,
-      },
-      tls: { rejectUnauthorized: false },
-    });
+    console.log("Reset link generated:", resetLink);
 
     await transporter.sendMail({
       from: `"PUNCHING APP" <${process.env.APP_EMAIL}>`,
@@ -374,27 +375,23 @@ export const sendPasswordResetLink = async (req, res) => {
             Or copy and paste this link in your browser:<br>
             <a href="${resetLink}" style="color: #141E46;">${resetLink}</a>
           </p>
-          <p style="color: #666; font-size: 14px;">
-            This link will expire in 30 minutes.
-          </p>
-          <p style="color: #666; font-size: 14px;">
-            If you didn't request this, please ignore this email.
-          </p>
+          <p style="color: #666; font-size: 14px;">This link will expire in 30 minutes.</p>
+          <p style="color: #666; font-size: 14px;">If you didn't request this, please ignore this email.</p>
         </div>
       `,
     });
 
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: "Password reset link sent to email"
+      message: "Password reset link sent to email",
     });
 
   } catch (err) {
     console.error("Error sending password link:", err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to send email",
-      error: err.message
+      error: err.message,
     });
   }
 };
