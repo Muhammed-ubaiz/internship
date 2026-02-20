@@ -345,7 +345,7 @@ export const sendPasswordResetLink = async (req, res) => {
     console.log(`Password reset link generated for ${email}`);
 
     // Create reset link - use environment variable for frontend URL
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL ||'enchanting-salmiakki-09499a.netlify.app';
     const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     const transporter = nodemailer.createTransport({
