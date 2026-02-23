@@ -318,16 +318,6 @@ const generateToken = () => {
   ).join('');
 };
 
-// Send Password Reset Link
-// Move transporter outside the function (at top of file)
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.APP_EMAIL,
-    pass: process.env.APP_PASSWORD,
-  },
-  tls: { rejectUnauthorized: false },
-});
 
 // Send Password Reset Link
 export const sendPasswordResetLink = async (req, res) => {
@@ -341,6 +331,30 @@ export const sendPasswordResetLink = async (req, res) => {
       });
     }
 
+    // Check if email credentials are configured
+    const appEmail = process.env.APP_EMAIL;
+    const appPassword = process.env.APP_PASSWORD;
+
+    if (!appEmail || !appPassword) {
+      console.error("❌ Email credentials not configured: APP_EMAIL or APP_PASSWORD is missing in .env file");
+      return res.status(500).json({
+        success: false,
+        message: "Email service not configured. Please contact administrator.",
+        error: "Email credentials not set",
+      });
+    }
+
+    // Transporter created inside function so it always reads env vars at call time
+    // (ES module imports are hoisted, so top-level transporter would read undefined env vars)
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: appEmail,
+        pass: appPassword,
+      },
+      tls: { rejectUnauthorized: false },
+    });
+
     // Generate secure random token
     const token = generateToken();
 
@@ -350,13 +364,16 @@ export const sendPasswordResetLink = async (req, res) => {
       expiresAt: Date.now() + 30 * 60 * 1000,
     };
 
-    const frontendUrl = 'https://enchanting-salmiakki-09499a.netlify.app';
-    const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
+    const frontendUrl = process.env.NODE_ENV === 'production'
+  ? 'https://enchanting-salmiakki-09499a.netlify.app'
+  : 'http://localhost:5173';
 
-    console.log("Reset link generated:", resetLink);
+const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
+    console.log("📧 Sending reset link to:", email);
+    console.log("🔑 Using email account:", appEmail);
 
     await transporter.sendMail({
-      from: `"PUNCHING APP" <${process.env.APP_EMAIL}>`,
+      from: `"PUNCHING APP" <${appEmail}>`,
       to: email,
       subject: "Set Your Password",
       html: `
@@ -381,16 +398,29 @@ export const sendPasswordResetLink = async (req, res) => {
       `,
     });
 
+    console.log("✅ Password reset link sent successfully to:", email);
+
     return res.status(200).json({
       success: true,
       message: "Password reset link sent to email",
     });
 
   } catch (err) {
-    console.error("Error sending password link:", err);
+    console.error("❌ Error sending password link:", err.message);
+    
+    let errorMessage = "Failed to send email";
+    
+    if (err.code === 'EAUTH') {
+      console.error("⚠️  GMAIL AUTH FAILED: APP_EMAIL =", process.env.APP_EMAIL);
+      console.error("⚠️  Your Google App Password in .env is invalid or expired. Generate a new one at: https://myaccount.google.com/apppasswords");
+      errorMessage = "Email authentication failed. Please check email configuration.";
+    } else if (err.code === 'ENOTFOUND') {
+      errorMessage = "Email server not found. Please check internet connection.";
+    }
+    
     return res.status(500).json({
       success: false,
-      message: "Failed to send email",
+      message: errorMessage,
       error: err.message,
     });
   }

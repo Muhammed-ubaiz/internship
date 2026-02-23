@@ -78,17 +78,6 @@ function StudentCreate() {
   const handleAddStudent = async (e) => {
     e.preventDefault();
 
-    if (!linkSent) {
-      Swal.fire({
-        icon: "error",
-        title: "Password link not sent",
-        text: "Please send password setup link to email first",
-        draggable: true,
-      });
-      return;
-    }
-
-    const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
     try {
@@ -100,6 +89,20 @@ function StudentCreate() {
 
       if (res.data.success) {
         setStudents([...students, res.data.student]);
+
+        // Auto-send password link if not already sent
+        if (!linkSent) {
+          try {
+            await api.post(
+              "/admin/send-password-link",
+              { email },
+              { headers: { Role: role } },
+            );
+          } catch (linkErr) {
+            console.error("Failed to send password link:", linkErr);
+          }
+        }
+
         resetForm();
 
         Swal.fire({
