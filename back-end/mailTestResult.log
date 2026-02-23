@@ -1,0 +1,15 @@
+Testing mail with: muhammedubais01@gmail.com
+❌ Mail error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-358af93a7bfsm7087929a91.13 - gsmtp
+Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 98e67ed59e1d1-358af93a7bfsm7087929a91.13 - gsmtp
+    at SMTPConnection._formatError (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+    at SMTPConnection._actionAUTHComplete (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:1617:34)
+    at SMTPConnection.<anonymous> (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:556:26)
+    at SMTPConnection._processResponse (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+    at SMTPConnection._onData (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+    at SMTPConnection._onSocketData (E:\code\internship\back-end\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+    at TLSSocket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
