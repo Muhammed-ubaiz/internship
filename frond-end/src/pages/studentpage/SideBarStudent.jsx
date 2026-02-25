@@ -162,16 +162,8 @@ function SideBarStudent() {
             </div>
           )}
 
-          {/* Notifications */}
-          <div
-            className={menuItem}
-            onClick={() => handleNavigation("/studentsNotification")}
-          >
-            <div className="flex items-center gap-3">
-              <FaBell />
-              <span>Notifications</span>
-            </div>
-          </div>
+          
+      
 
           {/* Logout */}
           <div className="mt-auto border-t border-gray-700 pt-2">
