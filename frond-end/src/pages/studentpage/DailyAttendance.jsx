@@ -12,7 +12,7 @@ import {
   LogOut,
   PauseCircle,
   Activity,
-  TrendingUp,
+  X,
 } from "lucide-react";
 
 function DailyAttendance() {
@@ -158,7 +158,6 @@ function DailyAttendance() {
     if (!seconds || seconds < 0) return "00h 00m";
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
     return `${hours}h ${minutes}m`;
   };
 
@@ -172,16 +171,6 @@ function DailyAttendance() {
 
   const hasActiveSession = punchRecords.some(r => !r.punchOut);
   const isOnBreak = attendance?.currentBreakStart;
-  const currentStatus = attendance?.status || "NOT_STARTED";
-
-  const calculateAttendancePercentage = () => {
-    if (!attendance) return 0;
-    const expectedWorkingHours = 8 * 3600;
-    const actualWorkingSeconds = liveWorkingSeconds;
-    return Math.min(Math.round((actualWorkingSeconds / expectedWorkingHours) * 100), 100);
-  };
-
-  const attendancePercentage = calculateAttendancePercentage();
 
   const filteredPunchRecords = punchRecords
     .filter((record) => {
@@ -202,429 +191,484 @@ function DailyAttendance() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 pt-14 lg:pt-0">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-[#EEF6FB]">
+      {/* Sidebar - Let SideBarStudent handle its own responsiveness */}
       <SideBarStudent />
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 md:ml-52 p-4 md:p-6 max-w-7xl mx-auto">
-        {/* Header - centered on mobile */}
-        <div className="mb-8 text-center md:text-left">
-          <h1 className="text-3xl font-bold text-[#0a2540] font-[Montserrat] mb-2">
-            Today's Attendance
-          </h1>
-          <p className="text-gray-600">
-            {new Date().toLocaleDateString('en-IN', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-        <div className="mb-6 flex justify-center md:justify-end">
-          <button
-            onClick={fetchAttendance}
-            disabled={loading}
-            className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            {loading ? "Loading..." : "Refresh"}
-          </button>
-        </div>
+      <div className="lg:ml-64 flex-1 min-h-screen p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto w-full">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex items-center justify-center mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#141E46]">
+              Today's Attendance
+            </h2>
+          </div>
 
-        {/* Error Message - MonthlySummary Style */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <strong>Error:</strong> {error}
-            </div>
-            <button onClick={fetchAttendance} className="mt-2 text-sm underline">
-              Try again
+          {/* Desktop Header */}
+          <div className="hidden lg:block mb-6">
+            <h2 className="text-xl sm:text-2xl font-semibold text-[#141E46]">
+              Today's Attendance
+            </h2>
+          </div>
+
+          {/* Mobile Date Display */}
+          <div className="lg:hidden mb-3 text-center bg-white/50 p-2 rounded-lg">
+            <p className="text-sm text-gray-600">
+              {new Date().toLocaleDateString('en-IN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+
+          {/* Refresh Button - Desktop */}
+          <div className="hidden lg:flex justify-end mb-4">
+            <button
+              onClick={fetchAttendance}
+              disabled={loading}
+              className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              {loading ? "Loading..." : "Refresh"}
             </button>
           </div>
-        )}
 
-        {/* Stats Cards - 3 Cards Only */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          {/* Date Card */}
-          <div className="bg-white p-5 rounded-xl shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Date</p>
-                <p className="text-2xl font-bold">
+          {/* Refresh Button - Mobile */}
+          <div className="lg:hidden flex justify-center mb-4">
+            <button
+              onClick={fetchAttendance}
+              disabled={loading}
+              className="px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors flex items-center gap-2 text-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              {loading ? "Loading..." : "Refresh"}
+            </button>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-6">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                <strong>Error:</strong> {error}
+              </div>
+              <button onClick={fetchAttendance} className="mt-2 text-sm underline">
+                Try again
+              </button>
+            </div>
+          )}
+
+          {/* Stats Cards */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 animate-pulse">
+                  <div className="h-5 bg-gray-200 rounded w-20 mb-2"></div>
+                  <div className="h-8 bg-gray-200 rounded w-12"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6">
+              {/* Date Card */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border hover:scale-105 transition">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-700">Date</h3>
+                  <Calendar className="w-5 h-5 text-blue-500" />
+                </div>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#0077b6] break-words">
                   {attendance ? formatDate(attendance.date) : formatDate(new Date())}
                 </p>
               </div>
-              <Calendar className="w-8 h-8 text-blue-500" />
-            </div>
-          </div>
 
-          {/* Working Time Card */}
-          <div className={`bg-white p-5 rounded-xl shadow-sm border ${hasActiveSession && !isOnBreak ? 'border-green-300' : 'border-gray-200'} p-5`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm text-gray-600">Working Time</p>
-                  {hasActiveSession && !isOnBreak && (
-                    <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                  )}
+              {/* Working Time Card */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border hover:scale-105 transition">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-700">Working</h3>
+                    {hasActiveSession && !isOnBreak && (
+                      <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                    )}
+                  </div>
+                  <Clock className="w-5 h-5 text-green-500" />
                 </div>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600">
                   {formatDuration(liveWorkingSeconds)}
                 </p>
                 {hasActiveSession && !isOnBreak && (
                   <p className="text-xs text-green-500 mt-1">Live updating</p>
                 )}
               </div>
-              <Clock className="w-8 h-8 text-green-500" />
-            </div>
-          </div>
 
-          {/* Break Time Card */}
-          <div className={`bg-white p-5 rounded-xl shadow-sm border ${isOnBreak ? 'border-orange-300' : 'border-gray-200'} p-5`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm text-gray-600">Break Time</p>
-                  {isOnBreak && (
-                    <span className="inline-flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
-                  )}
+              {/* Break Time Card */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border hover:scale-105 transition">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-700">Break</h3>
+                    {isOnBreak && (
+                      <span className="inline-flex h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    )}
+                  </div>
+                  <PauseCircle className="w-5 h-5 text-orange-500" />
                 </div>
-                <p className="text-2xl font-bold text-orange-600">
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-600">
                   {formatDuration(liveBreakSeconds)}
                 </p>
                 {isOnBreak && (
                   <p className="text-xs text-orange-500 mt-1">On break</p>
                 )}
               </div>
-              <PauseCircle className="w-8 h-8 text-orange-500" />
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Session Summary */}
-        {punchRecords.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* First Punch In Summary */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <LogIn className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">First Punch In</h3>
-                  <p className="text-sm text-gray-500">Start of day session</p>
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-blue-700 font-mono">
-                  {formatTime(punchRecords[0]?.punchIn)}
-                </p>
-                {hasActiveSession && (
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span className="text-sm text-green-600 font-medium">Session Active</span>
+          {/* Session Summary Cards */}
+          {punchRecords.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-6">
+              {/* First Punch In Card */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border hover:scale-105 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <LogIn className="w-5 h-5 text-blue-600" />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Last Punch Out Summary */}
-            <div className="bg-white p-5 rounded-xl shadow-sm border">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <LogOut className="w-6 h-6 text-gray-600" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">First Punch In</h3>
+                    <p className="text-xs text-gray-500">Start of day</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Last Punch Out</h3>
-                  <p className="text-sm text-gray-500">End of session</p>
-                </div>
-              </div>
-              <div className="text-center">
-                {punchRecords[punchRecords.length - 1]?.punchOut ? (
-                  <p className="text-3xl font-bold text-gray-700 font-mono">
-                    {formatTime(punchRecords[punchRecords.length - 1]?.punchOut)}
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-700 font-mono">
+                    {formatTime(punchRecords[0]?.punchIn)}
                   </p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-yellow-600">Still Working</p>
-                    <div className="flex items-center justify-center gap-2 mt-3">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                      <span className="text-sm text-yellow-600">Not punched out yet</span>
+                  {hasActiveSession && (
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                      <span className="text-xs text-green-600 font-medium">Session Active</span>
                     </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Punch Records Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Filter Bar - visible on all screens */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center p-5 bg-white border-b border-gray-100">
-            <div className="group relative w-full sm:w-72">
-              <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
-                <input
-                  type="text"
-                  placeholder="Search by time..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none rounded-full"
-                />
-                <button type="button" className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300">
-                  <Search className="h-4 w-4 text-white" />
-                </button>
-              </div>
-            </div>
-
-            <div className="relative w-full sm:w-48 group">
-              <div className="flex items-center bg-white rounded-full shadow-md border border-gray-200 transition-all duration-300 ease-out focus-within:ring-2 focus-within:ring-[#0a2540]/40">
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
-                >
-                  <option value="asc">Oldest First</option>
-                  <option value="desc">Newest First</option>
-                </select>
-                <Filter className="absolute right-4 w-4 h-4 text-[#0a2540]" />
-              </div>
-            </div>
-
-            {(search || sortOrder !== "asc") && (
-              <button
-                onClick={clearAllFilters}
-                className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-gray-50 rounded-lg flex items-center gap-2"
-              >
-                Clear All Filters
-              </button>
-            )}
-          </div>
-
-          {/* Desktop Table */}
-          <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full text-sm border-separate border-spacing-y-3 p-3">
-                <thead className="bg-white">
-                  <tr className="text-[#1679AB] text-left">
-                    <th className="p-3 text-center">#</th>
-                    <th className="p-3 text-center">Session</th>
-                    <th className="p-3 text-center">Punch In</th>
-                    <th className="p-3 text-center">Punch Out</th>
-                    <th className="p-3 text-center">Duration</th>
-                    <th className="p-3 text-center">Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    <tr className="bg-[#EEF6FB]">
-                      <td colSpan="6" className="text-center p-6 rounded-2xl">
-                        <div className="flex justify-center">
-                          <div className="animate-spin h-6 w-6 border-2 border-[#1679AB] border-t-transparent rounded-full"></div>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredPunchRecords.length === 0 && punchRecords.length === 0 ? (
-                    <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                      <td colSpan="6" className="text-center p-6 rounded-2xl text-gray-500">
-                        <div className="flex flex-col items-center">
-                          <Clock className="w-10 h-10 text-gray-400 mb-2" />
-                          <p>No punch records today</p>
-                          <p className="text-sm text-gray-400">Punch in to start tracking</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredPunchRecords.length === 0 ? (
-                    <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
-                      <td colSpan="6" className="text-center p-4 rounded-2xl text-gray-500">
-                        No matching records found
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPunchRecords.map((record, index) => {
-                      const isActive = !record.punchOut;
-                      const duration = isActive ? 
-                        Math.floor((new Date() - new Date(record.punchIn)) / 1000) :
-                        Math.floor((new Date(record.punchOut) - new Date(record.punchIn)) / 1000);
-
-                      return (
-                        <tr
-                          key={record._id || index}
-                          className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transition-all duration-300 hover:scale-[0.99]"
-                        >
-                          <td className="px-3 py-3 text-center rounded-l-2xl">
-                            <div className="flex items-center justify-center">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                isActive ? 'bg-green-100' : 'bg-gray-100'
-                              }`}>
-                                <span className="text-sm font-medium text-gray-700">{index + 1}</span>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex flex-col items-center">
-                              <span className="font-medium">Session {index + 1}</span>
-                              {isActive && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                  <span className="text-xs text-green-600 font-medium">Active</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <LogIn className="w-4 h-4 text-blue-500" />
-                              <span className="font-medium font-mono">{formatTime(record.punchIn)}</span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-3 text-center">
-                            {record.punchOut ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <LogOut className="w-4 h-4 text-gray-500" />
-                                <span className="font-medium font-mono">{formatTime(record.punchOut)}</span>
-                              </div>
-                            ) : (
-                              <span className="text-yellow-600 font-medium flex items-center justify-center gap-2">
-                                <Activity className="w-4 h-4 animate-pulse" />
-                                Active
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <Clock className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium font-mono">
-                                {formatDurationDetailed(duration)}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-3 text-center rounded-r-2xl">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              isActive ? 'bg-green-100 text-green-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
-                              {isActive ? 'ACTIVE' : 'COMPLETED'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
                   )}
-                </tbody>
-              </table>
-            </div>
-
-          {/* Mobile Card View */}
-          <div className="block lg:hidden p-4 space-y-3">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin h-8 w-8 border-2 border-[#1679AB] border-t-transparent rounded-full"></div>
+                </div>
               </div>
-            ) : punchRecords.length === 0 ? (
-              <div className="bg-[#EEF6FB] rounded-xl p-6 text-center">
-                <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">No Records Today</h3>
-                <p className="text-gray-500">Punch in to start tracking your attendance</p>
-              </div>
-            ) : (
-              filteredPunchRecords.map((record, idx) => {
-                const isActive = !record.punchOut;
-                const duration = isActive ? 
-                  Math.floor((new Date() - new Date(record.punchIn)) / 1000) :
-                  Math.floor((new Date(record.punchOut) - new Date(record.punchIn)) / 1000);
 
-                return (
-                  <div
-                    key={record._id || idx}
-                    className="bg-[#EEF6FB] p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-[#D1E8FF] transition-all duration-300"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          isActive ? 'bg-green-100' : 'bg-gray-100'
-                        }`}>
-                          <span className="text-sm font-bold">{idx + 1}</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-[#0a2540]">Session {idx + 1}</p>
-                          <p className={`text-xs ${
-                            isActive ? 'text-green-600' : 'text-blue-600'
-                          }`}>
-                            {isActive ? 'Active' : 'Completed'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="bg-white p-3 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <LogIn className="w-4 h-4 text-blue-500" />
-                          <p className="text-xs text-gray-600">Punch In</p>
-                        </div>
-                        <p className="font-semibold text-gray-900 font-mono">
-                          {formatTime(record.punchIn)}
-                        </p>
-                      </div>
-
-                      <div className="bg-white p-3 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <LogOut className="w-4 h-4 text-gray-500" />
-                          <p className="text-xs text-gray-600">Punch Out</p>
-                        </div>
-                        <p className="font-semibold text-gray-900 font-mono">
-                          {record.punchOut ? formatTime(record.punchOut) : "Active"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <p className="text-xs text-gray-600">Duration</p>
-                      </div>
-                      <p className="font-semibold text-gray-900 font-mono">
-                        {formatDurationDetailed(duration)}
-                      </p>
-                    </div>
+              {/* Last Punch Out Card */}
+              <div className="bg-white rounded-2xl shadow-2xl p-5 border hover:scale-105 transition">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <LogOut className="w-5 h-5 text-gray-600" />
                   </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Footer - MonthlySummary Style */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-              <div className="text-gray-500">
-                Showing{" "}
-                <span className="font-semibold text-[#0a2540]">
-                  {filteredPunchRecords.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-semibold">
-                  {punchRecords.length}
-                </span>{" "}
-                punch records
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Last Punch Out</h3>
+                    <p className="text-xs text-gray-500">End of session</p>
+                  </div>
+                </div>
+                <div className="text-center">
+                  {punchRecords[punchRecords.length - 1]?.punchOut ? (
+                    <p className="text-2xl font-bold text-gray-700 font-mono">
+                      {formatTime(punchRecords[punchRecords.length - 1]?.punchOut)}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xl font-bold text-yellow-600">Still Working</p>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                        <span className="text-xs text-yellow-600">Not punched out</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-              
+            </div>
+          )}
+
+          {/* Punch Records Table Section */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-center lg:text-left text-[#0a2540] px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8">
+              Punch Records
+            </h3>
+
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col lg:flex-row flex-wrap gap-3 lg:gap-4 items-stretch lg:items-center px-4 sm:px-6 lg:px-8 pb-4 sticky top-0 backdrop-blur-sm z-10 bg-white border-b border-gray-100">
+              {/* Search Input */}
+              <div className="group relative w-full lg:w-72">
+                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98] border border-gray-200">
+                  <input
+                    type="text"
+                    placeholder="Search by time..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="flex-1 px-4 sm:px-5 py-2 sm:py-3 text-sm text-gray-700 placeholder-gray-400 bg-transparent outline-none rounded-full"
+                  />
+                  <button type="button" className="relative flex items-center justify-center w-8 h-8 m-1 rounded-full bg-[#0a2540] transition-all duration-300 ease-out group-hover:scale-105 hover:scale-110 active:scale-95">
+                    <Search className="h-4 w-4 text-white transition-transform duration-300 group-hover:rotate-12" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Sort Select */}
+              <div className="relative w-full lg:w-48 group">
+                <div className="flex items-center bg-white rounded-full shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-[1px] focus-within:shadow-2xl focus-within:-translate-y-[2px] focus-within:ring-2 focus-within:ring-[#0a2540]/40 active:scale-[0.98] border border-gray-200">
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="appearance-none w-full bg-transparent px-4 sm:px-5 py-2 sm:py-3 pr-12 text-sm text-gray-700 rounded-full cursor-pointer outline-none"
+                  >
+                    <option value="asc">Oldest First</option>
+                    <option value="desc">Newest First</option>
+                  </select>
+                  <Filter className="absolute right-4 w-4 h-4 text-[#0a2540] pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Reset Button */}
               {(search || sortOrder !== "asc") && (
                 <button
                   onClick={clearAllFilters}
-                  className="text-sm text-[#0a2540] hover:underline flex items-center gap-1"
+                  className="group flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-[#0a2540] transition-colors hover:bg-gray-50 rounded-lg"
                 >
-                  Clear Filters
+                  <X className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Clear All
                 </button>
               )}
+            </div>
+
+            {/* Results count */}
+            <p className="text-xs text-gray-500 mb-2 px-4 sm:px-6 lg:px-8">
+              Showing {filteredPunchRecords.length} of {punchRecords.length} records
+            </p>
+
+            {/* Desktop Table */}
+            <div className="hidden lg:block px-4 sm:px-6 lg:px-8 pb-4">
+              <div className="overflow-x-auto">
+                <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <table className="w-full text-sm border-separate border-spacing-y-3">
+                    <thead className="sticky top-0 bg-white z-10">
+                      <tr className="text-[#1679AB] text-left">
+                        <th className="p-3 text-center">#</th>
+                        <th className="p-3 text-center">Session</th>
+                        <th className="p-3 text-center">Punch In</th>
+                        <th className="p-3 text-center">Punch Out</th>
+                        <th className="p-3 text-center">Duration</th>
+                        <th className="p-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr className="bg-[#EEF6FB]">
+                          <td colSpan="6" className="text-center p-6 rounded-2xl">
+                            <div className="flex justify-center">
+                              <div className="animate-spin h-6 w-6 border-2 border-[#1679AB] border-t-transparent rounded-full"></div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : filteredPunchRecords.length === 0 && punchRecords.length === 0 ? (
+                        <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                          <td colSpan="6" className="text-center p-6 rounded-2xl">
+                            <div className="flex flex-col items-center">
+                              <Clock className="w-10 h-10 text-gray-400 mb-2" />
+                              <p className="text-gray-500">No punch records today</p>
+                              <p className="text-sm text-gray-400">Punch in to start tracking</p>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : filteredPunchRecords.length === 0 ? (
+                        <tr className="bg-[#EEF6FB] hover:bg-[#D1E8FF]">
+                          <td colSpan="6" className="text-center p-4 rounded-2xl text-gray-500">
+                            No matching records found
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredPunchRecords.map((record, index) => {
+                          const isActive = !record.punchOut;
+                          const duration = isActive ? 
+                            Math.floor((new Date() - new Date(record.punchIn)) / 1000) :
+                            Math.floor((new Date(record.punchOut) - new Date(record.punchIn)) / 1000);
+
+                          return (
+                            <tr
+                              key={record._id || index}
+                              className="bg-[#EEF6FB] hover:bg-[#D1E8FF] transform transition-all duration-300 hover:scale-98"
+                            >
+                              <td className="px-3 py-3 text-center">
+                                <div className="flex items-center justify-center">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    isActive ? 'bg-green-100' : 'bg-gray-100'
+                                  }`}>
+                                    <span className="text-sm font-medium text-gray-700">{index + 1}</span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex flex-col items-center">
+                                  <span className="font-medium">Session {index + 1}</span>
+                                  {isActive && (
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                      <span className="text-xs text-green-600 font-medium">Active</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <LogIn className="w-4 h-4 text-blue-500" />
+                                  <span className="font-medium font-mono">{formatTime(record.punchIn)}</span>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-center">
+                                {record.punchOut ? (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <LogOut className="w-4 h-4 text-gray-500" />
+                                    <span className="font-medium font-mono">{formatTime(record.punchOut)}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-yellow-600 font-medium flex items-center justify-center gap-2">
+                                    <Activity className="w-4 h-4 animate-pulse" />
+                                    Active
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Clock className="w-4 h-4 text-gray-500" />
+                                  <span className="font-medium font-mono">
+                                    {formatDurationDetailed(duration)}
+                                  </span>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  isActive ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {isActive ? 'ACTIVE' : 'COMPLETED'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="block lg:hidden px-4 sm:px-6 lg:px-8 pb-4">
+              <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2 space-y-3">
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin h-8 w-8 border-2 border-[#1679AB] border-t-transparent rounded-full"></div>
+                  </div>
+                ) : filteredPunchRecords.length === 0 && punchRecords.length === 0 ? (
+                  <div className="bg-[#EEF6FB] p-6 rounded-xl text-center">
+                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Records Today</h3>
+                    <p className="text-gray-500">Punch in to start tracking</p>
+                  </div>
+                ) : filteredPunchRecords.length === 0 ? (
+                  <div className="bg-[#EEF6FB] p-4 rounded-xl text-center text-gray-500">
+                    No matching records found
+                  </div>
+                ) : (
+                  filteredPunchRecords.map((record, idx) => {
+                    const isActive = !record.punchOut;
+                    const duration = isActive ? 
+                      Math.floor((new Date() - new Date(record.punchIn)) / 1000) :
+                      Math.floor((new Date(record.punchOut) - new Date(record.punchIn)) / 1000);
+
+                    return (
+                      <div
+                        key={record._id || idx}
+                        className="bg-[#EEF6FB] hover:bg-[#D1E8FF] p-4 rounded-xl transform transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                  isActive ? 'bg-green-100' : 'bg-gray-100'
+                                }`}>
+                                  <span className="text-sm font-bold">{idx + 1}</span>
+                                </div>
+                                <span className="font-semibold text-[#0a2540]">Session {idx + 1}</span>
+                              </div>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                isActive ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {isActive ? 'ACTIVE' : 'COMPLETED'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 mt-3">
+                              <div className="bg-white/60 p-2 rounded-lg">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <LogIn className="w-3 h-3 text-blue-500" />
+                                  <p className="text-xs text-gray-600">Punch In</p>
+                                </div>
+                                <p className="font-semibold text-gray-900 font-mono text-sm">
+                                  {formatTime(record.punchIn)}
+                                </p>
+                              </div>
+
+                              <div className="bg-white/60 p-2 rounded-lg">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <LogOut className="w-3 h-3 text-gray-500" />
+                                  <p className="text-xs text-gray-600">Punch Out</p>
+                                </div>
+                                <p className="font-semibold text-gray-900 font-mono text-sm">
+                                  {record.punchOut ? formatTime(record.punchOut) : "Active"}
+                                </p>
+                              </div>
+
+                              <div className="bg-white/60 p-2 rounded-lg col-span-2">
+                                <div className="flex items-center gap-1 mb-1">
+                                  <Clock className="w-3 h-3 text-gray-500" />
+                                  <p className="text-xs text-gray-600">Duration</p>
+                                </div>
+                                <p className="font-semibold text-gray-900 font-mono text-sm">
+                                  {formatDurationDetailed(duration)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Footer with record count */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+                <div className="text-gray-500">
+                  Showing{" "}
+                  <span className="font-semibold text-[#0a2540]">
+                    {filteredPunchRecords.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold">
+                    {punchRecords.length}
+                  </span>{" "}
+                  punch records
+                </div>
+                
+                {(search || sortOrder !== "asc") && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-sm text-[#0a2540] hover:underline flex items-center gap-1"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

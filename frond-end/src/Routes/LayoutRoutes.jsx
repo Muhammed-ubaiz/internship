@@ -44,7 +44,14 @@ function LayoutRoutes() {
           <Route path="/" element={<StudentLogin />} />
           <Route path="/information" element={<Information />} />
           <Route path="/mentornotification" element={<MentorNotifications />} />
-          <Route path="/studentsnotification" element={<StuentsNotification />} />
+          <Route
+            path="/studentsnotification"
+            element={
+              <ProtectedRoute role="student">
+                <StuentsNotification />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admindashboard"
             element={
