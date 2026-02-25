@@ -310,7 +310,7 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 
-const resetTokenStore = {};
+
 
 const generateToken = () => crypto.randomBytes(32).toString("hex");
 
