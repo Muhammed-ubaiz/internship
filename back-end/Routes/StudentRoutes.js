@@ -25,6 +25,7 @@ import {
   getInitialLocation,
   verifyResetToken,
   setPassword,
+  deleteStudentAnnouncement,
 
 } from "../Controller/StudentController.js";
 import { verifyToken } from "../AuthMiddleware.js";
@@ -68,5 +69,6 @@ studentroutes.post("/set-password", setPassword); // No auth needed
 
 // Announcement routes
 studentroutes.get("/announcements", verifyToken, getStudentAnnouncements);
+studentroutes.delete("/announcements/:id", verifyToken, deleteStudentAnnouncement);
 
 export default studentroutes;

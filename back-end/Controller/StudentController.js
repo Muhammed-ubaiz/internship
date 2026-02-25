@@ -1136,6 +1136,20 @@ export const getStudentAnnouncements = async (req, res) => {
   }
 };
 
+// ✅ DELETE STUDENT ANNOUNCEMENT - Delete an announcement
+export const deleteStudentAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await Announcement.findByIdAndDelete(id);
+
+    res.json({ success: true, message: "Announcement deleted successfully" });
+  } catch (error) {
+    console.error("❌ deleteStudentAnnouncement error:", error);
+    res.status(500).json({ success: false, message: "Failed to delete announcement" });
+  }
+};
+
 
 
 export const verifyResetToken = (req, res) => {
