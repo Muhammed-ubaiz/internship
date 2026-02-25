@@ -336,8 +336,8 @@ export const sendPasswordResetLink = async (req, res) => {
     }
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",   // ✅ CORRECT HOST
-      port: 465,                // ✅ CORRECT PORT
+      host: "smtp.gmail.com",
+      port: 465,
       secure: true,
       auth: {
         user: appEmail,
@@ -408,6 +408,71 @@ export const sendPasswordResetLink = async (req, res) => {
     });
   }
 };
+
+export const verifyResetToken = (req, res) => {
+  const { email, token } = req.query;
+
+  if (!email || !token) {
+    return res.status(400).json({ success: false, message: "Email and token required" });
+  }
+
+  const entry = resetTokenStore[email];
+
+  if (!entry) {
+    return res.status(400).json({ success: false, message: "No reset request found" });
+  }
+
+  if (Date.now() > entry.expiresAt) {
+    delete resetTokenStore[email];
+    return res.status(400).json({ success: false, message: "Link expired. Request a new one." });
+  }
+
+  if (entry.token !== token) {
+    return res.status(400).json({ success: false, message: "Invalid token" });
+  }
+
+  return res.status(200).json({ success: true, message: "Token is valid" });
+};
+
+export const setNewPassword = async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ success: false, message: "Email, token and password required" });
+    }
+
+    const entry = resetTokenStore[email];
+
+    if (!entry) {
+      return res.status(400).json({ success: false, message: "No reset request found" });
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      delete resetTokenStore[email];
+      return res.status(400).json({ success: false, message: "Link expired. Request a new one." });
+    }
+
+    if (entry.token !== token) {
+      return res.status(400).json({ success: false, message: "Invalid token" });
+    }
+
+    // ✅ Update password in DB here:
+    // const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // await User.findOneAndUpdate({ email }, { password: hashedPassword });
+
+    delete resetTokenStore[email];
+
+    return res.status(200).json({ success: true, message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error("❌ setNewPassword error:", err.message);
+    return res.status(500).json({ success: false, message: "Failed to update password", error: err.message });
+  }
+};
+
+
+
 
 
 
