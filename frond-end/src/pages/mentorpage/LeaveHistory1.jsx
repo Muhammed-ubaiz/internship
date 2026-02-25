@@ -297,7 +297,7 @@ function LeaveHistory() {
               )}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
+            <div className=" overflow-hidden">
               {/* Mobile Card View */}
               <div className="block lg:hidden px-4 sm:px-6 pb-4 pt-4 space-y-4">
                 {filteredLeaves.map((leave) => {
