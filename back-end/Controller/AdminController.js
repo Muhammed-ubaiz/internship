@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import Student from "../Model/Studentsmodel.js";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 import Location from "../Model/Locationmodel.js";
 import Mentor from "../Model/Mentormodel.js";
 import Attendancemodel from "../Model/Attendancemodel.js";
@@ -309,17 +310,10 @@ const toggleCourseStatus = async (req, res) => {
 };
 
 
-// Store for password reset tokens is imported from tokenStore.js
+const resetTokenStore = {};
 
-// Generate random token without crypto module
-const generateToken = () => {
-  return Array.from({ length: 64 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join('');
-};
+const generateToken = () => crypto.randomBytes(32).toString("hex");
 
-
-// Send Password Reset Link
 export const sendPasswordResetLink = async (req, res) => {
   try {
     const { email } = req.body;
@@ -331,46 +325,39 @@ export const sendPasswordResetLink = async (req, res) => {
       });
     }
 
-    // Check if email credentials are configured
     const appEmail = process.env.APP_EMAIL;
     const appPassword = process.env.APP_PASSWORD;
 
     if (!appEmail || !appPassword) {
-      console.error("❌ Email credentials not configured: APP_EMAIL or APP_PASSWORD is missing in .env file");
       return res.status(500).json({
         success: false,
-        message: "Email service not configured. Please contact administrator.",
-        error: "Email credentials not set",
+        message: "Email service not configured.",
       });
     }
 
-    // Transporter created inside function so it always reads env vars at call time
-    // (ES module imports are hoisted, so top-level transporter would read undefined env vars)
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",   // ✅ CORRECT HOST
+      port: 465,                // ✅ CORRECT PORT
+      secure: true,
       auth: {
         user: appEmail,
         pass: appPassword,
       },
-      tls: { rejectUnauthorized: false },
     });
 
-    // Generate secure random token
     const token = generateToken();
 
-    // Store token with expiration (30 minutes)
     resetTokenStore[email] = {
       token,
       expiresAt: Date.now() + 30 * 60 * 1000,
     };
 
-    const frontendUrl = process.env.NODE_ENV === 'production'
-  ? 'https://enchanting-salmiakki-09499a.netlify.app'
-  : 'http://localhost:5173';
+    const frontendUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://enchanting-salmiakki-09499a.netlify.app"
+        : "http://localhost:5173";
 
-const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
-    console.log("📧 Sending reset link to:", email);
-    console.log("🔑 Using email account:", appEmail);
+    const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     await transporter.sendMail({
       from: `"PUNCHING APP" <${appEmail}>`,
@@ -382,14 +369,14 @@ const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIC
           <p>Hello,</p>
           <p>Click the button below to set your password for your new account:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetLink}" 
-               style="background-color: #141E46; color: white; padding: 12px 30px; 
+            <a href="${resetLink}"
+               style="background-color: #141E46; color: white; padding: 12px 30px;
                       text-decoration: none; border-radius: 5px; display: inline-block;">
               Set Password
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
-            Or copy and paste this link in your browser:<br>
+            Or copy and paste this link in your browser:<br/>
             <a href="${resetLink}" style="color: #141E46;">${resetLink}</a>
           </p>
           <p style="color: #666; font-size: 14px;">This link will expire in 30 minutes.</p>
@@ -398,26 +385,22 @@ const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIC
       `,
     });
 
-    console.log("✅ Password reset link sent successfully to:", email);
-
     return res.status(200).json({
       success: true,
       message: "Password reset link sent to email",
     });
 
   } catch (err) {
-    console.error("❌ Error sending password link:", err.message);
-    
+    console.error("❌ Email error:", err.message);
+
     let errorMessage = "Failed to send email";
-    
-    if (err.code === 'EAUTH') {
-      console.error("⚠️  GMAIL AUTH FAILED: APP_EMAIL =", process.env.APP_EMAIL);
-      console.error("⚠️  Your Google App Password in .env is invalid or expired. Generate a new one at: https://myaccount.google.com/apppasswords");
+
+    if (err.code === "EAUTH") {
       errorMessage = "Email authentication failed. Please check email configuration.";
-    } else if (err.code === 'ENOTFOUND') {
+    } else if (err.code === "ENOTFOUND") {
       errorMessage = "Email server not found. Please check internet connection.";
     }
-    
+
     return res.status(500).json({
       success: false,
       message: errorMessage,
@@ -425,6 +408,7 @@ const resetLink = `${frontendUrl}/set-password?token=${token}&email=${encodeURIC
     });
   }
 };
+
 
 
 
