@@ -1,48 +1,44 @@
-# TODO - Announcement & Notification Enhancement
+# Responsive Plan for MentorLeaveRequest.jsx
 
-## Backend Updates ✅ COMPLETED
+## Status: ✅ COMPLETED
 
-### 1. MentorContriller.js ✅
-- [x] Add `getMyAnnouncements` endpoint for mentors to view their sent announcements
-- [x] Add `deleteAnnouncement` endpoint for mentors to delete their announcements
+## Information Gathered:
+- **MentorLeaveRequest.jsx**: Current leave requests page with card layout that needs mobile responsiveness
+- **DailyAttendance1.jsx**: Already has excellent responsive design with mobile card views and desktop table views
 
-### 2. StudentController.js ✅
-- [x] Add `getStudentAnnouncements` endpoint for students to view announcements sent to them
+## Key Differences Identified:
+1. Sidebar margin: `ml-0 md:ml-52` vs `lg:ml-64`
+2. No mobile card view in LeaveRequest (only desktop grid)
+3. Missing proper mobile header vs desktop header switching
+4. No responsive stats display
 
-### 3. MentorRoutes.js ✅
-- [x] Add route for `GET /mentor/my-announcements`
-- [x] Add route for `DELETE /mentor/announcements/:id`
+## Changes Made:
 
-### 4. StudentRoutes.js ✅
-- [x] Add route for `GET /student/announcements`
+### 1. Layout Updates ✅
+- Changed sidebar margin to `lg:ml-64` for consistency with DailyAttendance
+- Uses `min-h-screen bg-[#EEF6FB]` instead of gradient background
+- Added proper mobile/desktop header switching
 
-## Frontend Updates ✅ COMPLETED
+### 2. Search & Filter Section ✅
+- Used `flex flex-col lg:flex-row flex-wrap gap-3 lg:gap-4` pattern
+- Made search and filter inputs full width on mobile
+- Added proper responsive padding
 
-### 5. Mentornotification.jsx ✅
-- [x] Add "My Announcements" section showing announcements sent by the mentor
-- [x] Add fetch for mentor's announcements
-- [x] Add delete functionality for mentor's announcements
-- [x] Add visual distinction between "My Announcements" and "Notifications from Admin"
+### 3. Main Content - Added Mobile Card View ✅
+- Created a mobile card view similar to DailyAttendance1
+- Desktop shows 2-column grid (`grid-cols-1 lg:grid-cols-2`)
+- Mobile shows single column cards with compact layout
 
-### 6. StuentsNotification.jsx ✅
-- [x] Add "Announcements from Mentors" section
-- [x] Add fetch for student announcements
-- [x] Add visual distinction between "Announcements" and "Notifications from Admin"
+### 4. Leave Request Cards ✅
+- Made cards fully responsive with proper padding adjustments
+- Stacked content vertically on mobile
+- Ensured buttons are properly sized for touch
 
-## Summary
-All tasks have been completed. The implementation includes:
+### 5. Stats Section ✅
+- Made responsive with proper spacing
 
-### Backend:
-- `getMyAnnouncements` - Mentors can view their sent announcements
-- `deleteAnnouncement` - Mentors can delete their own announcements  
-- `getStudentAnnouncements` - Students can view announcements sent to their batch
+## Files Edited:
+- `frond-end/src/pages/mentorpage/MentorLeaveRequest.jsx`
 
-### Frontend:
-- **Mentor Notification Page**: Now shows two sections:
-  1. "My Announcements" (green border) - Shows announcements sent by the mentor with delete option
-  2. "Notifications from Admin" (blue border) - Shows notifications from admin
-
-- **Student Notification Page**: Now shows two sections:
-  1. "Announcements from Mentors" (green border) - Shows announcements sent to the student's batch
-  2. "Notifications from Admin" (blue border) - Shows notifications from admin
+## Build Status: ✅ SUCCESS
 

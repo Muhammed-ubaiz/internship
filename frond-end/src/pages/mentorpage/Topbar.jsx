@@ -12,14 +12,17 @@ function Topbar() {
 
   return (
     <div className="w-full border-b border-[#1679AB] px-4 py-5 font-[Montserrat]">
-      <div className="flex items-center justify-between gap-6">
-        {/* LEFT */}
+      <div className="flex items-center justify-center relative">
+        {/* LEFT - Empty for spacing */}
+        <div className="absolute left-0"></div>
+
+        {/* CENTER - Dashboard Heading */}
         <h1 className="text-2xl font-semibold text-[#141E46]">
           Dashboard
         </h1>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-7">
+        {/* RIGHT - Location and Notifications */}
+        <div className="absolute right-0 flex items-center gap-7">
           <FaMapMarkerAlt className="text-xl text-[#1679AB]" />
 
           {/* Bell Button */}
